@@ -9,3 +9,15 @@
 -Venv içindeyken "pip install -r requirements.txt" komutu ile bunları yüklemeliyiz ki dependecy sorunu çıkmasın :)
 
 -Frontend kısmı için ayrıca venv açmadım.
+
+-Backend içinde .env dosyası oluşturulacak. içine şunları kopyalayıp yapıştırın:
+
+```
+DATABASE_ENGINE='django.db.backends.postgresql'
+DATABASE_NAME='small_db'
+DATABASE_USER='postgres'
+DATABASE_PASSWORD='***'
+DATABASE_HOST='localhost'
+DATABASE_PORT='5432'
+
+```
