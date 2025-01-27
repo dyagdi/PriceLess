@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User  # Import User model
+from django.contrib.auth.models import User  
+from django.db import connection
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -7,24 +8,24 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Product  # Product modelini içe aktarın
-from .serializers import UserSerializer, ProductSerializer  # Serializer'ları içe aktarın
-from django.db.models import F
+from .models import Product 
+from .serializers import UserSerializer, ProductSerializer 
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 
 
-# Test View
+
 def test_view(request):
     """API'nin çalışıp çalışmadığını test etmek için bir view"""
     return HttpResponse("Server is up and running!")
 
-# Kullanıcı Kaydı
+
 class UserRegistrationView(generics.CreateAPIView):
     """Kullanıcı kayıt işlemi"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-# Kullanıcı Girişi
+
 @csrf_exempt
 def user_login(request):
     """Kullanıcı girişi için view"""
@@ -45,7 +46,7 @@ def user_login(request):
 
     return JsonResponse({'error': 'POST request required.'}, status=405)
 
-# Ürün Listesi API'si
+
 class ProductListAPIView(APIView):
     """Tüm ürünleri dönen bir API"""
     def get(self, request):
@@ -56,7 +57,7 @@ class ProductListAPIView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
-# Özel Kategori veya Filtrelenmiş Ürün API'si (Opsiyonel)
+
 class HomePageProductListAPIView(APIView):
     """Filtrelenmiş ürünleri dönen bir API"""
     def get(self, request):
@@ -77,11 +78,11 @@ class HomePageProductListAPIView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
-# En Ucuz 4 Ürünü Dönen API
+
 def cheapest_products(request):
     """En ucuz 4 ürünü döner."""
     try:
-        products = Product.objects.order_by('price')[:8]  # Fiyata göre sırala, ilk 4 ürünü al
+        products = Product.objects.order_by('price')[:8] 
         data = [{"name": p.name, "price": p.price, "image": p.image_url} for p in products]
         return JsonResponse(data, safe=False)
     except Exception as e:
@@ -90,7 +91,7 @@ def cheapest_products(request):
 def cheapest_products_per_category(request):
     """Her kategoriden en ucuz 4 ürünü döner."""
     try:
-        categories = Product.objects.values_list('main_category', flat=True).distinct()  # Benzersiz kategorileri al
+        categories = Product.objects.values_list('main_category', flat=True).distinct()  
         data = []
 
         for category in categories:
@@ -107,3 +108,38 @@ def cheapest_products_per_category(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)        
+    
+def search_products(request):   # Query sonucuna göre tablodaki ts_vectorden veri çekip Json formtında dönüyor
+    query = request.GET.get('q', '')
+    
+    if query:
+        sql_query = """
+            SELECT id, name, price, high_price, in_stock, image_url, market_name, product_link
+            FROM sample_data
+            WHERE search_vector @@ plainto_tsquery('turkish', %s)
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql_query, [query])
+            results = cursor.fetchall()
+
+
+        if results:
+            data = [
+                {
+                    'id': row[0],
+                    'name': row[1],
+                    'price': row[2],
+                    'high_price': row[3],
+                    'in_stock': row[4],
+                    'image_url': row[5],
+                    'market_name': row[6],
+                    'product_link': row[7],
+                }
+                for row in results
+            ]
+            return JsonResponse(data, safe=False)
+        else:
+            return JsonResponse({'error': 'No results found'}, status=404)
+    else:
+        return JsonResponse({'error': 'No search query provided'}, status=400)
+    

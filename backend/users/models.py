@@ -1,22 +1,20 @@
 from django.db import models
-
-# Create your models here.
-# models.py
-
+from django.contrib.postgres.search import SearchVectorField
 
 class Product(models.Model):
     main_category = models.TextField()
     sub_category = models.TextField()
     lowest_category = models.TextField()
     name = models.TextField()
-    price = models.FloatField()  # PostgreSQL'deki "real" tipi için
-    high_price = models.FloatField(null=True, blank=True)  # nullable alan
+    price = models.FloatField()  
+    high_price = models.FloatField(null=True, blank=True)  
     in_stock = models.TextField()
     product_link = models.TextField()
     page_link = models.TextField()
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
+    search_vector = SearchVectorField(null=True) # Search vector eklentisi
 
     def __str__(self):
         return self.name

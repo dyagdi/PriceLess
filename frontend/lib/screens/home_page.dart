@@ -4,11 +4,13 @@ import 'package:frontend/screens/account_page.dart';
 import 'package:frontend/services/product_service.dart';
 import 'package:frontend/screens/popular_product_page.dart';
 import 'package:frontend/screens/discounted_product_page.dart';
-import 'package:frontend/widgets/app_button.dart';
+import 'package:frontend/widgets/search_page.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:frontend/models/cart_model.dart';
 import 'package:frontend/screens/cart_page.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -18,6 +20,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Map<String, List<dynamic>> categorizedProducts = {};
   bool isLoading = true;
+  String currentAddress = "Ümit Mh. Mah, Meksika Cd., Çankaya";
 
   @override
   void initState() {
@@ -42,6 +45,89 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print('Error: $e');
     }
+  }
+
+  Future<void> _getCurrentLocation() async {
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Lütfen konum servisini açın.")),
+      );
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Konum izni reddedildi.")),
+        );
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Konum izni kalıcı olarak reddedildi.")),
+      );
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+      localeIdentifier: "tr_TR", 
+    );
+
+    if (placemarks.isNotEmpty) {
+      Placemark place = placemarks[0];
+      setState(() {
+        currentAddress =
+            "${place.street}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.country}";
+      });
+    } else {
+      setState(() {
+        currentAddress = "Adres bulunamadı";
+      });
+    }
+  } catch (e) {
+    print('Error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Konum alınırken bir hata oluştu.")),
+    );
+  }
+}
+
+  void _showLocationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Mevcut konum"),
+          content: const Text("Mevcut konumunuzu kullanmak ister misiniz?"),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _getCurrentLocation();
+              },
+              child: const Text("Mevcut Konumumu Kullan"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("İptal"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -77,27 +163,42 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Ürün, marka veya kategori ara',
-                      prefixIcon: const Icon(Icons.search, color: Colors.black),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            const BorderSide(color: Colors.black, width: 1.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SearchPage()),
+                      );
+                    },
+                    child: TextField(
+                      enabled: false,
+                      decoration: InputDecoration(
+                        hintText: 'Ürün, marka veya kategori ara',
+                        prefixIcon: const Icon(Icons.search, color: Colors.black),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Colors.black, width: 1.0),
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Row(
                     children: [
                       Icon(Icons.location_on, color: Colors.black),
                       SizedBox(width: 5),
-                      Text(
-                        "Ümit Mh. Mah, Meksika Cd., Çankaya",
-                        style: TextStyle(color: Colors.black),
+                      Expanded(
+                        child: Text(
+                          currentAddress,
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_location_alt),
+                        color: Colors.black,
+                        onPressed: _showLocationDialog,
                       ),
                     ],
                   ),
@@ -349,7 +450,7 @@ class ProductDetailSheet extends StatelessWidget {
           ),
           width: double.infinity,
           height:
-              MediaQuery.of(context).size.height * 0.9, // Ekranın %90'ı kadar
+              MediaQuery.of(context).size.height * 0.9, 
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: SingleChildScrollView(
@@ -359,7 +460,7 @@ class ProductDetailSheet extends StatelessWidget {
                 children: [
                   const SizedBox(height: 96),
                   AspectRatio(
-                    aspectRatio: 10 / 9, // 10:9 oranında resim
+                    aspectRatio: 10 / 9, 
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: image.startsWith('http')
@@ -384,8 +485,8 @@ class ProductDetailSheet extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
-                    maxLines: 2, // Maksimum 2 satır
-                    overflow: TextOverflow.ellipsis, // Uzun metin için '...'
+                    maxLines: 2, 
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -481,23 +582,23 @@ class ProductDetailSheet extends StatelessWidget {
                       ),
                       ElevatedButton(
                         onPressed: () {
-                          // Sepete ekleme işlemi
+                          
                           final cartItem = CartItem(
                             name: name,
                             price: price,
                             image: image,
                           );
 
-                          // Provider üzerinden sepete ekle
+                          
                           Provider.of<CartProvider>(context, listen: false)
                               .addItem(cartItem);
 
-                          // Mesaj göster
+                          
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('$name sepete eklendi!')),
                           );
 
-                          // Popup'u kapat
+                          
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(

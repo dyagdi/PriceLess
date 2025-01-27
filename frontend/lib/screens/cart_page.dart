@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
+import 'to_do_list_page.dart'; 
 
 class CartPage extends StatelessWidget {
   @override
@@ -11,6 +12,17 @@ class CartPage extends StatelessWidget {
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
         titleTextStyle: TextStyle(color: Colors.black),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.list_alt),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ToDoListPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<CartProvider>(
         builder: (context, cartProvider, child) {
@@ -95,12 +107,10 @@ class CartPage extends StatelessWidget {
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        // Handle cart checkout or comparison logic here
                       },
                       child: Text("Marketleri Karşılaştır"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors
-                            .black, // Use backgroundColor instead of primary
+                        backgroundColor: Colors.black,
                         padding: EdgeInsets.all(16),
                       ),
                     ),

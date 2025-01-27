@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
   #shared_preferences: ^2.0.10
   http: ^1.2.2 
+  geolocator: ^9.0.2
+  geocoding: ^2.0.4
  
   
 
@@ -42,6 +44,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   provider: ^6.1.2
   flutter_application_1: ^0.0.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
