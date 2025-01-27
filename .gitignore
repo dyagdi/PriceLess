@@ -1,6 +1,8 @@
 # Ignore virtual environments
 backend/venv/
 
+*.zip
+
 # Ignore compiled Python files
 __pycache__/
 *.py[cod]
