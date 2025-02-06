@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'add_address_page.dart'; // Import the AddAddressPage
+import 'add_address_page.dart'; 
 
 class AddressManagementPage extends StatefulWidget {
   @override
@@ -8,15 +8,15 @@ class AddressManagementPage extends StatefulWidget {
 
 class _AddressManagementPageState extends State<AddressManagementPage> {
   final List<String> _addresses = [
-    "123 Main St, Springfield",
-    "456 Elm St, Springfield",
-  ]; // Sample addresses
+    "ODTÜ 1. yurt",
+    "ODTÜ 19. yurt",
+  ]; 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Addresses'),
+        title: const Text('Adreslerim'),
         backgroundColor: Colors.blue,
       ),
       body: Padding(
@@ -30,14 +30,12 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                 title: Text(address),
                 trailing: Icon(Icons.edit),
                 onTap: () {
-                  // Implement address editing functionality here
-                  // You can navigate to an "Edit Address" page if needed
+                  // adres editlicez
                 },
               ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navigate to the AddAddressPage
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -45,7 +43,6 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                   ),
                 ).then((newAddress) {
                   if (newAddress != null) {
-                    // Add the returned new address to the list and update the state
                     setState(() {
                       _addresses.add(newAddress);
                     });

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 
 class FavoriteCartsPage extends StatelessWidget {
   final List<String> favoriteCarts = [
-    "Shopping Cart 1",
-    "Shopping Cart 2",
-    "Shopping Cart 3",
-  ]; // Example favorite shopping carts
+    "Sepet 1",
+    "Sepet 2",
+    "Sepet 3",
+  ]; 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Favorite Shopping Carts'),
+        title: const Text('Favori Sepetlerim'),
         backgroundColor: Colors.blue,
       ),
       body: Padding(
@@ -23,7 +23,7 @@ class FavoriteCartsPage extends StatelessWidget {
                 title: Text(cart),
                 trailing: Icon(Icons.shopping_cart),
                 onTap: () {
-                  // Implement cart viewing functionality
+                  //sepetin içeriğini görüntülesinler
                 },
               ),
           ],

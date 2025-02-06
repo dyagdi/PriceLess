@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/account_settings.dart';
 import 'addresses_page.dart'; 
 import 'user_info_page.dart'; 
 import 'favorite_carts_page.dart'; 
@@ -7,7 +8,7 @@ class UserAccountPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('User Account'),
+        title: Text('Hesabım'),
         backgroundColor: Colors.blue,
       ),
       body: Padding(
@@ -17,6 +18,7 @@ class UserAccountPage extends StatelessWidget {
             _buildUserInfoSection(context),
             _buildAddressesSection(context),
             _buildFavoriteCartsSection(context),
+            _buildAccountSettingsSection(context),
           ],
         ),
       ),
@@ -74,6 +76,24 @@ class UserAccountPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => FavoriteCartsPage()),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAccountSettingsSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.settings, size: 40),
+        title: Text('Hesap Ayarları'),
+        trailing: Icon(Icons.arrow_forward),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AccountSettingsPage()),
           );
         },
       ),

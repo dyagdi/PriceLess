@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:convert'; // For decoding the JSON file
-import 'package:flutter/services.dart'; // For loading the asset
+import 'dart:convert'; 
+import 'package:flutter/services.dart'; 
+import 'package:http/http.dart' as http;
 
 class AddAddressPage extends StatefulWidget {
   @override
@@ -38,7 +39,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Address'),
+        title: const Text('Adres Ekle'),
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
@@ -60,40 +61,37 @@ class _AddAddressPageState extends State<AddAddressPage> {
             ),
             const SizedBox(height: 16),
           Row(
-  children: [
-    Flexible(
-      flex: 1,
-      child: _buildDropdown(
-        label: 'İl*',
-        value: selectedCity,
-        items: cities,
-        onChanged: (value) {
-          setState(() {
-            selectedCity = value;
-            selectedState = null; // Reset state when city changes
-          });
-        },
-      ),
-    ),
-    const SizedBox(width: 16),
-    Flexible(
-      flex: 1,
-      child: _buildDropdown(
-        label: 'İlçe*',
-        value: selectedState,
-        items: selectedCity != null ? statesByCity[selectedCity!] ?? [] : [],
-        onChanged: (value) {
-          setState(() {
-            selectedState = value;
-          });
-        },
-      ),
-    ),
-  ],
-),
-
-
-
+            children: [
+              Flexible(
+                flex: 1,
+                child: _buildDropdown(
+                  label: 'İl*',
+                  value: selectedCity,
+                  items: cities,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCity = value;
+                      selectedState = null; 
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 6), 
+              Flexible(
+                flex: 1,
+                child: _buildDropdown(
+                  label: 'İlçe*',
+                  value: selectedState,
+                  items: selectedCity != null ? statesByCity[selectedCity!] ?? [] : [],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedState = value;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
 
             const SizedBox(height: 16),
             Row(
@@ -102,7 +100,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
                   child: _buildTextField(
                     controller: _postalCodeController,
                     label: 'Posta Kodu',
-                    hint: 'e.g., 34000',
+                    hint: '34000',
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -118,21 +116,20 @@ class _AddAddressPageState extends State<AddAddressPage> {
             const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final addressData = {
                     'address_title': _addressTitleController.text.trim(),
-                    'address_line': _addressLineController.text.trim(),
+                    'address_details': _addressLineController.text.trim(), 
                     'city': selectedCity,
                     'state': selectedState,
-                    'country': 'Turkey', // Default value
+                    'country': 'Turkey',
                     'postal_code': _postalCodeController.text.trim(),
                     'mahalle': _mahalleController.text.trim(),
                   };
 
-                  // Check only the mandatory fields
                   if ([
                     addressData['address_title'],
-                    addressData['address_line'],
+                    addressData['address_details'],
                     addressData['city'],
                     addressData['state'],
                     addressData['mahalle'],
@@ -140,8 +137,33 @@ class _AddAddressPageState extends State<AddAddressPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Lütfen zorunlu alanları doldurunuz')),
                     );
-                  } else {
-                    Navigator.pop(context, addressData);
+                    return;
+                  }
+
+                  try {
+                    final response = await http.post(
+                      Uri.parse('http://127.0.0.1:8000/api/addresses/'), 
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+
+                      body: json.encode(addressData),
+                    );
+
+                    if (response.statusCode == 201) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Adres başarıyla kaydedildi!')),
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Hata: ${response.statusCode} - ${response.body}')),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Bir hata oluştu: $e')),
+                    );
                   }
                 },
 
@@ -177,31 +199,38 @@ class _AddAddressPageState extends State<AddAddressPage> {
     );
   }
 
-  Widget _buildDropdown({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: value,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-          ),
-          items: items
-              .map((item) => DropdownMenuItem<String>(
-                    value: item,
-                    child: Text(item),
-                  ))
-              .toList(),
-          onChanged: onChanged,
+ Widget _buildDropdown({
+  required String label,
+  required String? value,
+  required List<String> items,
+  required ValueChanged<String?> onChanged,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      DropdownButtonFormField<String>(
+        value: value,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
         ),
-      ],
-    );
-  }
+        items: items
+            .map((item) => DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: const TextStyle(fontSize: 14), 
+                  ),
+                ))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    ],
+  );
+}
+
 }
