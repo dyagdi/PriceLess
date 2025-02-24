@@ -51,6 +51,6 @@ Spider names
 $ python run_spiders.py
 ```
 
-The command above may not be working right.
+The command above may not be working right, use scrapy crawl command mentioned above rather than this.
 
 
