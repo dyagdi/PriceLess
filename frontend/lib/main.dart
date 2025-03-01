@@ -25,14 +25,22 @@ import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:frontend/screens/auth_page.dart';
 import 'package:frontend/screens/home_page.dart';
+import 'package:frontend/screens/discounted_product_page.dart';
+import 'package:frontend/screens/popular_product_page.dart';
+import 'package:frontend/screens/to_do_list_page.dart';
+import 'package:frontend/screens/favorite_carts_page.dart';
+import 'package:frontend/screens/cart_page.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/providers/recently_viewed_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => RecentlyViewedProvider()),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -44,13 +52,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PriceLess',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const AuthPage(), // AuthPage is the initial screen
+      theme: AppTheme.lightTheme,
+      home: const AuthPage(),
       routes: {
-        '/home': (context) => HomePage(), // Define the HomePage route
+        '/home': (context) => HomePage(),
+        '/discounted': (context) => DiscountedProductPage(),
+        '/popular': (context) => PopularProductPage(),
+        '/shopping-list': (context) => ToDoListPage(),
+        '/favorites': (context) => FavoriteCartsPage(),
+        '/cart': (context) => CartPage(),
       },
     );
   }

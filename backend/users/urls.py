@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import test_view, UserRegistrationView, user_login, ProductListAPIView, HomePageProductListAPIView, cheapest_products
+from .views import test_view, UserRegistrationView, user_login, ProductListAPIView, HomePageProductListAPIView, cheapest_products, DiscountedProductsAPIView, cheapest_products_per_category
 from . import views
+
 
 urlpatterns = [
     path('test/', test_view, name='test'),
@@ -10,5 +11,7 @@ urlpatterns = [
     path('products/filtered/', HomePageProductListAPIView.as_view(), name='filtered-product-list'),
     path('cheapest-products/', views.cheapest_products, name='cheapest-products'),
     path('cheapest-products-per-category/', views.cheapest_products_per_category, name='cheapest-products-per-category'),
+    path('discounted-products/', DiscountedProductsAPIView.as_view(), name='discounted-products'),
     path('search/', views.search_products, name='search_products'), # verilerin tablodan çekilebilmesi için eklediğim endpoint
+   
 ]

@@ -15,8 +15,57 @@ Future<List<CheapestProductPc>> fetchCheapestProductsPerCategory() async {
   }
 }
 
+Future<List<Product>> fetchDiscountedProducts() async {
+  try {
+    final response = await http.get(
+      Uri.parse(
+          'http://127.0.0.1:8000/api/discounted-products/'), // IP adresinizi yazın
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> productsJson =
+          json.decode(utf8.decode(response.bodyBytes));
+      return productsJson.map((json) => Product.fromJson(json)).toList();
+    } else {
+      print('HTTP Error: ${response.statusCode}');
+      throw Exception('Failed to load discounted products');
+    }
+  } catch (e) {
+    print('Error: $e');
+    throw Exception('Failed to connect to the server');
+  }
+}
+
+class Product {
+  final String name;
+  final double price;
+  final double? highPrice;
+  final String imageUrl;
+  final String mainCategory;
+
+  Product({
+    required this.name,
+    required this.price,
+    this.highPrice,
+    required this.imageUrl,
+    required this.mainCategory,
+  });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      name: json['name'] ?? 'Bilinmeyen Ürün',
+      price: (json['price'] ?? 0).toDouble(),
+      highPrice:
+          json['high_price'] != null ? json['high_price'].toDouble() : null,
+      imageUrl: json['image_url'] ?? '',
+      mainCategory: json['main_category'] ?? 'Genel',
+    );
+  }
+}
+
 Future<List<ProductSearchResult>> searchProducts(String query) async {
-  final response = await http.get(Uri.parse('http://localhost:8000/api/search/?q=$query'));
+  final response =
+      await http.get(Uri.parse('http://localhost:8000/api/search/?q=$query'));
 
   if (response.statusCode == 200) {
     List<dynamic> jsonData = json.decode(response.body);

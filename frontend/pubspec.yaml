@@ -34,7 +34,7 @@ dependencies:
   http: ^1.2.2 
   geolocator: ^9.0.2
   geocoding: ^2.0.4
- 
+  shimmer: ^3.0.0
   
 
 
@@ -45,6 +45,7 @@ dependencies:
   provider: ^6.1.2
   flutter_application_1: ^0.0.2
   url_launcher: ^6.3.1
+  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +66,9 @@ flutter:
   uses-material-design: true
   
   assets:
+    - assets/
+    - assets/logo.png
+    - images/
     - images/twix_white.webp
     - images/snickers.webp
     - images/reklam.jpg

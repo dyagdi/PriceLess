@@ -11,7 +11,10 @@ import json
 from .models import Product 
 from .serializers import UserSerializer, ProductSerializer 
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from rest_framework.decorators import api_view
 
 
 def test_view(request):
@@ -143,3 +146,30 @@ def search_products(request):   # Query sonucuna göre tablodaki ts_vectorden ve
     else:
         return JsonResponse({'error': 'No search query provided'}, status=400)
     
+
+
+
+from django.http import JsonResponse
+from django.db.models import F
+from rest_framework.views import APIView
+from .models import Product
+from .serializers import ProductSerializer
+
+class DiscountedProductsAPIView(APIView):
+    """İndirimde olan ürünleri dönen bir API"""
+    def get(self, request):
+        try:
+            discounted_products = Product.objects.filter(
+                high_price__isnull=False,
+                price__lt=F('high_price')
+            )
+            serializer = ProductSerializer(discounted_products, many=True)
+            
+            # Türkçe karakter desteği
+            return JsonResponse(
+                serializer.data,
+                safe=False,
+                json_dumps_params={'ensure_ascii': False}
+            )
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)    

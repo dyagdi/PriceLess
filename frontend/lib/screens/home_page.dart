@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/models/cheapest_pc.dart';
 import 'package:frontend/screens/account_page.dart';
 import 'package:frontend/services/product_service.dart';
+// ignore: unused_import
 import 'package:frontend/screens/popular_product_page.dart';
 import 'package:frontend/screens/discounted_product_page.dart';
+// ignore: unused_import
 import 'package:frontend/widgets/search_page.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
@@ -11,6 +13,12 @@ import 'package:frontend/models/cart_model.dart';
 import 'package:frontend/screens/cart_page.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:frontend/widgets/product_card.dart';
+import 'package:frontend/widgets/search_bar.dart';
+import 'package:frontend/screens/discounted_product_page.dart'
+    show ProductDetailSheet;
+import 'package:frontend/models/address_model.dart';
+import 'package:frontend/providers/recently_viewed_provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -18,14 +26,47 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  late Future<List<CheapestProductPc>> _cheapestProducts;
   Map<String, List<dynamic>> categorizedProducts = {};
   bool isLoading = true;
-  String currentAddress = "Ümit Mh. Mah, Meksika Cd., Çankaya";
+  String currentAddress = "Konum alınıyor...";
+  String? selectedAddressId;
+
+  final List<SavedAddress> savedAddresses = [
+    SavedAddress(
+      id: '1',
+      name: 'Ev',
+      address: 'Ümit Mh., Meksika Cd., Çankaya',
+      isDefault: true,
+    ),
+    SavedAddress(
+      id: '2',
+      name: 'İş',
+      address: 'Kızılay Mh., Atatürk Blv., Çankaya',
+    ),
+    SavedAddress(
+      id: '3',
+      name: 'Okul',
+      address: 'ODTÜ, Üniversiteler Mh., Çankaya',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
+    selectedAddressId = savedAddresses.firstWhere((addr) => addr.isDefault).id;
+    _cheapestProducts = fetchCheapestProductsPerCategory();
+    _getCurrentLocation();
     loadProducts();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> loadProducts() async {
@@ -48,60 +89,53 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _getCurrentLocation() async {
-  try {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Lütfen konum servisini açın.")),
-      );
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Konum izni reddedildi.")),
+          const SnackBar(content: Text("Lütfen konum servisini açın.")),
         );
         return;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Konum izni kalıcı olarak reddedildi.")),
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Konum izni reddedildi.")),
+          );
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Konum izni kalıcı olarak reddedildi.")),
+        );
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+        localeIdentifier: "tr_TR",
       );
-      return;
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          currentAddress =
+              "${place.subLocality}, ${place.thoroughfare}, ${place.locality}";
+        });
+      }
+    } catch (e) {
+      print('Error getting location: $e');
     }
-
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-      localeIdentifier: "tr_TR", 
-    );
-
-    if (placemarks.isNotEmpty) {
-      Placemark place = placemarks[0];
-      setState(() {
-        currentAddress =
-            "${place.street}, ${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.country}";
-      });
-    } else {
-      setState(() {
-        currentAddress = "Adres bulunamadı";
-      });
-    }
-  } catch (e) {
-    print('Error: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Konum alınırken bir hata oluştu.")),
-    );
   }
-}
 
   void _showLocationDialog() {
     showDialog(
@@ -128,6 +162,94 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  void _showAddressSelector() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setBottomSheetState) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Kayıtlı Adreslerim',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      // Add new address functionality
+                    },
+                  ),
+                ],
+              ),
+              const Divider(),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: savedAddresses.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      leading: const Icon(Icons.my_location),
+                      title: const Text('Mevcut Konum'),
+                      subtitle: Text(currentAddress),
+                      trailing: selectedAddressId == null
+                          ? Icon(Icons.check,
+                              color: Theme.of(context).primaryColor)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          selectedAddressId = null;
+                        });
+                        _getCurrentLocation();
+                        Navigator.pop(context);
+                      },
+                    );
+                  }
+
+                  final address = savedAddresses[index - 1];
+                  return ListTile(
+                    leading: Icon(
+                      address.isDefault ? Icons.home : Icons.location_on,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    title: Text(address.name),
+                    subtitle: Text(address.address),
+                    trailing: selectedAddressId == address.id
+                        ? Icon(Icons.check,
+                            color: Theme.of(context).primaryColor)
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        selectedAddressId = address.id;
+                        currentAddress = address.address;
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleSearch(String query) {
+    // Implement your search logic here
+    print('Searching for: $query');
+    // You could navigate to a search results page
+    // or filter the current products
   }
 
   @override
@@ -157,160 +279,59 @@ class _HomePageState extends State<HomePage> {
         ],
         centerTitle: true,
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildLocationBar(),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SearchPage()),
-                      );
-                    },
-                    child: TextField(
-                      enabled: false,
-                      decoration: InputDecoration(
-                        hintText: 'Ürün, marka veya kategori ara',
-                        prefixIcon: const Icon(Icons.search, color: Colors.black),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black, width: 1.0),
-                        ),
-                      ),
-                    ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onSearch: _handleSearch,
+                    hintText: 'Ürün, marka veya kategori ara',
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.location_on, color: Colors.black),
-                      SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          currentAddress,
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_location_alt),
-                        color: Colors.black,
-                        onPressed: _showLocationDialog,
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 24),
+                Text(
+                  'Hoş Geldiniz!',
+                  style: Theme.of(context).textTheme.headlineLarge,
                 ),
-                Container(
-                  height: 120,
-                  margin: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: PageView(
-                    children: [
-                      Image.asset('images/reklam.jpg', fit: BoxFit.fill),
-                      Image.asset('images/misir.jpg', fit: BoxFit.cover),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => DiscountedProductsPage()),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.black),
-                        ),
-                        child: const Text("İndirimli Ürünler",
-                            style: TextStyle(color: Colors.black)),
+                const SizedBox(height: 8),
+                Text(
+                  'En uygun fiyatlı ürünleri keşfedin',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey[600],
                       ),
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PopularProductsPage()),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.black),
-                        ),
-                        child: const Text("Popüler Ürünler",
-                            style: TextStyle(color: Colors.black)),
-                      ),
-                    ],
-                  ),
                 ),
-                ...categorizedProducts.entries.map((entry) {
-                  final category = entry.key;
-                  final products = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          category,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(8),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.7,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                          ),
-                          itemCount: products.length,
-                          itemBuilder: (context, index) {
-                            final product =
-                                products[index] as CheapestProductPc;
-                            return GestureDetector(
-                              onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled:
-                                      true, // Popup tam ekran kontrolü için
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(20),
-                                    ),
-                                  ),
-                                  builder: (context) => Container(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.8, // Ekranın %80'i kadar
-                                    child: ProductDetailSheet(
-                                      name: product.name ?? "Ürün Adı Yok",
-                                      price: product.price ?? 0.0,
-                                      image: product.image ?? "",
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: ProductCard(product: product),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                }),
               ],
             ),
+          ),
+          SliverToBoxAdapter(
+            child: _buildFeaturedCategories(context),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'En Uygun Fiyatlı Ürünler',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _buildCheapestProducts(),
+          ),
+          SliverToBoxAdapter(
+            child: _buildRecentlyViewed(),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
@@ -343,285 +364,254 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
 
-class ProductCard extends StatelessWidget {
-  final CheapestProductPc product;
+  Widget _buildLocationBar() {
+    return GestureDetector(
+      onTap: _showAddressSelector,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(Icons.location_on, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Teslimat Adresi',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                  ),
+                  Text(
+                    currentAddress,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: Theme.of(context).primaryColor,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  ProductCard({
-    required this.product,
-  });
+  Widget _buildFeaturedCategories(BuildContext context) {
+    final List<Map<String, dynamic>> categories = [
+      {
+        'name': 'İndirimli\nÜrünler',
+        'icon': Icons.local_offer,
+        'route': '/discounted'
+      } as Map<String, dynamic>,
+      {
+        'name': 'Popüler\nÜrünler',
+        'icon': Icons.trending_up,
+        'route': '/popular'
+      } as Map<String, dynamic>,
+      {
+        'name': 'Alışveriş\nListem',
+        'icon': Icons.checklist,
+        'route': '/shopping-list'
+      } as Map<String, dynamic>,
+      {'name': 'Favoriler', 'icon': Icons.favorite, 'route': '/favorites'}
+          as Map<String, dynamic>,
+    ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<CartProvider>(
-      builder: (context, cartProvider, child) {
-        return Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                height: 140,
-                padding: const EdgeInsets.all(8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child:
-                      product.image != null && product.image!.startsWith('http')
-                          ? Image.network(
-                              product.image!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Image.asset("images/default.png");
-                              },
-                            )
-                          : Image.asset(
-                              "images/default.png",
-                              fit: BoxFit.cover,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: SizedBox(
+        height: 120,
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            return Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: GestureDetector(
+                onTap: () =>
+                    Navigator.pushNamed(context, category['route'] as String),
+                child: Container(
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        category['icon'] as IconData,
+                        color: Theme.of(context).primaryColor,
+                        size: 32,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        category['name'] as String,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Text(
-                  product.name ?? "Ürün Adı Yok",
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ),
-              Text(
-                "₺${product.price?.toStringAsFixed(2) ?? "0.00"}",
-                style: const TextStyle(fontSize: 12, color: Colors.black),
-              ),
-              OutlinedButton(
-                onPressed: () {
-                  final cartItem = CartItem(
-                    name: product.name ?? "Ürün Adı Yok",
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheapestProducts() {
+    return FutureBuilder<List<CheapestProductPc>>(
+      future: _cheapestProducts,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text('Bir hata oluştu: ${snapshot.error}'),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('Ürün bulunamadı'),
+          );
+        }
+
+        final products = snapshot.data!;
+        return SizedBox(
+          height: 320,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return SizedBox(
+                width: 180,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16, bottom: 8),
+                  child: ProductCard(
+                    name: product.name ?? '',
                     price: product.price ?? 0.0,
-                    image: product.image ?? "",
-                  );
-                  cartProvider.addItem(cartItem);
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.black),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    imageUrl: product.image ?? '',
+                    category: product.category ?? '',
+                    onTap: () => _showProductDetail(context, product),
+                    onAddToCart: () => _addToCart(context, product),
                   ),
                 ),
-                child: const Icon(Icons.add, color: Colors.black),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
     );
   }
-}
 
-class ProductDetailSheet extends StatelessWidget {
-  final String name;
-  final double price;
-  final String image;
+  void _showProductDetail(BuildContext context, CheapestProductPc product) {
+    // Add to recently viewed when showing details
+    context.read<RecentlyViewedProvider>().addItem(product);
 
-  const ProductDetailSheet({
-    super.key,
-    required this.name,
-    required this.price,
-    required this.image,
-  });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => ProductDetailSheet(
+          name: product.name ?? '',
+          price: product.price ?? 0.0,
+          image: product.image ?? '',
+          category: product.category ?? '',
+          scrollController: scrollController,
+        ),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          width: double.infinity,
-          height:
-              MediaQuery.of(context).size.height * 0.9, 
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 96),
-                  AspectRatio(
-                    aspectRatio: 10 / 9, 
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: image.startsWith('http')
-                          ? Image.network(
-                              image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Image.asset("images/default.png");
-                              },
-                            )
-                          : Image.asset(
-                              "images/default.png",
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 20,
+  void _addToCart(BuildContext context, CheapestProductPc product) {
+    final cartItem = CartItem(
+      name: product.name ?? '',
+      price: product.price ?? 0.0,
+      image: product.image ?? '',
+    );
+
+    context.read<CartProvider>().addItem(cartItem);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${product.name} sepete eklendi!'),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Geri Al',
+          onPressed: () {
+            context.read<CartProvider>().removeItem(cartItem);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentlyViewed() {
+    return Consumer<RecentlyViewedProvider>(
+      builder: (context, provider, child) {
+        if (provider.items.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Son Görüntülenenler',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2, 
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "₺${price.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.green,
+              ),
+            ),
+            SizedBox(
+              height: 320,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: provider.items.length,
+                itemBuilder: (context, index) {
+                  final product = provider.items[index];
+                  return SizedBox(
+                    width: 180,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 16, bottom: 8),
+                      child: ProductCard(
+                        name: product.name ?? '',
+                        price: product.price ?? 0.0,
+                        imageUrl: product.image ?? '',
+                        category: product.category ?? '',
+                        onTap: () => _showProductDetail(context, product),
+                        onAddToCart: () => _addToCart(context, product),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                  );
+                },
               ),
             ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: Container(
-            height: 96,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30),
-                topRight: Radius.circular(30),
-              ),
-            ),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.close),
-                        iconSize: 24,
-                      ),
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.share),
-                        iconSize: 24,
-                      ),
-                    ],
-                  ),
-                  const Divider(
-                    color: Colors.grey,
-                    thickness: 0.5,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 32.0),
-            child: Container(
-              height: 96,
-              child: Column(
-                children: [
-                  const Divider(
-                    color: Colors.grey,
-                    thickness: 0.5,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "₺${price.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          
-                          final cartItem = CartItem(
-                            name: name,
-                            price: price,
-                            image: image,
-                          );
-
-                          
-                          Provider.of<CartProvider>(context, listen: false)
-                              .addItem(cartItem);
-
-                          
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$name sepete eklendi!')),
-                          );
-
-                          
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                        ),
-                        child: const Text(
-                          "Sepete Ekle",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
