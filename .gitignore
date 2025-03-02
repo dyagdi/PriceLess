@@ -1,5 +1,7 @@
 # Ignore virtual environments
 backend/venv/
+client/venv/
+scraping-market-data/venv/
 
 # Ignore compiled Python files
 __pycache__/

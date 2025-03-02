@@ -4,11 +4,13 @@ import 'package:frontend/screens/account_page.dart';
 import 'package:frontend/services/product_service.dart';
 import 'package:frontend/screens/popular_product_page.dart';
 import 'package:frontend/screens/discounted_product_page.dart';
+// ignore: unused_import
 import 'package:frontend/widgets/app_button.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:frontend/models/cart_model.dart';
 import 'package:frontend/screens/cart_page.dart';
+import 'package:frontend/widgets/product_detail_modal.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -180,25 +182,12 @@ class _HomePageState extends State<HomePage> {
                                 products[index] as CheapestProductPc;
                             return GestureDetector(
                               onTap: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled:
-                                      true, // Popup tam ekran kontrolü için
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(20),
-                                    ),
-                                  ),
-                                  builder: (context) => Container(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.8, // Ekranın %80'i kadar
-                                    child: ProductDetailSheet(
-                                      name: product.name ?? "Ürün Adı Yok",
-                                      price: product.price ?? 0.0,
-                                      image: product.image ?? "",
-                                    ),
-                                  ),
-                                );
+                                _showProductDetails(
+                                    context,
+                                    product.name ?? "Ürün Adı Yok",
+                                    product.price ?? 0.0,
+                                    product.image ?? "",
+                                    product.canonicalName);
                               },
                               child: ProductCard(product: product),
                             );
@@ -239,6 +228,21 @@ class _HomePageState extends State<HomePage> {
             );
           }
         },
+      ),
+    );
+  }
+
+  void _showProductDetails(BuildContext context, String name, double price,
+      String image, String? canonicalName) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ProductDetailModal(
+        name: name,
+        price: price,
+        image: image,
+        canonicalName: canonicalName,
       ),
     );
   }

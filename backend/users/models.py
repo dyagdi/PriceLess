@@ -23,3 +23,4 @@ class Product(models.Model):
 
     class Meta:
         db_table = 'sample_data'  # PostgreSQL'deki tablo adı
+        # Remove the unique_together constraint

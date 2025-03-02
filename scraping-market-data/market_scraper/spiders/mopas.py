@@ -2,12 +2,14 @@ import traceback
 import scrapy
 from ..items import MarketItem
 from datetime import date
+import json
 
 
 class MopasSpider(scrapy.Spider):
     name = "mopas"
-    home_url = "https://www.mopas.com.tr"
+    home_url = "https://www.mopas.com.tr/"
     current_date = date.today()
+    clear_old_data = True  # Set to True to clear old data for today's date
     custom_settings = {
         "FEEDS": {
             f"{name}_{current_date}.csv": {

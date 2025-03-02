@@ -3,3 +3,7 @@ scrapy-playwright==0.0.34
 beautifulsoup4==4.12.3
 bs4==0.0.2
 pandas==2.0.3
+selenium==4.15.2
+webdriver-manager==4.0.1
+psycopg2-binary==2.9.9
+python-decouple==3.8

@@ -70,6 +70,7 @@ SPIDER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     "market_scraper.pipelines.ReorderFieldsPipeline": 100,
+    "market_scraper.pipelines.PostgreSQLPipeline": 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
