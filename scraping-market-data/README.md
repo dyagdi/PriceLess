@@ -22,14 +22,21 @@ $ cd scraping-market-data
 ### Create and activate a virtual environment
 <span style="color: gray;">To ensure that the needed Python packages do not corrupt the Python packages in your local area</span>
 ```
-$ virtualenv venv
+$ python3 -m venv venv
 $ source venv/bin/activate
 ```
 ### Install the needed Python packages
 ```
 (venv) $ pip install -r requirements.txt
 ```
-
+### Install the required browsers for playwright
+```
+$ playwright install
+```
+<span style="color: gray;">if you have missing dependencies, use "install-deps"</span>
+```
+$ playwright install-deps
+```
 ### Run the spiders
 ```
 $ scrapy crawl <spider name>
