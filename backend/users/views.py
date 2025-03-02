@@ -8,9 +8,17 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Product 
+from .models import FavoriteCartProduct, Product 
 from .serializers import UserSerializer, ProductSerializer 
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from .models import FavoriteCart
+from .serializers import FavoriteCartSerializer
+from rest_framework import permissions
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
+
+
 
 
 
@@ -25,26 +33,42 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        # Create token for the new user
+        token, created = Token.objects.get_or_create(user=user)
+        
+        return Response({
+            'token': token.key,
+            'user_id': user.id,
+            'username': user.username
+        }, status=status.HTTP_201_CREATED)
 
-@csrf_exempt
+
+@api_view(['POST'])
 def user_login(request):
     """Kullanıcı girişi için view"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            password = data.get('password')
+    email = request.data.get('email')
+    password = request.data.get('password')
+    
+    print(f"Received login attempt - email: {email}")  # Debug print
+    
+    # Try authenticating with email as username
+    user = authenticate(username=email, password=password)
+    
+    if user:
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.id,
+            'username': user.username
+        })
+    
+    return Response({'error': 'Invalid credentials'}, status=400)
 
-            user = authenticate(request, username=email, password=password)
-            if user is not None:
-                login(request, user)
-                return JsonResponse({'message': 'Login successful!'}, status=200)
-            else:
-                return JsonResponse({'error': 'Invalid email or password.'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
-    return JsonResponse({'error': 'POST request required.'}, status=405)
 
 
 class ProductListAPIView(APIView):
@@ -143,3 +167,63 @@ def search_products(request):   # Query sonucuna göre tablodaki ts_vectorden ve
     else:
         return JsonResponse({'error': 'No search query provided'}, status=400)
     
+
+
+class FavoriteCartListCreateView(generics.ListCreateAPIView):
+    serializer_class = FavoriteCartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return FavoriteCart.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Create a new FavoriteCart for the user
+        favorite_cart = FavoriteCart.objects.create(user=user)
+
+        # Get the shopping cart data from request (Assuming it's sent in JSON format)
+        cart_data = self.request.data.get('products', [])
+        
+        # Add products to the FavoriteCartProduct table
+        for product in cart_data:
+            FavoriteCartProduct.objects.create(
+                favorite_cart=favorite_cart,
+                user=user,
+                name=product['name'],
+                price=product['price'],
+                image=product['image'],
+                quantity=product['quantity']
+            )
+
+        return Response({"message": "Cart saved successfully!"}, status=status.HTTP_201_CREATED)
+
+class MarketsListAPIView(APIView):
+    def get(self, request):
+        try:
+            markets_data = {}
+            products = Product.objects.all()
+            
+            for product in products:
+                market_name = product.market_name or "Diğer"
+                if market_name not in markets_data:
+                    markets_data[market_name] = []
+                
+                markets_data[market_name].append({
+                    "name": product.name,
+                    "price": product.price,
+                    "image": product.image_url,
+                    "category": product.main_category
+                })
+
+            response_data = [
+                {
+                    "marketName": market,
+                    "products": market_products,
+                }
+                for market, market_products in markets_data.items()
+            ]
+
+            return JsonResponse(response_data, safe=False)
+        except Exception as e:
+            print(f"Error in MarketsListAPIView: {e}")
+            return JsonResponse({'error': str(e)}, status=500)

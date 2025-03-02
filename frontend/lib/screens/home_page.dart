@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/cheapest_pc.dart';
 import 'package:frontend/screens/account_page.dart';
+import 'package:frontend/screens/to_do_list_page.dart';
 import 'package:frontend/services/product_service.dart';
 import 'package:frontend/screens/popular_product_page.dart';
 import 'package:frontend/screens/discounted_product_page.dart';
@@ -11,6 +12,9 @@ import 'package:frontend/models/cart_model.dart';
 import 'package:frontend/screens/cart_page.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:frontend/widgets/bottom_navigation.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -46,6 +50,55 @@ class _HomePageState extends State<HomePage> {
       print('Error: $e');
     }
   }
+
+ 
+Future<void> fetchNearbyMarkets(double latitude, double longitude) async {
+  const int radius = 1500; 
+
+  String overpassQuery = """
+  [out:json];
+  (
+    node["shop"="supermarket"](around:$radius,$latitude,$longitude);
+    node["shop"="grocery"](around:$radius,$latitude,$longitude);
+    node["amenity"="marketplace"](around:$radius,$latitude,$longitude);
+  );
+  out;
+  """;
+
+  String url = "https://overpass-api.de/api/interpreter?data=" + Uri.encodeComponent(overpassQuery);
+
+  try {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+
+      final utf8DecodedBody = utf8.decode(response.bodyBytes);
+      final data = json.decode(utf8DecodedBody);
+
+      print("Full API Response: $utf8DecodedBody");
+
+      List<dynamic> elements = data["elements"];
+
+      if (elements.isNotEmpty) {
+        print("\nMarkets within 1500 meters:");
+        for (var element in elements) {
+          String name = element["tags"]?["name"] ??
+                        element["tags"]?["brand"] ??
+                        element["tags"]?["shop"] ?? 
+                        element["tags"]?["amenity"] ?? 
+                        "Unnamed Market";
+
+          print("- $name (Lat: ${element["lat"]}, Lon: ${element["lon"]})");
+        }
+      } else {
+        print("No markets found within 1500 meters.");
+      }
+    } else {
+      print("Failed to fetch markets. Status Code: ${response.statusCode}");
+    }
+  } catch (e) {
+    print("Error fetching markets: $e");
+  }
+}
 
   Future<void> _getCurrentLocation() async {
   try {
@@ -95,6 +148,7 @@ class _HomePageState extends State<HomePage> {
         currentAddress = "Adres bulunamadı";
       });
     }
+    await fetchNearbyMarkets(position.latitude, position.longitude);
   } catch (e) {
     print('Error: $e');
     ScaffoldMessenger.of(context).showSnackBar(
@@ -311,35 +365,9 @@ class _HomePageState extends State<HomePage> {
                 }),
               ],
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: Colors.black),
-            label: 'Anasayfa',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.category, color: Colors.black),
-            label: 'Kategoriler',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list, color: Colors.black),
-            label: 'Listem',
-          ),
-        ],
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        onTap: (index) {
-          if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CartPage(),
-              ),
-            );
-          }
-        },
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 0,
+        categorizedProducts: categorizedProducts,
       ),
     );
   }

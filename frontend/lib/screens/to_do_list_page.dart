@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/bottom_navigation.dart';
 
 class ToDoListPage extends StatefulWidget {
   @override
@@ -38,6 +39,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
         titleTextStyle: TextStyle(color: Colors.black),
+        automaticallyImplyLeading: true,
       ),
       body: Column(
         children: [
@@ -101,6 +103,9 @@ class _ToDoListPageState extends State<ToDoListPage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 2,
       ),
     );
   }

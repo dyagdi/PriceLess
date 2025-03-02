@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/gestures.dart';
 //import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/constants/constants_url.dart';
+import 'package:frontend/services/auth_service.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -79,7 +81,7 @@ class _AuthPageState extends State<AuthPage> {
       _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
     });
   }
-
+/*
   void _submitForm() async {
     if (true) {
       //Navigator.pushReplacementNamed(context, '/home');
@@ -131,9 +133,9 @@ class _AuthPageState extends State<AuthPage> {
         setState(() => _isLoading = false);
       }
     }
-  }
+  }*/
 
-/*
+
   void _submitForm() async {
     if (_formKey.currentState!.validate()) { 
       setState(() => _isLoading = true);
@@ -159,19 +161,21 @@ class _AuthPageState extends State<AuthPage> {
           body: jsonEncode(body),
         );
 
-        /*if (_rememberMe) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('email', _emailController.text);
-          await prefs.setString('password', _passwordController.text);
-        } else {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('email');
-          await prefs.remove('password');
-        }*/
-
         if (response.statusCode == 201 || response.statusCode == 200) {
+          // Parse the response to get the token
+          final responseData = jsonDecode(response.body);
+          final token = responseData['token'];
+          
+          // Save the token regardless of whether it's login or registration
+          await AuthService.saveToken(token);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(_isLoginMode ? "Login successful!" : "Registration successful!"))
+          );
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +190,7 @@ class _AuthPageState extends State<AuthPage> {
         setState(() => _isLoading = false);
       }
     }
-  }*/
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -375,4 +379,4 @@ class _AuthPageState extends State<AuthPage> {
 }
 
 //const String baseUrl = 'http://144.122.207.230:8000/api/';
-const String baseUrl = 'http://127.0.0.1:8000/api/';
+//const String baseUrl = 'http://127.0.0.1:8000/api/';

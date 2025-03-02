@@ -3,13 +3,19 @@ import 'package:frontend/screens/account_settings.dart';
 import 'addresses_page.dart'; 
 import 'user_info_page.dart'; 
 import 'favorite_carts_page.dart'; 
+import 'package:frontend/widgets/bottom_navigation.dart';
+
 class UserAccountPage extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Hesabım'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        automaticallyImplyLeading: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -22,6 +28,10 @@ class UserAccountPage extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: -1,  // Use -1 to indicate this page isn't in the navigation bar
+        categorizedProducts: const {},
+      ),
     );
   }
 
@@ -32,7 +42,6 @@ class UserAccountPage extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         leading: Icon(Icons.account_circle, size: 40),
         title: Text('Hesap Bilgileri'),
-        //subtitle: Text('E-mail, telefon, name, and surname'),
         trailing: Icon(Icons.arrow_forward),
         onTap: () {
           Navigator.push(

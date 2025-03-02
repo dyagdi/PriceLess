@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.postgres.search import SearchVector
-from ...models import Product  
+from users.models import Product  
 
 class Command(BaseCommand):
     help = 'Update search_vector field for products'

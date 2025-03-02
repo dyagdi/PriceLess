@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.postgres.search import SearchVectorField
+from django.contrib.auth.models import User
+
 
 class Product(models.Model):
     main_category = models.TextField()
@@ -21,3 +23,24 @@ class Product(models.Model):
 
     class Meta:
         db_table = 'sample_data'  # PostgreSQL'deki tablo adı
+
+class FavoriteCart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    id = models.AutoField(primary_key=True)  # Django automatically assigns an ID, so no need for shopping_cart_id separately.
+
+    class Meta:
+        db_table = 'favorite_carts'
+
+class FavoriteCartProduct(models.Model):
+    favorite_cart = models.ForeignKey(FavoriteCart, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.URLField()
+    quantity = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = 'favorite_carts_products'
+
+    def __str__(self):
+        return f"{self.name} (x{self.quantity}) - Cart {self.favorite_cart_id}"
