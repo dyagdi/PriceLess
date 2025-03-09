@@ -18,6 +18,7 @@ import { styled } from '@mui/material/styles';
 import AppTheme from '../shared-theme/AppTheme';
 import { GoogleIcon } from '../components/CustomIcons';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
+import AppAppBar from '../components/AppAppBar';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -42,8 +43,10 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
+  paddingTop: theme.spacing(12),
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(4),
+    paddingTop: theme.spacing(14),
   },
   '&::before': {
     content: '""',
@@ -126,6 +129,7 @@ export default function SignUp(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
+      <AppAppBar />
       <SignUpContainer direction="column" justifyContent="space-between">
         <Box sx={{ position: 'fixed', top: '1rem', right: '1rem' }}>
           <ColorModeIconDropdown />
