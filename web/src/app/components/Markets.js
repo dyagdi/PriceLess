@@ -1,12 +1,13 @@
 'use client';
 import * as React from 'react';
-//import Box from '@mui/material/Box';
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import ProductCard from './ProductCard'; // Import the ProductCard component
 
 export default function Markets({ marketProducts }) {
@@ -22,17 +23,26 @@ export default function Markets({ marketProducts }) {
       <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
         Farklı marketlerdeki ürünleri keşfedin.
       </Typography>
-      <Grid container spacing={3}>
+      <Grid container spacing={4}>
         {marketProducts.map((market, index) => (
-          <Grid item xs={12} md={6} key={index}>
-            <Card sx={{ height: '100%', p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                {market.market_name}
-              </Typography>
-              <Grid container spacing={2}>
+          <Grid item xs={12} key={index}>
+            <Card sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
+                  {market.market_name}
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  size="small"
+                >
+                  View All
+                </Button>
+              </Box>
+              <Grid container spacing={3}>
                 {market.products.slice(0, 4).map((product, productIndex) => (
-                  <Grid item xs={6} sm={3} key={productIndex}>
-                    <ProductCard product={product} /> {/* Use ProductCard */}
+                  <Grid item xs={12} sm={6} md={3} key={productIndex}>
+                    <ProductCard product={product} />
                   </Grid>
                 ))}
               </Grid>
