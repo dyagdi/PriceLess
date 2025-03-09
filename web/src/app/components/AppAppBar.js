@@ -147,7 +147,7 @@ export default function AppAppBar() {
               size="small"
               onClick={() => navigate('/sign-in')}
             >
-              Sign in
+              Giriş Yap
             </Button>
             <Button
               color="primary"
@@ -155,7 +155,7 @@ export default function AppAppBar() {
               size="small"
               onClick={() => navigate('/sign-up')}
             >
-              Sign up
+              Kayıt Ol
             </Button>
             <Button
               color="primary"
@@ -181,7 +181,7 @@ export default function AppAppBar() {
                 </Badge>
               }
             >
-              My Basket
+                Sepetim
             </Button>
             <ColorModeIconDropdown />
           </Box>
@@ -228,7 +228,7 @@ export default function AppAppBar() {
                 <MenuItem>Marketler</MenuItem>
                 <MenuItem>Sıkça Sorulan Sorular</MenuItem>
                 <MenuItem onClick={() => navigate('/my-basket')}>
-                  My Basket ({basketCount})
+                  Sepetim ({basketCount})
                 </MenuItem>
 
                 <Button
@@ -237,7 +237,7 @@ export default function AppAppBar() {
                   fullWidth
                   onClick={() => navigate('/sign-up')}
                 >
-                  Sign up
+                  Kayıt Ol
                 </Button>
                 <Button
                   color="primary"
@@ -245,7 +245,7 @@ export default function AppAppBar() {
                   fullWidth
                   onClick={() => navigate('../sign-in')}
                 >
-                  Sign in
+                  Giriş Yap
                 </Button>
               </Box>
             </Drawer>
