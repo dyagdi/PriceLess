@@ -11,19 +11,49 @@ def normalize_product_name(name):
         
     # Convert to lowercase
     name = name.lower()
+    
     # Normalize accents and special characters
     name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('ASCII')
+    
+    # Replace common abbreviations and standardize terms
+    replacements = {
+        'gr': 'g',       # Standardize gram units
+        'lt': 'l',       # Standardize liter units
+        'ml.': 'ml',     # Remove period from ml
+        'g.': 'g',       # Remove period from g
+        'kg.': 'kg',     # Remove period from kg
+        'adet': 'ad',    # Standardize piece/count
+        ' x ': 'x',      # Standardize multiplication symbol
+        'pkt': 'paket',  # Expand package abbreviation
+    }
+    
+    for old, new in replacements.items():
+        name = name.replace(old, new)
+    
     # Standardize units: Insert a space between numbers and letters
     name = re.sub(r'(\d)([a-z])', r'\1 \2', name)
     name = re.sub(r'([a-z])(\d)', r'\1 \2', name)
+    
+    # Standardize common product size formats
+    # e.g., "100g" -> "100 g", "2x500ml" -> "2 x 500 ml"
+    name = re.sub(r'(\d+)x(\d+)', r'\1 x \2', name)
+    name = re.sub(r'(\d+)(ml|l|g|kg)', r'\1 \2', name)
+    
+    # Remove brand-specific suffixes that don't help with matching
+    name = re.sub(r'\b(inc|ltd|co|gida|market)\b', '', name)
+    
     # Trim whitespace
     name = name.strip()
+    
     # Replace extra spaces with a single space
     name = re.sub(r'\s+', ' ', name)
+    
     # Remove special characters (keep alphanumeric and spaces)
     name = re.sub(r'[^a-z0-9\s]', '', name)
+    
     # Sort words for consistency
     name = ' '.join(sorted(name.split()))
+    
     return name
 
 # Connect to the PostgreSQL database

@@ -8,6 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
 from decouple import config
 import psycopg2.extras
+import re
 
 # Connect to the PostgreSQL database
 try:
@@ -96,13 +97,40 @@ try:
     for name in unique_names[:5]:
         print(name)
     
-    # Step 3: Convert product names into TF-IDF vectors
-    vectorizer = TfidfVectorizer()
-    name_vectors = vectorizer.fit_transform(unique_names)
+    # Step 3: Additional preprocessing for better clustering
+    def preprocess_for_clustering(name):
+        if not name or not isinstance(name, str):
+            return ""
+        
+        # Remove common units and numbers that might interfere with clustering
+        # This is just for clustering purposes, not for display
+        name = re.sub(r'\b\d+\s*(ml|l|g|gr|kg|adet|lt|mm|cm|m)\b', '', name)
+        name = re.sub(r'\b(ml|l|g|gr|kg|adet|lt|mm|cm|m)\b', '', name)
+        
+        # Remove common words that don't help with product identification
+        stop_words = ['ve', 'ile', 'icin', 'the', 'and', 'for', 'with']
+        words = name.split()
+        words = [word for word in words if word not in stop_words]
+        
+        # Remove single character words except meaningful ones
+        words = [word for word in words if len(word) > 1]
+        
+        return ' '.join(words).strip()
+    
+    # Apply additional preprocessing
+    preprocessed_names = [preprocess_for_clustering(name) for name in unique_names]
+    
+    # Step 4: Convert product names into TF-IDF vectors
+    vectorizer = TfidfVectorizer(
+        min_df=2,  # Ignore terms that appear in less than 2 documents
+        max_df=0.9,  # Ignore terms that appear in more than 90% of documents
+        ngram_range=(1, 2)  # Use both unigrams and bigrams
+    )
+    name_vectors = vectorizer.fit_transform(preprocessed_names)
     print(f"Created TF-IDF vectors with shape: {name_vectors.shape}")
     
-    # Step 4: Find optimal eps parameter for DBSCAN using k-distance graph
-    k = 4  # Typically, use min_samples - 1
+    # Step 5: Find optimal eps parameter for DBSCAN using k-distance graph
+    k = 5  # Increase from 4 to 5 for better clustering
     neighbors = NearestNeighbors(n_neighbors=k)
     neighbors_fit = neighbors.fit(name_vectors)
     distances, _ = neighbors_fit.kneighbors(name_vectors)
@@ -119,15 +147,15 @@ try:
     plt.savefig('k_distance_plot.png')
     print("Saved k-distance plot to k_distance_plot.png")
     
-    # Step 5: Calculate cosine similarity and apply DBSCAN clustering
+    # Step 6: Calculate cosine similarity and apply DBSCAN clustering
     distance_matrix = 1 - cosine_similarity(name_vectors)
     
     # Ensure non-negative distances
     distance_matrix[distance_matrix < 0] = 0
     
-    # Apply DBSCAN clustering
-    eps = 0.6  # You may need to adjust this based on the k-distance plot
-    min_samples = 4  # Minimum number of samples in a cluster
+    # Apply DBSCAN clustering with adjusted parameters
+    eps = 0.5  # Slightly lower eps for tighter clusters
+    min_samples = 3  # Lower min_samples to catch more clusters
     clustering_model = DBSCAN(eps=eps, min_samples=min_samples, metric='precomputed')
     clusters = clustering_model.fit_predict(distance_matrix)
     
@@ -137,15 +165,64 @@ try:
     print(f"Number of clusters: {n_clusters}")
     print(f"Number of noise points: {n_noise}")
     
-    # Step 6: Map clusters to canonical names
+    # Create a mapping from preprocessed names back to original unique names
+    name_mapping = dict(zip(preprocessed_names, unique_names))
+    
+    # Step 7: Map clusters to canonical names
     name_clusters = pd.DataFrame({'name': unique_names, 'cluster': clusters})
     
-    # Assign canonical names (e.g., the shortest name in each cluster)
+    # Assign canonical names using a more sophisticated approach
     canonical_names = {}
     for cluster_id in set(clusters):
         if cluster_id != -1:  # Skip noise points
-            cluster_names = name_clusters[name_clusters['cluster'] == cluster_id]['name']
-            canonical_names[cluster_id] = min(cluster_names, key=len)  # Shortest name
+            cluster_names = name_clusters[name_clusters['cluster'] == cluster_id]['name'].tolist()
+            
+            # Calculate word frequency across all names in the cluster
+            all_words = []
+            for name in cluster_names:
+                all_words.extend(name.split())
+            
+            word_freq = {}
+            for word in all_words:
+                if word not in word_freq:
+                    word_freq[word] = 0
+                word_freq[word] += 1
+            
+            # Score each name based on:
+            # 1. Word frequency (words that appear more often across products are more important)
+            # 2. Name length (prefer more complete names, but with a penalty for extremely long names)
+            # 3. Word count (prefer names with more distinct words, up to a point)
+            name_scores = {}
+            for name in cluster_names:
+                words = name.split()
+                
+                # Calculate frequency score (sum of frequencies of words in this name)
+                freq_score = sum(word_freq.get(word, 0) for word in words)
+                
+                # Calculate length score (prefer names that aren't too short or too long)
+                length = len(name)
+                if length < 5:
+                    length_score = length / 5  # Penalize very short names
+                elif length > 50:
+                    length_score = 2 - (length / 100)  # Penalize very long names
+                else:
+                    length_score = 1.0  # Ideal length
+                
+                # Calculate word count score (prefer names with more information)
+                word_count = len(words)
+                if word_count <= 1:
+                    word_score = 0.5  # Penalize single-word names
+                elif word_count >= 10:
+                    word_score = 0.7  # Penalize extremely verbose names
+                else:
+                    word_score = 1.0  # Ideal word count
+                
+                # Calculate final score (weighted combination)
+                final_score = (freq_score * 0.5) + (length_score * 0.3) + (word_score * 0.2)
+                name_scores[name] = final_score
+            
+            # Choose the name with the highest score as the canonical name
+            canonical_names[cluster_id] = max(name_scores.items(), key=lambda x: x[1])[0]
     
     # Map names to their canonical form
     name_clusters['canonical_name'] = name_clusters['cluster'].map(
@@ -155,10 +232,10 @@ try:
     # For noise points, use the original name as canonical name
     name_clusters.loc[name_clusters['cluster'] == -1, 'canonical_name'] = name_clusters.loc[name_clusters['cluster'] == -1, 'name']
     
-    # Step 7: Create a mapping table for all normalized names to their canonical forms
+    # Step 8: Create a mapping table for all normalized names to their canonical forms
     mapping_dict = dict(zip(name_clusters['name'], name_clusters['canonical_name']))
     
-    # Step 8: Update all product tables with canonical names
+    # Step 9: Update all product tables with canonical names
     for table in market_tables:
         try:
             # Check if the table has normalized_name column
@@ -206,7 +283,7 @@ try:
         except Exception as e:
             print(f"Error updating canonical names in {table}: {e}")
     
-    # Step 9: Create a view for price comparison
+    # Step 10: Create a view for price comparison
     try:
         # First, check if the view already exists and drop it
         cursor.execute("""

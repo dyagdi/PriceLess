@@ -10,4 +10,6 @@ urlpatterns = [
     path('products/filtered/', HomePageProductListAPIView.as_view(), name='filtered-product-list'),
     path('cheapest-products/', views.cheapest_products, name='cheapest-products'),
     path('cheapest-products-per-category/', views.cheapest_products_per_category, name='cheapest-products-per-category'),
+    path('products-in-multiple-markets/', views.products_in_multiple_markets, name='products-in-multiple-markets'),
+    path('similar-products/', views.similar_products_across_markets, name='similar-products-across-markets'),
 ]

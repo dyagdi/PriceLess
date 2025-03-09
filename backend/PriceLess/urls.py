@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', welcome_view, name='home'),  # Ana sayfa rotası
     path('api/', include('users.urls')),  # API için users rotası
+    path('api/products/', include('products.urls')),  # API için products rotası
 ]
 
 

@@ -5,6 +5,8 @@ import 'package:frontend/providers/cart_provider.dart';
 import 'package:frontend/services/comparison_service.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:frontend/services/comparison_service.dart'
+    show searchProductByName;
 
 class ProductDetailModal extends StatefulWidget {
   final String name;
@@ -35,26 +37,38 @@ class _ProductDetailModalState extends State<ProductDetailModal> {
   }
 
   Future<void> _loadComparisonData() async {
-    if (widget.canonicalName != null && widget.canonicalName!.isNotEmpty) {
-      try {
-        // Use the real API when it's ready
-        // final comparison = await ComparisonService.getProductComparison(widget.canonicalName!);
+    try {
+      print("Loading comparison data for product: ${widget.name}");
+      print("Canonical name (if available): ${widget.canonicalName}");
 
-        // For now, use mock data
-        final comparison =
-            await ComparisonService.getMockProductComparison(widget.name);
+      ProductComparison? comparison;
 
-        setState(() {
-          _comparison = comparison;
-          _isLoading = false;
-        });
-      } catch (e) {
-        print('Error loading comparison data: $e');
-        setState(() {
-          _isLoading = false;
-        });
+      // Try using canonical name if available
+      if (widget.canonicalName != null && widget.canonicalName!.isNotEmpty) {
+        try {
+          comparison = await ComparisonService.getProductComparison(
+              widget.canonicalName!);
+        } catch (e) {
+          print('Error loading comparison by canonical name: $e');
+        }
       }
-    } else {
+
+      // If that fails, use mock data
+      if (comparison == null) {
+        comparison =
+            await ComparisonService.getMockProductComparison(widget.name);
+      }
+
+      setState(() {
+        _comparison = comparison;
+        _isLoading = false;
+      });
+
+      print("Loaded comparison data: ${_comparison?.canonicalName}");
+      print("Number of markets: ${_comparison?.numMarkets}");
+      print("Market prices: ${_comparison?.marketPrices.length} items");
+    } catch (e) {
+      print('Error loading comparison data: $e');
       setState(() {
         _isLoading = false;
       });
@@ -225,22 +239,107 @@ class _ProductDetailModalState extends State<ProductDetailModal> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            "En ucuz: ${_comparison!.cheapestMarket} (₺${_comparison!.minPrice.toStringAsFixed(2)})",
-            style: const TextStyle(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
+
+          // Price comparison summary card
+          Card(
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.info_outline,
+                          color: Colors.blue, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Bu ürün ${_comparison!.numMarkets} farklı markette bulundu",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.arrow_downward,
+                          color: Colors.green, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "En ucuz: ${_comparison!.cheapestMarket} (₺${_comparison!.minPrice.toStringAsFixed(2)})",
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.arrow_upward,
+                          color: Colors.red, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "En pahalı: ${_comparison!.mostExpensiveMarket} (₺${_comparison!.maxPrice.toStringAsFixed(2)})",
+                          style: const TextStyle(
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.compare_arrows,
+                          color: Colors.orange, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Fiyat farkı: %${_comparison!.priceDiffPercent.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_comparison!.priceDiffPercent > 20)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.yellow.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.yellow.shade700),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.savings,
+                              color: Colors.yellow.shade800, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Bu ürünü ${_comparison!.cheapestMarket}'dan alarak %${_comparison!.priceDiffPercent.toStringAsFixed(2)} tasarruf edebilirsiniz!",
+                              style: TextStyle(
+                                color: Colors.yellow.shade800,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-          Text(
-            "En pahalı: ${_comparison!.mostExpensiveMarket} (₺${_comparison!.maxPrice.toStringAsFixed(2)})",
-            style: const TextStyle(
-              color: Colors.red,
-            ),
-          ),
-          Text(
-            "Fiyat farkı: %${_comparison!.priceDiffPercent.toStringAsFixed(2)}",
-          ),
+
           const SizedBox(height: 16),
           const Text(
             "Marketlerdeki Fiyatlar",
@@ -257,10 +356,13 @@ class _ProductDetailModalState extends State<ProductDetailModal> {
                 final marketPrice = _comparison!.marketPrices[index];
                 final bool isCheapest =
                     marketPrice.market == _comparison!.cheapestMarket;
+                final bool isMostExpensive =
+                    marketPrice.market == _comparison!.mostExpensiveMarket;
 
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.only(bottom: 8),
+                  color: isCheapest ? Colors.green.shade50 : null,
                   child: ListTile(
                     leading: _getMarketLogo(marketPrice.market),
                     title: Text(
@@ -282,12 +384,38 @@ class _ProductDetailModalState extends State<ProductDetailModal> {
                             ),
                           )
                         : null,
-                    trailing: Text(
-                      "₺${marketPrice.price.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isCheapest ? Colors.green : null,
-                      ),
+                    trailing: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "₺${marketPrice.price.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isCheapest
+                                ? Colors.green
+                                : isMostExpensive
+                                    ? Colors.red
+                                    : null,
+                          ),
+                        ),
+                        if (isCheapest)
+                          const Text(
+                            "En ucuz",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                            ),
+                          ),
+                        if (isMostExpensive)
+                          const Text(
+                            "En pahalı",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 );
@@ -300,22 +428,66 @@ class _ProductDetailModalState extends State<ProductDetailModal> {
   }
 
   Widget _getMarketLogo(String marketName) {
-    // You can replace these with actual market logos
-    final Map<String, Color> marketColors = {
-      'Migros': Colors.orange,
-      'Carrefour': Colors.blue,
-      'A101': Colors.blue.shade900,
-      'Şok': Colors.yellow.shade700,
-      'BİM': Colors.red,
+    // Market colors and first letters for the avatar
+    final Map<String, Map<String, dynamic>> marketInfo = {
+      'migros': {
+        'color': Colors.orange,
+        'letter': 'M',
+        'icon': Icons.shopping_cart,
+      },
+      'carrefour': {
+        'color': Colors.blue,
+        'letter': 'C',
+        'icon': Icons.shopping_basket,
+      },
+      'a101': {
+        'color': Colors.blue.shade900,
+        'letter': 'A',
+        'icon': Icons.store,
+      },
+      'şok': {
+        'color': Colors.yellow.shade700,
+        'letter': 'Ş',
+        'icon': Icons.local_grocery_store,
+      },
+      'sok': {
+        'color': Colors.yellow.shade700,
+        'letter': 'S',
+        'icon': Icons.local_grocery_store,
+      },
+      'bim': {
+        'color': Colors.red,
+        'letter': 'B',
+        'icon': Icons.storefront,
+      },
+      'mopas': {
+        'color': Colors.purple,
+        'letter': 'M',
+        'icon': Icons.shopping_bag,
+      },
+      'marketpaketi': {
+        'color': Colors.green,
+        'letter': 'M',
+        'icon': Icons.shopping_bag,
+      },
     };
 
-    final color = marketColors[marketName] ?? Colors.grey;
+    final marketKey = marketName.toLowerCase();
+    final info = marketInfo[marketKey] ??
+        {
+          'color': Colors.grey,
+          'letter': marketName.isNotEmpty
+              ? marketName.substring(0, 1).toUpperCase()
+              : '?',
+          'icon': Icons.store,
+        };
 
     return CircleAvatar(
-      backgroundColor: color,
-      child: Text(
-        marketName.substring(0, 1),
-        style: const TextStyle(color: Colors.white),
+      backgroundColor: info['color'],
+      child: Icon(
+        info['icon'],
+        color: Colors.white,
+        size: 18,
       ),
     );
   }

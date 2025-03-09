@@ -9,6 +9,8 @@ class Product(models.Model):
     sub_category = models.TextField()
     lowest_category = models.TextField()
     name = models.TextField()
+    normalized_name = models.TextField(null=True, blank=True)
+    canonical_name = models.TextField(null=True, blank=True)
     price = models.FloatField()  # PostgreSQL'deki "real" tipi için
     high_price = models.FloatField(null=True, blank=True)  # nullable alan
     in_stock = models.TextField()
