@@ -16,8 +16,11 @@ import Popover from '@mui/material/Popover';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import Badge from '@mui/material/Badge';
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 import Sitemark from './SitemarkIcon';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
+import { useBasket } from '../context/BasketContext';
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: 'flex',
@@ -39,6 +42,7 @@ export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const navigate = useNavigate(); // Hook for navigation
+  const { getBasketCount } = useBasket(); // Get basket count from context
 
   // Function to toggle drawer
   const toggleDrawer = (newOpen) => () => {
@@ -56,6 +60,7 @@ export default function AppAppBar() {
   };
 
   const isPopoverOpen = Boolean(anchorEl);
+  const basketCount = getBasketCount(); // Get the current basket count
 
   return (
     <AppBar
@@ -152,9 +157,45 @@ export default function AppAppBar() {
             >
               Sign up
             </Button>
+            <Button
+              color="primary"
+              variant="text"
+              size="small"
+              onClick={() => navigate('/my-basket')}
+              startIcon={
+                <Badge 
+                  badgeContent={basketCount} 
+                  color="error"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      animation: basketCount > 0 ? 'pulse 1.5s infinite' : 'none',
+                      '@keyframes pulse': {
+                        '0%': { transform: 'scale(1)' },
+                        '50%': { transform: 'scale(1.2)' },
+                        '100%': { transform: 'scale(1)' },
+                      },
+                    },
+                  }}
+                >
+                  <ShoppingBasketIcon />
+                </Badge>
+              }
+            >
+              My Basket
+            </Button>
             <ColorModeIconDropdown />
           </Box>
           <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
+            <Badge 
+              badgeContent={basketCount} 
+              color="error"
+              sx={{ mr: 1 }}
+              onClick={() => navigate('/my-basket')}
+            >
+              <IconButton color="inherit">
+                <ShoppingBasketIcon />
+              </IconButton>
+            </Badge>
             <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
               <MenuIcon />
@@ -186,6 +227,9 @@ export default function AppAppBar() {
                 <MenuItem>Popüler Ürünler</MenuItem>
                 <MenuItem>Marketler</MenuItem>
                 <MenuItem>Sıkça Sorulan Sorular</MenuItem>
+                <MenuItem onClick={() => navigate('/my-basket')}>
+                  My Basket ({basketCount})
+                </MenuItem>
 
                 <Button
                   color="primary"
