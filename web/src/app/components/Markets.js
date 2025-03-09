@@ -7,6 +7,7 @@ import CardMedia from '@mui/material/CardMedia';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+import ProductCard from './ProductCard'; // Import the ProductCard component
 
 export default function Markets({ marketProducts }) {
   if (!marketProducts || marketProducts.length === 0) {
@@ -31,22 +32,7 @@ export default function Markets({ marketProducts }) {
               <Grid container spacing={2}>
                 {market.products.slice(0, 4).map((product, productIndex) => (
                   <Grid item xs={6} sm={3} key={productIndex}>
-                    <Card sx={{ height: '100%' }}>
-                      <CardMedia
-                        component="img"
-                        height="100"
-                        image={product.image || '/placeholder.jpg'}
-                        alt={product.name}
-                      />
-                      <CardContent>
-                        <Typography variant="body2" noWrap>
-                          {product.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          ₺{product.price}
-                        </Typography>
-                      </CardContent>
-                    </Card>
+                    <ProductCard product={product} /> {/* Use ProductCard */}
                   </Grid>
                 ))}
               </Grid>
