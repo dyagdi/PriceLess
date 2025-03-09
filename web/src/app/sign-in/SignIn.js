@@ -19,6 +19,7 @@ import ForgotPassword from '../components/ForgotPassword';
 import { GoogleIcon } from '../components/CustomIcons';
 import AppTheme from '../shared-theme/AppTheme';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
+import AppAppBar from '../components/AppAppBar';
 //import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -44,8 +45,10 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
   minHeight: '100%',
   padding: theme.spacing(2),
+  paddingTop: theme.spacing(12),
   [theme.breakpoints.up('sm')]: {
     padding: theme.spacing(4),
+    paddingTop: theme.spacing(14),
   },
   '&::before': {
     content: '""',
@@ -123,6 +126,7 @@ export default function SignIn(props) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
+      <AppAppBar />
       <SignInContainer direction="column" justifyContent="space-between">
         <Box sx={{ position: 'fixed', top: '1rem', right: '1rem' }}>
           <ColorModeIconDropdown />
