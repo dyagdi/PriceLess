@@ -32,6 +32,12 @@ dependencies:
     sdk: flutter
   #shared_preferences: ^2.0.10
   http: ^1.2.2 
+  geolocator: ^9.0.2
+  geocoding: ^2.0.4
+  shared_preferences: ^2.5.2
+  shimmer: ^3.0.0
+  share_plus: ^7.2.1
+  google_fonts: ^6.1.0
  
   
 
@@ -42,6 +48,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   provider: ^6.1.2
   flutter_application_1: ^0.0.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +76,14 @@ flutter:
     - images/mars.webp
     - images/misir.jpg
     - images/default.png
+    - assets/cities_states.json
+    - images/carrefour.png
+    - images/a101.png
+    - images/şok.png
+    - images/migros.png
+    - images/meyve_sebze.jpeg
+    - images/et_tavuk_balik.jpeg
+    - images/sut_kahvaltilik.jpeg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

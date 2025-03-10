@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import FavoriteCart, Product, FavoriteCartProduct
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -20,10 +21,29 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 
-from rest_framework import serializers
-from .models import Product
+
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        
+    
+
+class FavoriteCartProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavoriteCartProduct
+        fields = ['name', 'price', 'image', 'quantity']
+
+class FavoriteCartSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FavoriteCart
+        fields = ['id', 'user', 'products']
+        read_only_fields = ['user']
+
+    def get_products(self, obj):
+        # Get products through the foreign key relationship
+        cart_products = FavoriteCartProduct.objects.filter(favorite_cart_id=obj.id)
+        return FavoriteCartProductSerializer(cart_products, many=True).data

@@ -4,6 +4,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/gestures.dart';
 //import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/constants/constants_url.dart';
+import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/widgets/app_logo.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -79,7 +83,7 @@ class _AuthPageState extends State<AuthPage> {
       _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
     });
   }
-
+/*
   void _submitForm() async {
     if (true) {
       //Navigator.pushReplacementNamed(context, '/home');
@@ -131,27 +135,25 @@ class _AuthPageState extends State<AuthPage> {
         setState(() => _isLoading = false);
       }
     }
-  }
+  }*/
 
-/*
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) { 
+    if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      final url = _isLoginMode
-          ? '${baseUrl}users/login/'  
-          : '${baseUrl}users/register/';  
+      final url =
+          _isLoginMode ? '${baseUrl}users/login/' : '${baseUrl}users/register/';
       final body = _isLoginMode
-    ? {
-        'email': _emailController.text,
-        'password': _passwordController.text,
-      }
-    : {
-        'email': _emailController.text,
-        'password': _passwordController.text,
-        'first_name': _nameController.text,  
-        'last_name': _surnameController.text, 
-      };
-      
+          ? {
+              'email': _emailController.text,
+              'password': _passwordController.text,
+            }
+          : {
+              'email': _emailController.text,
+              'password': _passwordController.text,
+              'first_name': _nameController.text,
+              'last_name': _surnameController.text,
+            };
+
       try {
         final response = await http.post(
           Uri.parse(url),
@@ -159,214 +161,335 @@ class _AuthPageState extends State<AuthPage> {
           body: jsonEncode(body),
         );
 
-        /*if (_rememberMe) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('email', _emailController.text);
-          await prefs.setString('password', _passwordController.text);
-        } else {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('email');
-          await prefs.remove('password');
-        }*/
-
         if (response.statusCode == 201 || response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_isLoginMode ? "Login successful!" : "Registration successful!"))
+          // Parse the response to get the token
+          final responseData = jsonDecode(response.body);
+          final token = responseData['token'];
+
+          // Save the token regardless of whether it's login or registration
+          await AuthService.saveToken(token);
+
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(_isLoginMode
+                  ? "Login successful!"
+                  : "Registration successful!")));
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage()),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Failed: ${response.body}"))
-          );
+              SnackBar(content: Text("Failed: ${response.body}")));
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("An error occurred: $e"))
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("An error occurred: $e")));
       } finally {
         setState(() => _isLoading = false);
       }
     }
-  }*/
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Auth Page")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: _isLoginMode ? null : _toggleAuthMode,
-                    child: Text(
-                      "Giriş Yap",
-                      style: TextStyle(
-                        fontWeight:
-                            _isLoginMode ? FontWeight.bold : FontWeight.normal,
-                        color: _isLoginMode ? Colors.blue : Colors.black,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  GestureDetector(
-                    onTap: _isLoginMode ? _toggleAuthMode : null,
-                    child: Text(
-                      "Üye Ol",
-                      style: TextStyle(
-                        fontWeight:
-                            !_isLoginMode ? FontWeight.bold : FontWeight.normal,
-                        color: !_isLoginMode ? Colors.blue : Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              if (!_isLoginMode) ...[
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                      labelText: 'Ad', border: OutlineInputBorder()),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Bu alan boş bırakılamaz'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _surnameController,
-                  decoration: const InputDecoration(
-                      labelText: 'Soyad', border: OutlineInputBorder()),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Bu alan boş bırakılamaz'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-              ],
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                    labelText: 'E-posta',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email)),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Bu alan boş bırakılamaz'
-                    : RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)
-                        ? null
-                        : 'Lütfen geçerli bir e-posta giriniz',
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                decoration: InputDecoration(
-                  labelText: 'Şifre',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                    ),
-                    onPressed: _togglePasswordVisibility,
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Lütfen şifre giriniz';
-                  } else if (value.length < 6) {
-                    return 'Şifreniz en az altı karakterden oluşmalıdır';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_isLoginMode)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+                // Logo and welcome text
+                Column(
                   children: [
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (newValue) {
-                            setState(() {
-                              _rememberMe = newValue!;
-                            });
-                          },
-                        ),
-                        const Text("Beni hatırla"),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        // şifreni unuttun mu? buraya yaz
-                      },
-                      child: const Text(
-                        "Şifremi unuttum",
-                        style: TextStyle(color: Colors.blue),
+                    // App Logo
+                    const AppLogo(size: 120),
+                    const SizedBox(height: 8),
+                    // Welcome Text
+                    Text(
+                      "PriceLess'a Hoşgeldiniz",
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[700],
                       ),
                     ),
+                    const SizedBox(height: 40),
                   ],
                 ),
-              if (!_isLoginMode)
-                TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: !_isConfirmPasswordVisible,
-                    decoration: InputDecoration(
-                      labelText: 'Şifre Doğrulama',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isConfirmPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: _toggleConfirmPasswordVisibility,
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen şifrenizi tekrar giriniz';
-                      } else if (value != _passwordController.text) {
-                        return 'Şifreler aynı değil';
-                      }
-                      return null;
-                    }),
-              const SizedBox(height: 32),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _submitForm,
-                      child: Text(_isLoginMode ? "Giriş Yap" : "Hesap Oluştur"),
-                    ),
-              if (_isLoginMode)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Henüz üye değil misiniz? ",
-                      style: TextStyle(color: Colors.black),
+
+                // Auth mode toggle
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextSpan(
-                          text: "Üye ol",
-                          style: TextStyle(color: Colors.blue),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = _toggleAuthMode,
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _isLoginMode ? null : _toggleAuthMode,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: _isLoginMode
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.transparent,
+                                borderRadius:
+                                    BorderRadius.circular(AppTheme.radiusM),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Giriş Yap",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _isLoginMode
+                                        ? Colors.white
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _isLoginMode ? _toggleAuthMode : null,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: !_isLoginMode
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.transparent,
+                                borderRadius:
+                                    BorderRadius.circular(AppTheme.radiusM),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Üye Ol",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: !_isLoginMode
+                                        ? Colors.white
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-            ],
+                const SizedBox(height: 32),
+
+                // Form fields
+                if (!_isLoginMode) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Ad',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person),
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Bu alan boş bırakılamaz'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _surnameController,
+                          decoration: InputDecoration(
+                            labelText: 'Soyad',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Bu alan boş bırakılamaz'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                      labelText: 'E-posta',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.email)),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Bu alan boş bırakılamaz'
+                      : RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)
+                          ? null
+                          : 'Lütfen geçerli bir e-posta giriniz',
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Şifre',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: _togglePasswordVisibility,
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Lütfen şifre giriniz';
+                    } else if (value.length < 6) {
+                      return 'Şifreniz en az altı karakterden oluşmalıdır';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                if (_isLoginMode)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _rememberMe,
+                            onChanged: (newValue) {
+                              setState(() {
+                                _rememberMe = newValue!;
+                              });
+                            },
+                          ),
+                          const Text("Beni hatırla"),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          // şifreni unuttun mu? buraya yaz
+                        },
+                        child: const Text(
+                          "Şifremi unuttum",
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (!_isLoginMode)
+                  TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: !_isConfirmPasswordVisible,
+                      decoration: InputDecoration(
+                        labelText: 'Şifre Doğrulama',
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isConfirmPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: _toggleConfirmPasswordVisibility,
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen şifrenizi tekrar giriniz';
+                        } else if (value != _passwordController.text) {
+                          return 'Şifreler aynı değil';
+                        }
+                        return null;
+                      }),
+                const SizedBox(height: 32),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _submitForm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.radiusL),
+                            ),
+                          ),
+                          child: Text(
+                            _isLoginMode ? "Giriş Yap" : "Hesap Oluştur",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                if (_isLoginMode)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24.0),
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Henüz üye değil misiniz? ",
+                        style: TextStyle(color: Colors.grey[700]),
+                        children: [
+                          TextSpan(
+                            text: "Üye ol",
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = _toggleAuthMode,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (!_isLoginMode)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24.0),
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Zaten bir hesabınız var mı? ",
+                        style: TextStyle(color: Colors.grey[700]),
+                        children: [
+                          TextSpan(
+                            text: "Giriş yap",
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = _toggleAuthMode,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -375,4 +498,4 @@ class _AuthPageState extends State<AuthPage> {
 }
 
 //const String baseUrl = 'http://144.122.207.230:8000/api/';
-const String baseUrl = 'http://127.0.0.1:8000/api/';
+//const String baseUrl = 'http://127.0.0.1:8000/api/';

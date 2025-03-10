@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User  # Import User model
+from django.contrib.auth.models import User  
+from django.db import connection
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -7,45 +8,69 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import Product  # Product modelini içe aktarın
-from .serializers import UserSerializer, ProductSerializer  # Serializer'ları içe aktarın
-from django.db.models import F
+from .models import FavoriteCartProduct, Product 
+from .serializers import UserSerializer, ProductSerializer 
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from .models import FavoriteCart
+from .serializers import FavoriteCartSerializer
+from rest_framework import permissions
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
 
 
-# Test View
+
+
+
 def test_view(request):
     """API'nin çalışıp çalışmadığını test etmek için bir view"""
     return HttpResponse("Server is up and running!")
 
-# Kullanıcı Kaydı
+
 class UserRegistrationView(generics.CreateAPIView):
     """Kullanıcı kayıt işlemi"""
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-# Kullanıcı Girişi
-@csrf_exempt
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        # Create token for the new user
+        token, created = Token.objects.get_or_create(user=user)
+        
+        return Response({
+            'token': token.key,
+            'user_id': user.id,
+            'username': user.username
+        }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
 def user_login(request):
     """Kullanıcı girişi için view"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            email = data.get('email')
-            password = data.get('password')
+    email = request.data.get('email')
+    password = request.data.get('password')
+    
+    print(f"Received login attempt - email: {email}")  # Debug print
+    
+    # Try authenticating with email as username
+    user = authenticate(username=email, password=password)
+    
+    if user:
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.id,
+            'username': user.username
+        })
+    
+    return Response({'error': 'Invalid credentials'}, status=400)
 
-            user = authenticate(request, username=email, password=password)
-            if user is not None:
-                login(request, user)
-                return JsonResponse({'message': 'Login successful!'}, status=200)
-            else:
-                return JsonResponse({'error': 'Invalid email or password.'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
 
-    return JsonResponse({'error': 'POST request required.'}, status=405)
 
-# Ürün Listesi API'si
 class ProductListAPIView(APIView):
     """Tüm ürünleri dönen bir API"""
     def get(self, request):
@@ -56,7 +81,7 @@ class ProductListAPIView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
-# Özel Kategori veya Filtrelenmiş Ürün API'si (Opsiyonel)
+
 class HomePageProductListAPIView(APIView):
     """Filtrelenmiş ürünleri dönen bir API"""
     def get(self, request):
@@ -77,11 +102,11 @@ class HomePageProductListAPIView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
-# En Ucuz 4 Ürünü Dönen API
+
 def cheapest_products(request):
     """En ucuz 4 ürünü döner."""
     try:
-        products = Product.objects.order_by('price')[:8]  # Fiyata göre sırala, ilk 4 ürünü al
+        products = Product.objects.order_by('price')[:8] 
         data = [{"name": p.name, "price": p.price, "image": p.image_url} for p in products]
         return JsonResponse(data, safe=False)
     except Exception as e:
@@ -90,7 +115,7 @@ def cheapest_products(request):
 def cheapest_products_per_category(request):
     """Her kategoriden en ucuz 4 ürünü döner."""
     try:
-        categories = Product.objects.values_list('main_category', flat=True).distinct()  # Benzersiz kategorileri al
+        categories = Product.objects.values_list('main_category', flat=True).distinct()  
         data = []
 
         for category in categories:
@@ -107,3 +132,123 @@ def cheapest_products_per_category(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)        
+    
+def search_products(request):   # Query sonucuna göre tablodaki ts_vectorden veri çekip Json formtında dönüyor
+    query = request.GET.get('q', '')
+    
+    if query:
+        sql_query = """
+            SELECT id, name, price, high_price, in_stock, image_url, market_name, product_link
+            FROM sample_data
+            WHERE search_vector @@ plainto_tsquery('turkish', %s)
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql_query, [query])
+            results = cursor.fetchall()
+
+
+        if results:
+            data = [
+                {
+                    'id': row[0],
+                    'name': row[1],
+                    'price': row[2],
+                    'high_price': row[3],
+                    'in_stock': row[4],
+                    'image_url': row[5],
+                    'market_name': row[6],
+                    'product_link': row[7],
+                }
+                for row in results
+            ]
+            return JsonResponse(data, safe=False)
+        else:
+            return JsonResponse({'error': 'No results found'}, status=404)
+    else:
+        return JsonResponse({'error': 'No search query provided'}, status=400)
+    
+
+
+class FavoriteCartListCreateView(generics.ListCreateAPIView):
+    serializer_class = FavoriteCartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return FavoriteCart.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Create a new FavoriteCart for the user
+        favorite_cart = FavoriteCart.objects.create(user=user)
+
+        # Get the shopping cart data from request (Assuming it's sent in JSON format)
+        cart_data = self.request.data.get('products', [])
+        
+        # Add products to the FavoriteCartProduct table
+        for product in cart_data:
+            FavoriteCartProduct.objects.create(
+                favorite_cart=favorite_cart,
+                user=user,
+                name=product['name'],
+                price=product['price'],
+                image=product['image'],
+                quantity=product['quantity']
+            )
+
+        return Response({"message": "Cart saved successfully!"}, status=status.HTTP_201_CREATED)
+
+class MarketsListAPIView(APIView):
+    def get(self, request):
+        try:
+            markets_data = {}
+            products = Product.objects.all()
+            
+            for product in products:
+                market_name = product.market_name or "Diğer"
+                if market_name not in markets_data:
+                    markets_data[market_name] = []
+                
+                markets_data[market_name].append({
+                    "name": product.name,
+                    "price": product.price,
+                    "image": product.image_url,
+                    "category": product.main_category
+                })
+
+            response_data = [
+                {
+                    "marketName": market,
+                    "products": market_products,
+                }
+                for market, market_products in markets_data.items()
+            ]
+
+            return JsonResponse(response_data, safe=False)
+        except Exception as e:
+            print(f"Error in MarketsListAPIView: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+        
+from django.http import JsonResponse
+from django.db.models import F
+from rest_framework.views import APIView
+from .models import Product
+from .serializers import ProductSerializer
+
+class DiscountedProductsAPIView(APIView):
+    """İndirimde olan ürünleri dönen bir API"""
+    def get(self, request):
+        try:
+            discounted_products = Product.objects.filter(
+                high_price__isnull=False,
+                price__lt=F('high_price')
+            )
+            serializer = ProductSerializer(discounted_products, many=True)
+            
+            # Türkçe karakter desteği
+            return JsonResponse(
+                serializer.data,
+                safe=False,
+                json_dumps_params={'ensure_ascii': False}
+            )
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)    

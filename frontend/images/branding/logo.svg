@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#44B341" />
+      <stop offset="100%" stop-color="#7CD179" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="90" fill="url(#gradient)" opacity="0.1" />
+  <path d="M100,30 C70,30 45,55 45,85 C45,115 70,140 100,140 C130,140 155,115 155,85 C155,55 130,30 100,30 Z M100,130 C75,130 55,110 55,85 C55,60 75,40 100,40 C125,40 145,60 145,85 C145,110 125,130 100,130 Z" fill="#44B341" />
+  <path d="M75,70 L125,70 L125,75 L75,75 Z" fill="#44B341" />
+  <path d="M65,85 L135,85 L135,90 L65,90 Z" fill="#44B341" />
+  <path d="M75,100 L125,100 L125,105 L75,105 Z" fill="#44B341" />
+  <path d="M85,115 L115,115 L115,120 L85,120 Z" fill="#44B341" />
+  <path d="M70,150 L130,150 L130,155 L120,170 L80,170 L70,155 Z" fill="#44B341" />
+  <text x="100" y="190" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="#44B341">PriceLess</text>
+</svg> 

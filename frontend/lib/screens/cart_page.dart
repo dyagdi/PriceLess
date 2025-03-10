@@ -1,16 +1,32 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
+import 'package:frontend/widgets/bottom_navigation.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
+import 'to_do_list_page.dart'; 
+import 'package:frontend/screens/category_page.dart';
+import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/constants/constants_url.dart';
 
 class CartPage extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Listem"),
+        title: Text("Sepetim"),
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Colors.black),
         titleTextStyle: TextStyle(color: Colors.black),
+        automaticallyImplyLeading: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.favorite_border, color: Colors.black),
+            onPressed: () => saveCartToFavorites(context),
+          ),
+        ],
       ),
       body: Consumer<CartProvider>(
         builder: (context, cartProvider, child) {
@@ -95,12 +111,10 @@ class CartPage extends StatelessWidget {
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        // Handle cart checkout or comparison logic here
                       },
                       child: Text("Marketleri Karşılaştır"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors
-                            .black, // Use backgroundColor instead of primary
+                        backgroundColor: Colors.black,
                         padding: EdgeInsets.all(16),
                       ),
                     ),
@@ -111,6 +125,66 @@ class CartPage extends StatelessWidget {
           );
         },
       ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 4,
+      ),
     );
   }
+
+  
+void saveCartToFavorites(BuildContext context) async {
+  final cartProvider = Provider.of<CartProvider>(context, listen: false);
+  final cartItems = cartProvider.cartItems;
+
+  if (cartItems.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Sepetiniz boş, favorilere eklenemez!")),
+    );
+    return;
+  }
+
+  final products = cartItems.map((item) => {
+    'name': item.name,
+    'price': item.price,
+    'image': item.image,
+    'quantity': item.quantity,
+  }).toList();
+
+  try {
+    final token = await AuthService.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lütfen önce giriş yapın")),
+      );
+      return;
+    }
+
+    final url = Uri.parse('${baseUrl}favorite-carts/');  // Using the baseUrl constant
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Token $token",  // Note: Using 'Token' instead of 'Bearer'
+      },
+      body: jsonEncode({
+        'products': products,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Sepetiniz favorilere eklendi!")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Favorilere eklenirken hata oluştu: ${response.body}")),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Bağlantı hatası: $e")),
+    );
+  }
+}
+
 }

@@ -12,25 +12,29 @@ String cheapestProductPcToJson(List<CheapestProductPc> data) =>
     json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class CheapestProductPc {
-  String? name;
-  double? price;
-  String? image;
-  String? category;
+  final String? id;
+  final String? name;
+  final double? price;
+  final String? image;
+  final String? category;
 
   CheapestProductPc({
+    this.id,
     this.name,
     this.price,
     this.image,
     this.category,
   });
 
-  factory CheapestProductPc.fromJson(Map<String, dynamic> json) =>
-      CheapestProductPc(
-        name: json["name"],
-        price: json["price"]?.toDouble(),
-        image: json["image"],
-        category: json["category"],
-      );
+  factory CheapestProductPc.fromJson(Map<String, dynamic> json) {
+    return CheapestProductPc(
+      id: json['_id'] ?? json['id'] ?? DateTime.now().toString(),
+      name: json['name'],
+      price: json['price']?.toDouble(),
+      image: json['image'],
+      category: json['category'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "name": name,
@@ -38,4 +42,14 @@ class CheapestProductPc {
         "image": image,
         "category": category,
       };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CheapestProductPc &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
