@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:frontend/models/cart_model.dart';
 import 'package:frontend/widgets/bottom_navigation.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/screens/discounted_product_page.dart'
+    show ProductDetailSheet;
+import 'package:frontend/providers/recently_viewed_provider.dart';
 
 class MarketsPage extends StatefulWidget {
   final Map<String, List<dynamic>> categorizedProducts;
@@ -45,23 +49,101 @@ class _MarketsPageState extends State<MarketsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Marketler",
-          style: TextStyle(color: Colors.black),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.shopping_basket_rounded,
+              color: Theme.of(context).primaryColor,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Marketler",
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
+        centerTitle: true,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: marketProducts.length,
-              itemBuilder: (context, index) {
-                final marketData = marketProducts[index];
-                return MarketSection(marketData: marketData);
-              },
+          : CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).primaryColor.withOpacity(0.8),
+                                Theme.of(context).primaryColor.withOpacity(0.6),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusL),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Yakınımdaki Marketler',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineLarge
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'En uygun fiyatlı ürünleri keşfedin',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      color: Colors.white.withOpacity(0.9),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(8.0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final marketData = marketProducts[index];
+                        return MarketSection(marketData: marketData);
+                      },
+                      childCount: marketProducts.length,
+                    ),
+                  ),
+                ),
+                // Add some bottom padding
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 24),
+                ),
+              ],
             ),
       bottomNavigationBar: BottomNavigation(
         currentIndex: 3,
@@ -81,6 +163,7 @@ class MarketSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Market image mapping
     final Map<String, String> marketImages = {
       "Carrefour": "images/carrefour.png",
       "A101": "images/a101.png",
@@ -89,26 +172,50 @@ class MarketSection extends StatelessWidget {
     };
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
       ),
+      elevation: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
+          // Market header
+          Container(
             padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(AppTheme.radiusL),
+                topRight: Radius.circular(AppTheme.radiusL),
+              ),
+            ),
             child: Row(
               children: [
+                // Market logo as an image
                 Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: Theme.of(context).primaryColor,
+                      width: 2,
+                    ),
                     image: DecorationImage(
-                      image: AssetImage(marketImages[marketData.marketName] ??
-                          'images/default.png'),
-                      fit: BoxFit.cover,
+                      image: AssetImage(
+                        marketImages[marketData.marketName] ??
+                            'images/default.png',
+                      ),
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -119,44 +226,84 @@ class MarketSection extends StatelessWidget {
                     children: [
                       Text(
                         marketData.marketName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
-                      Text(
-                        "${marketData.products.length} ürün",
-                        style: const TextStyle(
-                          color: Colors.grey,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${marketData.products.length} ürün",
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                          ),
+                        ],
                       ),
                     ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Products horizontal list
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    "Ürünler",
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 220,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: marketData.products.length,
+                    itemBuilder: (context, index) {
+                      final product = marketData.products[index];
+                      return SizedBox(
+                        width: 160,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: MarketProductCard(
+                            product: product,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.7,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: marketData.products.length > 4
-                  ? 4
-                  : marketData.products.length,
-              itemBuilder: (context, index) {
-                final product = marketData.products[index];
-                return MarketProductCard(product: product);
-              },
-            ),
-          ),
-          if (marketData.products.length > 4)
+
+          // View all button
+          if (marketData.products.length > 5)
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Center(
@@ -165,11 +312,18 @@ class MarketSection extends StatelessWidget {
                     // TODO: Navigate to market detail page
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.black),
+                    side: BorderSide(color: Theme.of(context).primaryColor),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Tüm Ürünleri Gör",
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(color: Theme.of(context).primaryColor),
                   ),
                 ),
               ),
@@ -192,73 +346,187 @@ class MarketProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<CartProvider>(
       builder: (context, cartProvider, child) {
-        return Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                height: 140,
-                padding: const EdgeInsets.all(8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child:
-                      product.image != null && product.image!.startsWith('http')
-                          ? Image.network(
-                              product.image!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Image.asset("images/default.png");
-                              },
-                            )
-                          : Image.asset(
-                              "images/default.png",
-                              fit: BoxFit.cover,
+        return GestureDetector(
+          onTap: () => _showProductDetail(context, product),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppTheme.radiusL),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product image
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(AppTheme.radiusL),
+                      ),
+                      child: SizedBox(
+                        height: 120,
+                        width: double.infinity,
+                        child: product.image != null &&
+                                product.image!.startsWith('http')
+                            ? Image.network(
+                                product.image!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.image_not_supported_outlined,
+                                        color: Colors.grey[400],
+                                        size: 32,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: Icon(
+                                    Icons.image_not_supported_outlined,
+                                    color: Colors.grey[400],
+                                    size: 32,
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                    // Price tag
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        ),
+                        child: Text(
+                          "₺${product.price?.toStringAsFixed(2) ?? "0.00"}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Product details
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Product name
+                        Text(
+                          product.name ?? "Ürün Adı Yok",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const Spacer(),
+
+                        // Add to cart button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 30,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              final cartItem = CartItem(
+                                name: product.name ?? "Ürün Adı Yok",
+                                price: product.price ?? 0.0,
+                                image: product.image ?? "",
+                              );
+                              cartProvider.addItem(cartItem);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('${product.name} sepete eklendi!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  action: SnackBarAction(
+                                    label: 'Geri Al',
+                                    onPressed: () {
+                                      cartProvider.removeItem(cartItem);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add_shopping_cart, size: 14),
+                            label: const Text('Sepete Ekle',
+                                style: TextStyle(fontSize: 11)),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
                             ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Text(
-                  product.name ?? "Ürün Adı Yok",
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Text(
-                "₺${product.price?.toStringAsFixed(2) ?? "0.00"}",
-                style: const TextStyle(fontSize: 12, color: Colors.black),
-              ),
-              OutlinedButton(
-                onPressed: () {
-                  final cartItem = CartItem(
-                    name: product.name ?? "Ürün Adı Yok",
-                    price: product.price ?? 0.0,
-                    image: product.image ?? "",
-                  );
-                  cartProvider.addItem(cartItem);
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.black),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                child: const Icon(Icons.add, color: Colors.black),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  void _showProductDetail(BuildContext context, CheapestProductPc product) {
+    // Add to recently viewed if provider exists
+    try {
+      context.read<RecentlyViewedProvider>().addItem(product);
+    } catch (e) {
+      // Provider might not be available, ignore
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => ProductDetailSheet(
+          name: product.name ?? '',
+          price: product.price ?? 0.0,
+          image: product.image ?? '',
+          category: product.category,
+          scrollController: scrollController,
+          id: product.id,
+        ),
+      ),
     );
   }
 }

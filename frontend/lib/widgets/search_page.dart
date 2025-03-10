@@ -19,7 +19,8 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      List<ProductSearchResult> result = await searchProducts(_searchController.text);
+      List<ProductSearchResult> result =
+          await searchProducts(_searchController.text);
       setState(() {
         products = result;
       });
@@ -37,7 +38,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search Results'),
+        title: Text('Arama Sonuçları'),
         actions: [
           IconButton(
             icon: Icon(Icons.search),
@@ -52,7 +53,7 @@ class _SearchPageState extends State<SearchPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search for products...',
+                hintText: 'Ürün, marka veya kategori ara',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
               ),
@@ -67,14 +68,16 @@ class _SearchPageState extends State<SearchPage> {
                       final product = products[index];
                       return ListTile(
                         title: Text(product.name),
-                        subtitle: Text('${product.price} - ${product.marketName}'),
+                        subtitle:
+                            Text('${product.price} - ${product.marketName}'),
                         leading: Image.network(product.imageUrl),
                         onTap: () {
                           // Navigate to the product detail page
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ProductDetailPage(product: product),
+                              builder: (context) =>
+                                  ProductDetailPage(product: product),
                             ),
                           );
                         },

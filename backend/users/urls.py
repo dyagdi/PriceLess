@@ -7,6 +7,7 @@ from .views import (
     HomePageProductListAPIView, 
     cheapest_products,
     MarketsListAPIView,
+    DiscountedProductsAPIView,
 )
 from . import views
 from .views import FavoriteCartListCreateView
@@ -23,4 +24,5 @@ urlpatterns = [
     path('search/', views.search_products, name='search_products'), # verilerin tablodan çekilebilmesi için eklediğim endpoint
     path('favorite-carts/', FavoriteCartListCreateView.as_view(), name='favorite-carts'),
     path('markets-products/', MarketsListAPIView.as_view(), name='market-products'),
+    path('discounted-products/', DiscountedProductsAPIView.as_view(), name='discounted-products'),
 ]

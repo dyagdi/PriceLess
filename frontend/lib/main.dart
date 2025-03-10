@@ -25,14 +25,21 @@ import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:frontend/screens/auth_page.dart';
 import 'package:frontend/screens/home_page.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/providers/recently_viewed_provider.dart';
+import 'package:frontend/providers/favorites_provider.dart';
+import 'package:frontend/screens/splash_screen.dart';
+import 'package:frontend/screens/markets_page.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => RecentlyViewedProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
       ],
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
@@ -44,13 +51,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PriceLess',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const AuthPage(), // AuthPage is the initial screen
+      theme: AppTheme.lightTheme,
+      home: const SplashScreen(), // Use SplashScreen as the initial screen
       routes: {
         '/home': (context) => HomePage(), // Define the HomePage route
+        '/auth': (context) => const AuthPage(), // Define the AuthPage route
+        '/markets': (context) =>
+            const MarketsPage(), // Define the MarketsPage route
       },
     );
   }

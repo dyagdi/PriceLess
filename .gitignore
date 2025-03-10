@@ -13,7 +13,7 @@ __pycache__/
 
 # Ignore environment variables
 .env
-
+backend/.env
 # Ignore system files
 .DS_Store
 Thumbs.db

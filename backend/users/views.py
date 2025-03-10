@@ -227,3 +227,28 @@ class MarketsListAPIView(APIView):
         except Exception as e:
             print(f"Error in MarketsListAPIView: {e}")
             return JsonResponse({'error': str(e)}, status=500)
+        
+from django.http import JsonResponse
+from django.db.models import F
+from rest_framework.views import APIView
+from .models import Product
+from .serializers import ProductSerializer
+
+class DiscountedProductsAPIView(APIView):
+    """İndirimde olan ürünleri dönen bir API"""
+    def get(self, request):
+        try:
+            discounted_products = Product.objects.filter(
+                high_price__isnull=False,
+                price__lt=F('high_price')
+            )
+            serializer = ProductSerializer(discounted_products, many=True)
+            
+            # Türkçe karakter desteği
+            return JsonResponse(
+                serializer.data,
+                safe=False,
+                json_dumps_params={'ensure_ascii': False}
+            )
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)    

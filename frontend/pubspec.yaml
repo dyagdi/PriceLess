@@ -35,6 +35,9 @@ dependencies:
   geolocator: ^9.0.2
   geocoding: ^2.0.4
   shared_preferences: ^2.5.2
+  shimmer: ^3.0.0
+  share_plus: ^7.2.1
+  google_fonts: ^6.1.0
  
   
 
@@ -74,6 +77,13 @@ flutter:
     - images/misir.jpg
     - images/default.png
     - assets/cities_states.json
+    - images/carrefour.png
+    - images/a101.png
+    - images/şok.png
+    - images/migros.png
+    - images/meyve_sebze.jpeg
+    - images/et_tavuk_balik.jpeg
+    - images/sut_kahvaltilik.jpeg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
