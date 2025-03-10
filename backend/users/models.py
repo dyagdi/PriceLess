@@ -1,7 +1,6 @@
 from django.db import models
-
-# Create your models here.
-# models.py
+from django.contrib.postgres.search import SearchVectorField
+from django.contrib.auth.models import User
 
 
 class Product(models.Model):
@@ -9,17 +8,39 @@ class Product(models.Model):
     sub_category = models.TextField()
     lowest_category = models.TextField()
     name = models.TextField()
-    price = models.FloatField()  # PostgreSQL'deki "real" tipi için
-    high_price = models.FloatField(null=True, blank=True)  # nullable alan
+    price = models.FloatField()  
+    high_price = models.FloatField(null=True, blank=True)  
     in_stock = models.TextField()
     product_link = models.TextField()
     page_link = models.TextField()
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
+    search_vector = SearchVectorField(null=True) # Search vector eklentisi
 
     def __str__(self):
         return self.name
 
     class Meta:
         db_table = 'sample_data'  # PostgreSQL'deki tablo adı
+
+class FavoriteCart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    id = models.AutoField(primary_key=True)  # Django automatically assigns an ID, so no need for shopping_cart_id separately.
+
+    class Meta:
+        db_table = 'favorite_carts'
+
+class FavoriteCartProduct(models.Model):
+    favorite_cart = models.ForeignKey(FavoriteCart, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.URLField()
+    quantity = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = 'favorite_carts_products'
+
+    def __str__(self):
+        return f"{self.name} (x{self.quantity}) - Cart {self.favorite_cart_id}"

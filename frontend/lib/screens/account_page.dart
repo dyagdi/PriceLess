@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/account_settings.dart';
 import 'addresses_page.dart'; 
 import 'user_info_page.dart'; 
 import 'favorite_carts_page.dart'; 
+import 'package:frontend/widgets/bottom_navigation.dart';
+
 class UserAccountPage extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('User Account'),
-        backgroundColor: Colors.blue,
+        title: Text('Hesabım'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        automaticallyImplyLeading: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -17,8 +24,13 @@ class UserAccountPage extends StatelessWidget {
             _buildUserInfoSection(context),
             _buildAddressesSection(context),
             _buildFavoriteCartsSection(context),
+            _buildAccountSettingsSection(context),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: -1,  // Use -1 to indicate this page isn't in the navigation bar
+        categorizedProducts: const {},
       ),
     );
   }
@@ -30,7 +42,6 @@ class UserAccountPage extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         leading: Icon(Icons.account_circle, size: 40),
         title: Text('Hesap Bilgileri'),
-        //subtitle: Text('E-mail, telefon, name, and surname'),
         trailing: Icon(Icons.arrow_forward),
         onTap: () {
           Navigator.push(
@@ -74,6 +85,24 @@ class UserAccountPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => FavoriteCartsPage()),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAccountSettingsSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.settings, size: 40),
+        title: Text('Hesap Ayarları'),
+        trailing: Icon(Icons.arrow_forward),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AccountSettingsPage()),
           );
         },
       ),
