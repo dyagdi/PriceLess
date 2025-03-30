@@ -7,7 +7,7 @@ import { dataDisplayCustomizations } from './customizations/dataDisplay';
 import { feedbackCustomizations } from './customizations/feedback';
 import { navigationCustomizations } from './customizations/navigation';
 import { surfacesCustomizations } from './customizations/surfaces';
-import { colorSchemes, typography, shadows, shape } from './themePrimitives';
+import { colorSchemes, typography, shadows, shape, brand } from './themePrimitives';
 
 function AppTheme({ children, disableCustomTheme, themeComponents }) {
   const theme = React.useMemo(() => {
@@ -30,6 +30,96 @@ function AppTheme({ children, disableCustomTheme, themeComponents }) {
             ...navigationCustomizations,
             ...surfacesCustomizations,
             ...themeComponents,
+            MuiAppBar: {
+              styleOverrides: {
+                root: {
+                  boxShadow: 'none',
+                },
+              },
+            },
+            MuiButton: {
+              styleOverrides: {
+                root: {
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 12,
+                  padding: '12px 24px',
+                  letterSpacing: 0.5,
+                },
+                contained: {
+                  boxShadow: 'none',
+                  backgroundColor: '#68B96A',
+                  '&:hover': {
+                    backgroundColor: '#5AA45C',
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                  },
+                },
+                outlined: {
+                  borderWidth: '1.5px',
+                  borderColor: '#68B96A',
+                  color: '#5AA45C',
+                  '&:hover': {
+                    borderWidth: '1.5px',
+                    borderColor: '#5AA45C',
+                    backgroundColor: 'rgba(104, 185, 106, 0.08)',
+                  },
+                },
+                textInfo: {
+                  color: '#5AA45C',
+                  fontWeight: 600,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: '#68B96A',
+                  },
+                },
+                textPrimary: {
+                  color: '#5AA45C',
+                  '&:hover': {
+                    backgroundColor: 'rgba(104, 185, 106, 0.08)',
+                  },
+                },
+              },
+            },
+            MuiCard: {
+              styleOverrides: {
+                root: {
+                  borderRadius: 12,
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden',
+                },
+              },
+            },
+            MuiTextField: {
+              styleOverrides: {
+                root: {
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 12,
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#68B96A',
+                    },
+                  },
+                },
+              },
+            },
+            MuiChip: {
+              styleOverrides: {
+                root: {
+                  borderRadius: 8,
+                  fontWeight: 500,
+                },
+                colorPrimary: {
+                  backgroundColor: '#68B96A',
+                  color: 'white',
+                },
+              },
+            },
+            MuiBadge: {
+              styleOverrides: {
+                colorError: {
+                  backgroundColor: '#FF5B3D',
+                },
+              },
+            },
           },
         });
   }, [disableCustomTheme, themeComponents]);
