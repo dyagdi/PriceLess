@@ -8,7 +8,7 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import ProductCard from './ProductCard'; // Import the ProductCard component
+import ProductCard from './ProductCard'; 
 
 export default function Markets({ marketProducts }) {
   if (!marketProducts || marketProducts.length === 0) {
@@ -29,14 +29,14 @@ export default function Markets({ marketProducts }) {
             <Card sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
-                  {market.market_name}
+                  {market.marketName}
                 </Typography>
                 <Button 
                   variant="outlined" 
                   color="primary" 
                   size="small"
                 >
-                  View All
+                  Tümünü Gör
                 </Button>
               </Box>
               <Grid container spacing={3}>
