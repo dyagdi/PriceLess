@@ -1,22 +1,26 @@
 import * as React from 'react';
 import SvgIcon from '@mui/material/SvgIcon';
+import { useTheme } from '@mui/material/styles';
 
 export default function SitemarkIcon() {
+  const theme = useTheme();
+  const brandColor = theme.palette.primary.dark;
+
   return (
-    <SvgIcon sx={{ height: 21, width: 100, mr: 2 }}>
+    <SvgIcon sx={{ height: 28, width: 130, mr: 2 }}>
       <svg
-        width={120}
-        height={24}
-        viewBox="0 0 120 24"
+        width={130}
+        height={28}
+        viewBox="0 0 130 28"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <text
           x="0"
-          y="16"
-          fontSize="16"
-          fontWeight="bold"
-          fill="#4876EE"
+          y="20"
+          fontSize="20"
+          fontWeight="900"
+          fill={brandColor}
           fontFamily="Arial, sans-serif"
         >
           PriceLess
