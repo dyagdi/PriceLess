@@ -19,7 +19,6 @@ import Footer from '../components/Footer';
 import AppTheme from '../shared-theme/AppTheme';
 import Categories from '../components/Categories';
 
-// Define API endpoint base URL as a constant
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 export default function MarketingPage(props) {
@@ -37,7 +36,7 @@ export default function MarketingPage(props) {
       
       try {
         const [cheapestData, marketsData, productsData, categoryData] = await Promise.all([
-          fetchApi('/cheapest-products/'),
+          fetchApi('/discounted-products/'),
           fetchApi('/markets-products/'),
           fetchApi('/products/'),
           fetchApi('/cheapest-products-per-category/')
@@ -58,7 +57,6 @@ export default function MarketingPage(props) {
     fetchData();
   }, []);
 
-  // Helper function to fetch data from API
   const fetchApi = async (endpoint) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`);
     
@@ -69,7 +67,6 @@ export default function MarketingPage(props) {
     return await response.json();
   };
 
-  // Render loading state
   if (isLoading) {
     return (
       <AppTheme {...props}>
@@ -97,7 +94,6 @@ export default function MarketingPage(props) {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <AppTheme {...props}>
@@ -147,7 +143,6 @@ export default function MarketingPage(props) {
     );
   }
 
-  // Section divider with enhanced styling
   const StyledDivider = () => (
     <Box 
       sx={{ 
@@ -193,7 +188,6 @@ export default function MarketingPage(props) {
       <AppAppBar />
       <Hero />
       <Box sx={{ overflow: 'hidden' }}>
-        {/* Discounted Products Section */}
         <Box 
           sx={{ 
             position: 'relative',
@@ -235,7 +229,6 @@ export default function MarketingPage(props) {
           <Categories categoryProducts={categoryProducts} />
         </Box>
         
-        {/* Popular Products Section */}
         <Box 
           sx={{ 
             position: 'relative',
@@ -277,7 +270,6 @@ export default function MarketingPage(props) {
           <Markets marketProducts={marketProducts} />
         </Box>
         
-        {/* FAQ Section */}
         <Box 
           sx={{ 
             position: 'relative',
@@ -290,7 +282,6 @@ export default function MarketingPage(props) {
           <FAQ />
         </Box>
         
-        {/* Footer Section */}
         <Box 
           sx={{ 
             bgcolor: (theme) => 
