@@ -1,7 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { styled, alpha } from '@mui/material/styles';
+import { styled, alpha, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -18,72 +17,125 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Badge from '@mui/material/Badge';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
-import Sitemark from './SitemarkIcon';
+import Typography from '@mui/material/Typography';
 import ColorModeIconDropdown from '../shared-theme/ColorModeIconDropdown';
 import { useBasket } from '../context/BasketContext';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { useFavorites } from '../context/FavoritesContext';
+import { useNavigate } from 'react-router-dom';
+import { Tooltip } from '@mui/material';
+import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   flexShrink: 0,
-  borderRadius: `calc(${theme.shape.borderRadius}px + 8px)`,
-  backdropFilter: 'blur(24px)',
-  border: '1px solid',
-  borderColor: (theme.vars || theme).palette.divider,
-  backgroundColor: theme.vars
-    ? `rgba(${theme.vars.palette.background.defaultChannel} / 0.4)`
-    : alpha(theme.palette.background.default, 0.4),
-  boxShadow: (theme.vars || theme).shadows[1],
-  padding: '8px 12px',
+  borderRadius: 0,
+  backdropFilter: 'none',
+  border: 'none',
+  borderBottom: '1px solid',
+  borderColor: alpha(theme.palette.divider, 0.08),
+  backgroundColor: 'white',
+  boxShadow: 'none',
+  padding: '0 8px',
+  height: { xs: '48px', sm: '56px' },
+  minHeight: { xs: '48px', sm: '56px' },
+  [theme.breakpoints.up('sm')]: {
+    minHeight: '56px',
+    height: '56px',
+  },
 }));
 
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const navigate = useNavigate(); // Hook for navigation
-  const { getBasketCount } = useBasket(); // Get basket count from context
+  const navigate = useNavigate();
+  const { getBasketCount } = useBasket();
+  const { favorites } = useFavorites();
+  const theme = useTheme();
 
-  // Function to toggle drawer
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
 
-  // Open Popover for "Kategoriler"
   const handlePopoverOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  // Close Popover
   const handlePopoverClose = () => {
     setAnchorEl(null);
   };
 
   const isPopoverOpen = Boolean(anchorEl);
-  const basketCount = getBasketCount(); // Get the current basket count
+  const basketCount = getBasketCount();
+
+  const handleFavoritesClick = () => {
+    navigate('/favorites');
+  };
 
   return (
     <AppBar
       position="fixed"
       enableColorOnDark
       sx={{
-        boxShadow: 0,
-        bgcolor: 'transparent',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+        bgcolor: 'white',
         backgroundImage: 'none',
-        mt: 'calc(var(--template-frame-height, 0px) + 28px)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1200,
+        height: { xs: '48px', sm: '56px' },
       }}
     >
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
-            <Sitemark />
+            <Typography
+              variant="h5"
+              component="a"
+              href="/"
+              sx={{
+                mr: 2,
+                fontWeight: 900,
+                fontSize: '20px',
+                color: 'primary.dark',
+                textDecoration: 'none',
+                letterSpacing: '-0.5px',
+                display: 'flex', 
+                alignItems: 'center',
+                '&:hover': {
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                },
+              }}
+            >
+              <LocalGroceryStoreIcon 
+                sx={{ 
+                  mr: 0.5, 
+                  color: 'primary.main',
+                  fontSize: '24px'
+                }} 
+              />
+              PriceLess
+            </Typography>
             <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
               {/* Kategoriler Button with Popover */}
               <Button
                 variant="text"
-                color="info"
+                color="primary"
                 size="small"
                 onClick={handlePopoverOpen}
+                sx={{ 
+                  fontWeight: 600,
+                  color: 'primary.dark',
+                  px: 1,
+                  py: 0.5,
+                  minWidth: 'auto',
+                  '&:hover': { color: 'primary.main' }
+                }}
               >
                 Kategoriler
               </Button>
@@ -120,24 +172,76 @@ export default function AppAppBar() {
                 </List>
               </Popover>
 
-              <Button variant="text" href="#indirimli-urunler" color="info" size="small">
+              <Button 
+                variant="text" 
+                href="#indirimli-urunler" 
+                color="primary" 
+                size="small"
+                sx={{ 
+                  fontWeight: 600,
+                  color: 'primary.dark',
+                  px: 1,
+                  py: 0.5,
+                  minWidth: 'auto',
+                  '&:hover': { color: 'primary.main' }
+                }}
+              >
                 İndirimli Ürünler
               </Button>
-              <Button variant="text" href="#popular-products" color="info" size="small">
+              <Button 
+                variant="text" 
+                href="#popular-products" 
+                color="primary" 
+                size="small"
+                sx={{ 
+                  fontWeight: 600,
+                  color: 'primary.dark',
+                  px: 1,
+                  py: 0.5,
+                  minWidth: 'auto',
+                  '&:hover': { color: 'primary.main' }
+                }}
+              >
                 Popüler Ürünler
               </Button>
-              <Button variant="text" href="#markets" color="info" size="small">
+              <Button 
+                variant="text" 
+                href="#markets" 
+                color="primary" 
+                size="small"
+                sx={{ 
+                  fontWeight: 600,
+                  color: 'primary.dark',
+                  px: 1,
+                  py: 0.5,
+                  minWidth: 'auto',
+                  '&:hover': { color: 'primary.main' }
+                }}
+              >
                 Marketler
               </Button>
-              <Button variant="text" href="#faq" color="info" size="small" sx={{ minWidth: 0 }}>
-                Sıkça Sorulan Sorular
+              <Button 
+                variant="text" 
+                href="#faq" 
+                color="primary" 
+                size="small" 
+                sx={{ 
+                  minWidth: 'auto',
+                  px: 1,
+                  py: 0.5,
+                  fontWeight: 600,
+                  color: 'primary.dark',
+                  '&:hover': { color: 'primary.main' }
+                }}
+              >
+                SSS
               </Button>
             </Box>
           </Box>
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
-              gap: 1,
+              gap: 0.5,
               alignItems: 'center',
             }}
           >
@@ -146,22 +250,38 @@ export default function AppAppBar() {
               variant="text"
               size="small"
               onClick={() => navigate('/sign-in')}
+              sx={{ fontWeight: 600, py: 0.5, px: 1 }}
             >
-              Giriş Yap
+              Giriş
             </Button>
             <Button
               color="primary"
               variant="contained"
               size="small"
               onClick={() => navigate('/sign-up')}
+              sx={{ py: 0.5, px: 1.5 }}
             >
               Kayıt Ol
             </Button>
+            <Tooltip title="Favoriler">
+              <IconButton 
+                onClick={handleFavoritesClick}
+                color="inherit"
+                aria-label="favorites"
+                sx={{ ml: 0.5, p: 0.5 }}
+                size="small"
+              >
+                <Badge badgeContent={favorites?.length || 0} color="error">
+                  <FavoriteBorderIcon fontSize="small" />
+                </Badge>
+              </IconButton>
+            </Tooltip>
             <Button
               color="primary"
               variant="text"
               size="small"
               onClick={() => navigate('/my-basket')}
+              sx={{ fontWeight: 600, px: 1, py: 0.5 }}
               startIcon={
                 <Badge 
                   badgeContent={basketCount} 
@@ -177,7 +297,7 @@ export default function AppAppBar() {
                     },
                   }}
                 >
-                  <ShoppingBasketIcon />
+                  <ShoppingBasketIcon fontSize="small" />
                 </Badge>
               }
             >
@@ -185,20 +305,19 @@ export default function AppAppBar() {
             </Button>
             <ColorModeIconDropdown />
           </Box>
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 0.5 }}>
             <Badge 
               badgeContent={basketCount} 
               color="error"
-              sx={{ mr: 1 }}
+              sx={{ mr: 0.5 }}
               onClick={() => navigate('/my-basket')}
             >
-              <IconButton color="inherit">
-                <ShoppingBasketIcon />
+              <IconButton color="inherit" size="small" sx={{ p: 0.5 }}>
+                <ShoppingBasketIcon fontSize="small" />
               </IconButton>
             </Badge>
-            <ColorModeIconDropdown size="medium" />
-            <IconButton aria-label="Menu button" onClick={toggleDrawer(true)}>
-              <MenuIcon />
+            <IconButton aria-label="Menu button" onClick={toggleDrawer(true)} size="small" sx={{ p: 0.5 }}>
+              <MenuIcon fontSize="small" />
             </IconButton>
             <Drawer
               anchor="top"
@@ -243,7 +362,7 @@ export default function AppAppBar() {
                   color="primary"
                   variant="outlined"
                   fullWidth
-                  onClick={() => navigate('../sign-in')}
+                  onClick={() => navigate('/sign-in')}
                 >
                   Giriş Yap
                 </Button>
