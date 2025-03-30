@@ -11,14 +11,14 @@ import Typography from '@mui/material/Typography';
 import FacebookIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import TwitterIcon from '@mui/icons-material/X';
-import SitemarkIcon from './SitemarkIcon';
+import { useTheme } from '@mui/material/styles';
 
 function Copyright() {
   return (
     <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
       {'Copyright © '}
-      <Link color="text.secondary" href="https://mui.com/">
-        Sitemark
+      <Link color="text.secondary" href="/">
+        PriceLess
       </Link>
       &nbsp;
       {new Date().getFullYear()}
@@ -27,6 +27,8 @@ function Copyright() {
 }
 
 export default function Footer() {
+  const theme = useTheme();
+  
   return (
     <Container
       sx={{
@@ -55,7 +57,26 @@ export default function Footer() {
           }}
         >
           <Box sx={{ width: { xs: '100%', sm: '60%' } }}>
-            <SitemarkIcon />
+            <Typography
+              variant="h5"
+              component="a"
+              href="/"
+              sx={{
+                fontWeight: 900,
+                fontSize: '24px',
+                color: 'primary.dark',
+                textDecoration: 'none',
+                letterSpacing: '-0.5px',
+                display: 'flex', 
+                alignItems: 'center',
+                '&:hover': {
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                },
+              }}
+            >
+              PriceLess
+            </Typography>
             <Typography variant="body2" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
               Join the newsletter
             </Typography>
