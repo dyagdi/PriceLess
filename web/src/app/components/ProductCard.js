@@ -18,18 +18,26 @@ import Chip from '@mui/material/Chip';
 import { useBasket } from '../context/BasketContext';
 import { useFavorites } from '../context/FavoritesContext';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product = {} }) {
   const { addToBasket } = useBasket();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [openSnackbar, setOpenSnackbar] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
+  const [imgSrc, setImgSrc] = React.useState(() => {
+    return product?.image || product?.image_url || '/default.png';
+  });
+  const [imgError, setImgError] = React.useState(false);
   
   const handleImageError = (e) => {
-    e.target.onerror = null; 
-    e.target.src = '/placeholder.jpg'; 
+    console.log('Image failed to load:', imgSrc);
+    e.target.onerror = null; // Prevent infinite loops
+    setImgError(true);
+    setImgSrc('/default.png');
   };
 
   const handleAddToBasket = () => {
+    if (!product) return;
+    
     const productCopy = { ...product };
     
     if (!productCopy.id) {
@@ -48,11 +56,16 @@ export default function ProductCard({ product }) {
   };
 
   const handleToggleFavorite = (e) => {
+    if (!product) return;
     e.stopPropagation();
     toggleFavorite(product);
   };
 
-  const hasDiscount = product.price && product.high_price && product.price < product.high_price;
+  // Safely check for discount with null checks
+  const hasDiscount = product?.price && product?.high_price && 
+                      !isNaN(product.price) && !isNaN(product.high_price) && 
+                      product.price < product.high_price;
+                      
   const discountPercentage = hasDiscount 
     ? Math.round(((product.high_price - product.price) / product.high_price) * 100) 
     : 0;
@@ -128,19 +141,36 @@ export default function ProductCard({ product }) {
           backgroundColor: '#ffffff',
           overflow: 'hidden',
         }}>
-          <CardMedia
-            component="img"
-            image={product.image || product.image_url || '/placeholder.jpg'}
-            alt={product.name}
-            onError={handleImageError}
-            sx={{ 
-              objectFit: 'contain',
-              maxHeight: '150px',
-              maxWidth: '90%',
-              margin: 'auto',
-              padding: '10px',
-            }}
-          />
+          {!imgError ? (
+            <CardMedia
+              component="img"
+              image={imgSrc}
+              alt={product?.name || 'Product'}
+              onError={handleImageError}
+              sx={{ 
+                objectFit: 'contain',
+                maxHeight: '150px',
+                maxWidth: '90%',
+                margin: 'auto',
+                padding: '10px',
+              }}
+            />
+          ) : (
+            <Box 
+              sx={{ 
+                width: '100px', 
+                height: '100px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                backgroundColor: 'rgba(0,0,0,0.03)',
+                borderRadius: '8px',
+                color: 'text.secondary'
+              }}
+            >
+              <Typography variant="caption">No Image</Typography>
+            </Box>
+          )}
         </Box>
         
         <CardContent sx={{ 
@@ -188,7 +218,7 @@ export default function ProductCard({ product }) {
               height: '2.4em',
             }}
           >
-            {product.name}
+            {product?.name || 'Unnamed Product'}
           </Typography>
           
           <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'baseline' }}>
@@ -200,10 +230,10 @@ export default function ProductCard({ product }) {
                 color: '#333',
               }}
             >
-              ₺{product.price?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+              {product?.price ? `₺${product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}` : '₺0.00'}
             </Typography>
             
-            {hasDiscount && (
+            {hasDiscount && product?.high_price && (
               <Typography 
                 variant="body2" 
                 sx={{ 
@@ -213,7 +243,7 @@ export default function ProductCard({ product }) {
                   fontSize: '0.85rem',
                 }}
               >
-                ₺{product.high_price?.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                ₺{product.high_price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
               </Typography>
             )}
           </Box>
