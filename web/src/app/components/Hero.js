@@ -10,8 +10,17 @@ import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
+import { useTheme } from '@mui/material/styles';
 //import { visuallyHidden } from '@mui/utils';
 //import { styled } from '@mui/material/styles';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import SearchIcon from '@mui/icons-material/Search';
+import InputAdornment from '@mui/material/InputAdornment';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 /*const StyledBox = styled('div')(({ theme }) => ({
   alignSelf: 'center',
@@ -39,128 +48,305 @@ import CardMedia from '@mui/material/CardMedia';
 }));*/
 
 export default function Hero() {
+  const theme = useTheme();
+  const brandColor = theme.palette.primary.main;
+  
   return (
-    <Box
-      id="hero"
-      sx={(theme) => ({
-        width: '100%',
-        backgroundRepeat: 'no-repeat',
-        backgroundImage:
-          'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 90%), transparent)',
-        ...theme.applyStyles('dark', {
-          backgroundImage:
-            'radial-gradient(ellipse 80% 50% at 50% -20%, hsl(210, 100%, 16%), transparent)',
-        }),
-      })}
-    >
-      <Container
+    <>
+      {/* Delivery Address Section */}
+      <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          pt: { xs: 14, sm: 20 },
-          pb: { xs: 8, sm: 12 },
+          width: '100%',
+          backgroundColor: 'white',
+          mt: { xs: '48px', sm: '56px' }, // Updated to match new AppBar height
+          borderBottom: '1px solid',
+          borderColor: 'rgba(0,0,0,0.05)',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
-        <Stack
-          spacing={2}
-          useFlexGap
-          sx={{ alignItems: 'center', width: { xs: '100%', sm: '70%' } }}
+        <Container
+          sx={{
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
         >
-          <Typography
-            variant="h1"
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: 'center',
-              fontSize: 'clamp(3rem, 10vw, 3.5rem)',
-            }}
-          >
-            En Ucuz Ürünleri Bul
-            <Typography
-              component="span"
-              variant="h1"
-              sx={(theme) => ({
-                fontSize: 'inherit',
-                color: 'primary.main',
-                ...theme.applyStyles('dark', {
-                  color: 'primary.light',
-                }),
-              })}
-            >
-              En Yakın Marketlere Git
-            </Typography>
-          </Typography>
-          <Typography
-            sx={{
-              textAlign: 'center',
-              color: 'text.secondary',
-              width: { sm: '100%', md: '80%' },
-            }}
-          >
-            
-            Yenilikçi yaklaşımımız, gelişmiş pazar analizi, akıllı tedarik stratejileri ve en son teknolojileri bir araya getirerek sizi en uygun maliyetli üretim seçenekleriyle buluşturur.
-            Arama motorumuzu denemekten çekinmeyin!
-            
-          </Typography>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            useFlexGap
-            sx={{ pt: 2, width: { xs: '100%', sm: '350px' } }}
-          >
-            <TextField
-              id="arama-hero"
-              hiddenLabel
-              size="small"
-              variant="outlined"
-              aria-label="Search Engine"
-              placeholder="Search"
-              fullWidth
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              sx={{ minWidth: 'fit-content' }}
-            >
-              Search
-            </Button>
-          </Stack>
-        </Stack>
-      </Container>
-      {/* Product Section */}
-      <Container
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <LocationOnIcon sx={{ color: '#68B96A', mr: 1, fontSize: '20px' }} />
+            <Box>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'text.secondary',
+                  display: 'block',
+                  fontSize: '0.7rem',
+                  lineHeight: 1.2,
+                }}
+              >
+                Teslimat Adresi
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 500,
+                  color: 'text.primary',
+                  fontSize: '0.875rem',
+                  lineHeight: 1.2,
+                }}
+              >
+                Union Square, Ellis St, San Francisco
+              </Typography>
+            </Box>
+          </Box>
+          <KeyboardArrowDownIcon sx={{ color: '#68B96A', fontSize: '20px' }} />
+        </Container>
+      </Box>
+      
+      <Box
+        id="hero"
         sx={{
-          py: 4,
+          width: '100%',
+          backgroundColor: '#9ED0A0', // Updated to match the mobile app color
+          borderRadius: '0 0 16px 16px',
+          mb: 3,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
-{/*         <Typography variant="h4" sx={{ textAlign: 'center', mb: 4 }}>
-          All Products
-        </Typography> */}
-{/*         <Grid container spacing={4}>
-          {Array(8).fill(null).map((_, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card sx={{ height: '100%' }}>
-                <CardMedia
-                  component="img"
-                  height="140"
-                  image="https://via.placeholder.com/140" // Replace with product image URL
-                  alt="Product Image"
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h6" component="div">
-                    Product Name
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    $100.00
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid> */}
+        <Container
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            pt: { xs: 4, sm: 5 },
+            pb: { xs: 4, sm: 5 },
+          }}
+        >
+          <Typography 
+            variant="h3" 
+            sx={{ 
+              color: 'primary.dark',
+              fontWeight: 'bold',
+              mb: 0.5,
+              fontSize: { xs: '1.75rem', sm: '2.25rem' },
+            }}
+          >
+            Hoş Geldiniz!
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'primary.dark',
+              width: { sm: '100%', md: '80%' },
+              mb: 2.5,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+            }}
+          >
+            En uygun fiyatlı ürünleri keşfedin
+          </Typography>
+          
+          <Box sx={{ width: '100%', mb: 2 }}>
+            <TextField
+              placeholder="Ürün, marka veya kategori ara"
+              variant="outlined"
+              fullWidth
+              sx={{
+                backgroundColor: 'white',
+                borderRadius: 8,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 8,
+                  height: 42,
+                  '& fieldset': {
+                    borderColor: 'rgba(0,0,0,0.08)',
+                    borderWidth: '1px',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(0,0,0,0.12)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#68B96A',
+                    borderWidth: '1px',
+                  },
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                },
+                '& .MuiInputBase-input': {
+                  '&::placeholder': {
+                    color: 'rgba(0, 0, 0, 0.45)',
+                    opacity: 1,
+                  },
+                  fontSize: '0.875rem',
+                  padding: '10px 14px',
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+          
+          <Button
+            variant="contained"
+            color="primary"
+            size="medium"
+            sx={{ 
+              minWidth: 'fit-content',
+              color: 'white',
+              borderRadius: 8,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: 3,
+              py: 1,
+              boxShadow: 'none',
+              mb: 2,
+              backgroundColor: '#68B96A',
+              '&:hover': {
+                backgroundColor: '#5AA45C',
+              }
+            }}
+          >
+            Yakınımdaki Marketleri Gör
+          </Button>
+        </Container>
+      </Box>
+    
+      {/* Category Cards Section */}
+      <Container sx={{ mb: 5 }}>
+        <Grid container spacing={1.5} justifyContent="center">
+          <Grid item xs={6} sm={3}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                py: 1.5,
+                bgcolor: '#FFF8EA',
+                border: 'none',
+                boxShadow: 'none',
+                borderRadius: 3,
+              }}
+            >
+              <Box 
+                sx={{ 
+                  bgcolor: '#FDE9C1', 
+                  borderRadius: '50%', 
+                  p: 1, 
+                  display: 'flex',
+                  mb: 0.5,
+                }}
+              >
+                <LocalOfferIcon sx={{ color: '#F8A93E', fontSize: '1.25rem' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600} textAlign="center">
+                İndirimli Ürünler
+              </Typography>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={6} sm={3}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                py: 1.5,
+                bgcolor: '#EEF6FB',
+                border: 'none',
+                boxShadow: 'none',
+                borderRadius: 3,
+              }}
+            >
+              <Box 
+                sx={{ 
+                  bgcolor: '#D5E8F7', 
+                  borderRadius: '50%', 
+                  p: 1, 
+                  display: 'flex',
+                  mb: 0.5,
+                }}
+              >
+                <TrendingUpIcon sx={{ color: '#4A96DE', fontSize: '1.25rem' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600} textAlign="center">
+                Popüler Ürünler
+              </Typography>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={6} sm={3}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                py: 1.5,
+                bgcolor: '#F1F8F1',
+                border: 'none',
+                boxShadow: 'none',
+                borderRadius: 3,
+              }}
+            >
+              <Box 
+                sx={{ 
+                  bgcolor: '#DCF0DD', 
+                  borderRadius: '50%', 
+                  p: 1, 
+                  display: 'flex',
+                  mb: 0.5,
+                }}
+              >
+                <ShoppingCartIcon sx={{ color: '#67B96A', fontSize: '1.25rem' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600} textAlign="center">
+                Alışveriş Listem
+              </Typography>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={6} sm={3}>
+            <Card 
+              sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                py: 1.5,
+                bgcolor: '#FEF1F0',
+                border: 'none',
+                boxShadow: 'none',
+                borderRadius: 3,
+              }}
+            >
+              <Box 
+                sx={{ 
+                  bgcolor: '#FADBD8', 
+                  borderRadius: '50%', 
+                  p: 1, 
+                  display: 'flex',
+                  mb: 0.5,
+                }}
+              >
+                <FavoriteIcon sx={{ color: '#E74C3C', fontSize: '1.25rem' }} />
+              </Box>
+              <Typography variant="subtitle2" fontWeight={600} textAlign="center">
+                Favoriler
+              </Typography>
+            </Card>
+          </Grid>
+        </Grid>
       </Container>
-    </Box>
+    </>
   );
 }
