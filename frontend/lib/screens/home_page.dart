@@ -318,6 +318,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Helper function to truncate long product names
+  String _truncateName(String name) {
+    if (name.length > 18) {
+      return name.substring(0, 18) + "...";
+    }
+    return name;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -689,10 +697,11 @@ class _HomePageState extends State<HomePage> {
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: ProductCard(
-                    name: product.name ?? '',
+                    name: _truncateName(product.name ?? ''),
                     price: product.price ?? 0.0,
                     imageUrl: product.image ?? '',
                     category: product.category ?? '',
+                    marketName: product.marketName ?? '',
                     onTap: () => _showProductDetail(context, product),
                     onAddToCart: () => _addToCart(context, product),
                   ),
@@ -726,6 +735,7 @@ class _HomePageState extends State<HomePage> {
           price: product.price ?? 0.0,
           image: product.image ?? '',
           category: product.category,
+          marketName: product.marketName,
           scrollController: scrollController,
           id: product.id,
         ),
@@ -742,9 +752,12 @@ class _HomePageState extends State<HomePage> {
 
     context.read<CartProvider>().addItem(cartItem);
 
+    // Use a truncated name for the snackbar message if it's too long
+    final displayName = _truncateName(product.name ?? '');
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${product.name} sepete eklendi!'),
+        content: Text('$displayName sepete eklendi!'),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
           label: 'Geri Al',
@@ -786,10 +799,11 @@ class _HomePageState extends State<HomePage> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: ProductCard(
-                        name: product.name ?? '',
+                        name: _truncateName(product.name ?? ''),
                         price: product.price ?? 0.0,
                         imageUrl: product.image ?? '',
                         category: product.category ?? '',
+                        marketName: product.marketName ?? '',
                         onTap: () => _showProductDetail(context, product),
                         onAddToCart: () => _addToCart(context, product),
                       ),
@@ -868,10 +882,11 @@ class _HomePageState extends State<HomePage> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: ProductCard(
-                        name: product.name ?? '',
+                        name: _truncateName(product.name ?? ''),
                         price: product.price ?? 0.0,
                         imageUrl: product.image ?? '',
                         category: product.category ?? '',
+                        marketName: product.marketName ?? '',
                         onTap: () => _showProductDetail(context, product),
                         onAddToCart: () => _addToCart(context, product),
                       ),
