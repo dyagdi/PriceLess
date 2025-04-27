@@ -9,9 +9,6 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:frontend/providers/favorites_provider.dart';
 import 'package:frontend/models/cheapest_pc.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:frontend/config/api_config.dart';
 
 class DiscountedProductPage extends StatefulWidget {
   @override
@@ -25,14 +22,6 @@ class _DiscountedProductPageState extends State<DiscountedProductPage> {
   void initState() {
     super.initState();
     _discountedProducts = fetchDiscountedProducts();
-  }
-
-  // Helper function to truncate long product names
-  String _truncateName(String name) {
-    if (name.length > 18) {
-      return name.substring(0, 18) + "...";
-    }
-    return name;
   }
 
   @override
@@ -202,14 +191,6 @@ class CategorySection extends StatelessWidget {
     required this.products,
   }) : super(key: key);
 
-  // Helper function to truncate long product names
-  String _truncateName(String name) {
-    if (name.length > 18) {
-      return name.substring(0, 18) + "...";
-    }
-    return name;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -246,16 +227,15 @@ class CategorySection extends StatelessWidget {
             itemBuilder: (context, index) {
               final product = products[index];
               return SizedBox(
-                width: 180,
+                width: 160,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: ProductCard(
-                    name: _truncateName(product.name),
+                    name: product.name,
                     price: product.price,
                     highPrice: product.highPrice,
                     imageUrl: product.imageUrl,
                     category: product.mainCategory,
-                    marketName: product.marketName,
                     onTap: () => _showProductDetail(context, product),
                     onAddToCart: () => _addToCart(context, product),
                   ),
@@ -277,7 +257,7 @@ class CategorySection extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
+        initialChildSize: 0.75,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
@@ -287,10 +267,8 @@ class CategorySection extends StatelessWidget {
           image: product.imageUrl,
           highPrice: product.highPrice,
           category: product.mainCategory,
-          marketName: product.marketName,
           scrollController: scrollController,
           id: product.id,
-          productLink: product.productLink,
         ),
       ),
     );
@@ -305,12 +283,9 @@ class CategorySection extends StatelessWidget {
 
     Provider.of<CartProvider>(context, listen: false).addItem(cartItem);
 
-    // Use a truncated name for the snackbar message if it's too long
-    final displayName = _truncateName(product.name);
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$displayName sepete eklendi!'),
+        content: Text('${product.name} sepete eklendi!'),
         behavior: SnackBarBehavior.floating,
         action: SnackBarAction(
           label: 'Geri Al',
@@ -330,10 +305,8 @@ class ProductDetailSheet extends StatelessWidget {
   final String image;
   final double? highPrice;
   final String? category;
-  final String? marketName;
   final ScrollController scrollController;
   final String? id;
-  final String? productLink;
 
   const ProductDetailSheet({
     super.key,
@@ -343,9 +316,7 @@ class ProductDetailSheet extends StatelessWidget {
     required this.scrollController,
     this.highPrice,
     this.category,
-    this.marketName,
     this.id,
-    this.productLink,
   });
 
   @override
@@ -359,27 +330,28 @@ class ProductDetailSheet extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Content
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: EdgeInsets.zero,
+          ),
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              controller: scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Product image
                   Padding(
@@ -425,47 +397,27 @@ class ProductDetailSheet extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Category badge and market name
+                        // Category badge
+                        if (category != null && category!.isNotEmpty) ...[
+                          CategoryBadge(category: category!),
+                          const SizedBox(height: 8),
+                        ],
+
+                        // Product name and favorite button
                         Row(
                           children: [
-                            if (category != null && category!.isNotEmpty)
-                              CategoryBadge(category: category!),
-                            if (category != null &&
-                                category!.isNotEmpty &&
-                                marketName != null &&
-                                marketName!.isNotEmpty)
-                              const SizedBox(width: 8),
-                            if (marketName != null && marketName!.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.withOpacity(0.1),
-                                  borderRadius:
-                                      BorderRadius.circular(AppTheme.radiusS),
-                                  border: Border.all(
-                                      color: Colors.blue.withOpacity(0.3)),
-                                ),
-                                child: Text(
-                                  marketName!,
-                                  style: TextStyle(
-                                    color: Colors.blue[700],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
+                            ),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Product name
-                        Text(
-                          name,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
                         ),
                         const SizedBox(height: 8),
 
@@ -523,7 +475,7 @@ class ProductDetailSheet extends StatelessWidget {
                         const Divider(),
                         const SizedBox(height: 12),
 
-                        // Product description
+                        // Product description (placeholder)
                         Text(
                           'Ürün Açıklaması',
                           style: Theme.of(context).textTheme.titleMedium,
@@ -537,69 +489,45 @@ class ProductDetailSheet extends StatelessWidget {
                                   ),
                         ),
 
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 24),
 
-                        // Comparison section
-                        Text(
-                          'Diğer Marketlerdeki Fiyatlar',
-                          style: Theme.of(context).textTheme.titleMedium,
+                        // Add to cart button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              final cartItem = CartItem(
+                                name: name,
+                                price: price,
+                                image: image,
+                              );
+                              Provider.of<CartProvider>(context, listen: false)
+                                  .addItem(cartItem);
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('$name sepete eklendi!'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.shopping_cart),
+                            label: const Text('Sepete Ekle'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        _buildComparisonSection(context),
-
-                        // Add extra bottom padding for a better look and to make room for the button
-                        const SizedBox(height: 80),
+                        // Add bottom padding to ensure content doesn't get cut off
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Bottom fixed button - always visible at the bottom
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final cartItem = CartItem(
-                      name: name,
-                      price: price,
-                      image: image,
-                    );
-                    Provider.of<CartProvider>(context, listen: false)
-                        .addItem(cartItem);
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$name sepete eklendi!'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_cart),
-                  label: const Text('Sepete Ekle'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -622,9 +550,6 @@ class ProductDetailSheet extends StatelessWidget {
                 price: price,
                 image: image,
                 category: category,
-                marketName: marketName,
-                highPrice: highPrice,
-                productLink: productLink,
               );
 
               favoritesProvider.toggleFavorite(product);
@@ -667,210 +592,6 @@ class ProductDetailSheet extends StatelessWidget {
     } catch (e) {
       // If FavoritesProvider is not available, return an empty container
       return Container();
-    }
-  }
-
-  Widget _buildComparisonSection(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: _fetchSimilarProducts(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.green[400]!),
-              ),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Fiyat karşılaştırması yüklenirken bir hata oluştu',
-              style: TextStyle(color: Colors.red[400]),
-            ),
-          );
-        }
-
-        final similarProducts = snapshot.data ?? [];
-
-        if (similarProducts.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 48,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Diğer marketlerde benzer ürün bulunamadı',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Column(
-          children: similarProducts.map<Widget>((product) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: Row(
-                  children: [
-                    // Product image
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: product['imageUrl'].isNotEmpty
-                          ? Image.network(
-                              product['imageUrl'],
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.broken_image,
-                                  size: 24,
-                                  color: Colors.grey[400],
-                                );
-                              },
-                            )
-                          : Icon(
-                              Icons.image_not_supported,
-                              size: 24,
-                              color: Colors.grey[400],
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Product details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product['name'],
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  product['marketName'],
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                              ),
-                              const Spacer(),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '₺${product['price'].toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.green[700],
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  if (product['highPrice'] != null)
-                                    Text(
-                                      '₺${product['highPrice'].toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[500],
-                                        decoration: TextDecoration.lineThrough,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
-  Future<List<dynamic>> _fetchSimilarProducts() async {
-    try {
-      final Uri uri = Uri.parse('${ApiConfig.baseUrl}/search').replace(
-        queryParameters: {
-          'query': name,
-          'collection': 'SupermarketProducts',
-        },
-      );
-
-      final response = await http.get(
-        uri,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        return data
-            .where((product) =>
-                product['product_link'] != productLink &&
-                product['market_name'] != marketName)
-            .map((product) => {
-                  'name': product['name'] ?? '',
-                  'price': (product['price'] ?? 0.0).toDouble(),
-                  'imageUrl': product['image_url'] ?? '',
-                  'marketName': product['market_name'] ?? '',
-                  'highPrice': product['high_price']?.toDouble(),
-                  'productLink': product['product_link'] ?? '',
-                })
-            .take(3)
-            .toList();
-      }
-      return [];
-    } catch (e) {
-      print('Error fetching similar products: $e');
-      return [];
     }
   }
 }

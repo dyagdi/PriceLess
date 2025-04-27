@@ -10,10 +10,10 @@ class CategoryBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: _getCategoryColor(category).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusS),
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(
           color: _getCategoryColor(category).withOpacity(0.3),
           width: 1,
@@ -23,11 +23,10 @@ class CategoryBadge extends StatelessWidget {
         category,
         style: TextStyle(
           color: _getCategoryColor(category),
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
         ),
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
       ),
     );
   }
