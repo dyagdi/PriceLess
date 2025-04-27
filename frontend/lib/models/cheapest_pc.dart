@@ -13,50 +13,35 @@ String cheapestProductPcToJson(List<CheapestProductPc> data) =>
 
 class CheapestProductPc {
   final String? id;
-  final String name;
-  final double price;
+  final String? name;
+  final double? price;
   final String? image;
   final String? category;
-  final String? marketName;
-  final double? highPrice;
-  final String? productLink;
 
   CheapestProductPc({
     this.id,
-    required this.name,
-    required this.price,
+    this.name,
+    this.price,
     this.image,
     this.category,
-    this.marketName,
-    this.highPrice,
-    this.productLink,
   });
 
   factory CheapestProductPc.fromJson(Map<String, dynamic> json) {
     return CheapestProductPc(
-      id: json['id'],
-      name: json['name'] ?? 'Ürün Adı',
-      price: (json['price'] ?? 0.0).toDouble(),
+      id: json['_id'] ?? json['id'] ?? DateTime.now().toString(),
+      name: json['name'],
+      price: json['price']?.toDouble(),
       image: json['image'],
       category: json['category'],
-      marketName: json['market_name'],
-      highPrice: json['high_price']?.toDouble(),
-      productLink: json['product_link'],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'price': price,
-      'image': image,
-      'category': category,
-      'market_name': marketName,
-      'high_price': highPrice,
-      'product_link': productLink,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        "name": name,
+        "price": price,
+        "image": image,
+        "category": category,
+      };
 
   @override
   bool operator ==(Object other) =>
