@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import FavoriteCart, Product, FavoriteCartProduct
+from .models import FavoriteCart, Product, FavoriteCartProduct, MopasProduct, MigrosProduct, SokmarketProduct, MarketpaketiProduct, CarrefourProduct
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -19,17 +19,37 @@ class UserSerializer(serializers.ModelSerializer):
         )
         return user
 
-
-
-
-
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
-        
-    
 
+# New serializers for each market
+class MopasProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MopasProduct
+        fields = '__all__'
+
+class MigrosProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MigrosProduct
+        fields = '__all__'
+
+class SokmarketProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SokmarketProduct
+        fields = '__all__'
+
+class MarketpaketiProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MarketpaketiProduct
+        fields = '__all__'
+
+class CarrefourProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarrefourProduct
+        fields = '__all__'
+        
 class FavoriteCartProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = FavoriteCartProduct

@@ -1,5 +1,6 @@
 from django.db import models
-from django.contrib.postgres.search import SearchVectorField
+# Commenting out SearchVectorField as we're not using it temporarily
+# from django.contrib.postgres.search import SearchVectorField
 from django.contrib.auth.models import User
 
 
@@ -16,7 +17,8 @@ class Product(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    search_vector = SearchVectorField(null=True) # Search vector eklentisi
+    # Make search_vector truly optional
+    # search_vector = SearchVectorField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -44,3 +46,98 @@ class FavoriteCartProduct(models.Model):
 
     def __str__(self):
         return f"{self.name} (x{self.quantity}) - Cart {self.favorite_cart_id}"
+
+class MopasProduct(models.Model):
+    main_category = models.TextField()
+    sub_category = models.TextField()
+    lowest_category = models.TextField()
+    name = models.TextField()
+    price = models.FloatField()
+    high_price = models.FloatField(null=True, blank=True)
+    in_stock = models.TextField()
+    product_link = models.TextField()
+    page_link = models.TextField()
+    image_url = models.TextField()
+    date = models.TextField()
+    market_name = models.TextField()
+    # Make search_vector truly optional
+    # search_vector = SearchVectorField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'mopas_products'
+
+class MigrosProduct(models.Model):
+    main_category = models.TextField()
+    sub_category = models.TextField()
+    lowest_category = models.TextField()
+    name = models.TextField()
+    price = models.FloatField()
+    high_price = models.FloatField(null=True, blank=True)
+    in_stock = models.TextField()
+    product_link = models.TextField()
+    page_link = models.TextField()
+    image_url = models.TextField()
+    date = models.TextField()
+    market_name = models.TextField()
+    # Make search_vector truly optional
+    # search_vector = SearchVectorField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'migros_products'
+
+class SokmarketProduct(models.Model):
+    main_category = models.TextField()
+    sub_category = models.TextField()
+    lowest_category = models.TextField()
+    name = models.TextField()
+    price = models.FloatField()
+    high_price = models.FloatField(null=True, blank=True)
+    in_stock = models.TextField()
+    product_link = models.TextField()
+    page_link = models.TextField()
+    image_url = models.TextField()
+    date = models.TextField()
+    market_name = models.TextField()
+    # Make search_vector truly optional
+    # search_vector = SearchVectorField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'sokmarket_products'
+
+class MarketpaketiProduct(models.Model):
+    main_category = models.TextField()
+    sub_category = models.TextField()
+    lowest_category = models.TextField()
+    name = models.TextField()
+    price = models.FloatField()
+    high_price = models.FloatField(null=True, blank=True)
+    in_stock = models.TextField()
+    product_link = models.TextField()
+    page_link = models.TextField()
+    image_url = models.TextField()
+    date = models.TextField()
+    market_name = models.TextField()
+    # Make search_vector truly optional
+    # search_vector = SearchVectorField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'marketpaketi_products'
+
+class CarrefourProduct(models.Model):
+    main_category = models.TextField()
+    sub_category = models.TextField()
+    lowest_category = models.TextField()
+    name = models.TextField()
+    price = models.FloatField()
+    high_price = models.FloatField(null=True, blank=True)
+    in_stock = models.TextField()
+    product_link = models.TextField()
+    page_link = models.TextField()
+    image_url = models.TextField()
+    date = models.TextField()
+    market_name = models.TextField()
+    # Make search_vector truly optional
+    # search_vector = SearchVectorField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'carrefour_products'

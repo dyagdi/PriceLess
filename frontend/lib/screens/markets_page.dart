@@ -523,6 +523,7 @@ class MarketProductCard extends StatelessWidget {
           price: product.price ?? 0.0,
           image: product.image ?? '',
           category: product.category,
+          marketName: product.marketName,
           scrollController: scrollController,
           id: product.id,
         ),

@@ -21,6 +21,7 @@ urlpatterns = [
     path('products/filtered/', HomePageProductListAPIView.as_view(), name='filtered-product-list'),
     path('cheapest-products/', views.cheapest_products, name='cheapest-products'),
     path('cheapest-products-per-category/', views.cheapest_products_per_category, name='cheapest-products-per-category'),
+    path('cheapest-products-by-categories/', views.cheapest_products_by_categories, name='cheapest-products-by-categories'),
     path('search/', views.search_products, name='search_products'), # verilerin tablodan çekilebilmesi için eklediğim endpoint
     path('favorite-carts/', FavoriteCartListCreateView.as_view(), name='favorite-carts'),
     path('markets-products/', MarketsListAPIView.as_view(), name='market-products'),
