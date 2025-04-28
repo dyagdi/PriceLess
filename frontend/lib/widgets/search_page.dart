@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:frontend/models/product_search_result.dart';
 import 'package:frontend/widgets/product_detail_page.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class SearchPage extends StatefulWidget {
   @override
@@ -14,6 +15,67 @@ class _SearchPageState extends State<SearchPage> {
   bool isLoading = false;
   List<ProductSearchResult> products = [];
   String? errorMessage;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _speech = stt.SpeechToText();
+  }
+
+  @override
+  void dispose() {
+    _speech.stop();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (status) {
+          if (status == 'done') {
+            if (!mounted) return;
+            setState(() => _isListening = false);
+            _searchProducts(); // Automatically search after voice input
+          }
+        },
+        onError: (error) {
+          print('Speech recognition error: $error');
+          if (!mounted) return;
+          setState(() {
+            _isListening = false;
+            errorMessage = 'Sizi anlayamadık, lütfen tekrar deneyin.';
+          });
+        },
+      );
+
+      if (available) {
+        if (!mounted) return;
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            if (!mounted) return;
+            setState(() {
+              _searchController.text = val.recognizedWords;
+            });
+          },
+          localeId: 'tr_TR', // Turkish locale
+          listenFor: Duration(seconds: 10), // or longer
+        );
+      } else {
+        if (!mounted) return;
+        setState(() {
+          errorMessage = 'Ses tanıma kullanılamıyor';
+        });
+      }
+    } else {
+      if (!mounted) return;
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
 
   String _decodeUtf8(String text) {
     try {
@@ -41,11 +103,11 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      final Uri uri =
-          Uri.parse('https://35c4-144-122-129-53.ngrok-free.app/search')
-              .replace(queryParameters: {
+      final Uri uri = Uri.parse(
+              'https://priceless-weaviate-production.up.railway.app/search')
+          .replace(queryParameters: {
         'query': Uri.encodeQueryComponent(query),
-        'collection': 'SupermarketProducts',
+        'collection': 'SupermarketProducts2',
         'limit': '20',
       });
 
@@ -128,46 +190,66 @@ class _SearchPageState extends State<SearchPage> {
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Ürün adı veya kategori ara',
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 16,
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: Colors.grey[300]!,
-                    width: 1.0,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Ürün adı veya kategori ara',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 16,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(
+                          color: Colors.grey[300]!,
+                          width: 1.0,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(
+                          color: Colors.grey[300]!,
+                          width: 1.0,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(
+                          color: Colors.green[400]!,
+                          width: 1.0,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey[400],
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onSubmitted: (_) => _searchProducts(),
+                    textInputAction: TextInputAction.search,
                   ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: Colors.grey[300]!,
-                    width: 1.0,
+                SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: _isListening ? Colors.red[400] : Colors.green[400],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      _isListening ? Icons.mic : Icons.mic_none,
+                      color: Colors.white,
+                    ),
+                    onPressed: _listen,
                   ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: Colors.green[400]!,
-                    width: 1.0,
-                  ),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Colors.grey[400],
-                ),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              onSubmitted: (_) => _searchProducts(),
-              textInputAction: TextInputAction.search,
+              ],
             ),
           ),
           if (errorMessage != null)

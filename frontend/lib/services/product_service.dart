@@ -5,8 +5,8 @@ import 'package:frontend/models/product_search_result.dart';
 import 'package:frontend/config/api_config.dart';
 
 Future<List<ProductSearchResult>> searchProducts(String query) async {
-  final response =
-      await http.get(Uri.parse('http://localhost:8000/api/search/?q=$query'));
+  final response = await http.get(Uri.parse(
+      'https://d66e-176-233-26-194.ngrok-free.app/api/search/?q=$query'));
 
   if (response.statusCode == 200) {
     List<dynamic> jsonData = json.decode(response.body);
@@ -19,8 +19,8 @@ Future<List<ProductSearchResult>> searchProducts(String query) async {
 }
 
 Future<List<CheapestProductPc>> fetchCheapestProductsPerCategory() async {
-  final url =
-      Uri.parse('http://localhost:8000/api/cheapest-products-per-category/');
+  final url = Uri.parse(
+      'https://d66e-176-233-26-194.ngrok-free.app/api/cheapest-products-per-category/');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {
@@ -31,8 +31,8 @@ Future<List<CheapestProductPc>> fetchCheapestProductsPerCategory() async {
 }
 
 Future<List<CheapestProductPc>> fetchCheapestProductsByCategories() async {
-  final url =
-      Uri.parse('http://localhost:8000/api/cheapest-products-by-categories/');
+  final url = Uri.parse(
+      'https://d66e-176-233-26-194.ngrok-free.app/api/cheapest-products-by-categories/');
   final response = await http.get(url);
 
   if (response.statusCode == 200) {
@@ -45,7 +45,8 @@ Future<List<CheapestProductPc>> fetchCheapestProductsByCategories() async {
 Future<List<Product>> fetchDiscountedProducts() async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:8000/api/discounted-products/'),
+      Uri.parse(
+          'https://d66e-176-233-26-194.ngrok-free.app/api/discounted-products/'),
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json; charset=UTF-8',

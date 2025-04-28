@@ -4,6 +4,7 @@ import 'package:frontend/models/product_search_result.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/config/api_config.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final ProductSearchResult product;
@@ -18,11 +19,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   List<ProductSearchResult> similarProducts = [];
   bool isLoading = false;
   String? errorMessage;
+  late Future<List<Map<String, dynamic>>> _priceHistoryFuture;
 
   @override
   void initState() {
     super.initState();
     _fetchSimilarProducts();
+    _priceHistoryFuture = _fetchPriceHistory(widget.product.name);
   }
 
   Future<void> _fetchSimilarProducts() async {
@@ -37,7 +40,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       final Uri uri =
           Uri.parse(ApiConfig.searchEndpoint).replace(queryParameters: {
         'query': widget.product.name,
-        'collection': 'SupermarketProducts',
+        'collection': 'SupermarketProducts2',
       });
 
       print('Fetching similar products from: ${uri.toString()}');
@@ -109,6 +112,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _fetchPriceHistory(String name) async {
+    final url = Uri.parse(
+        '${ApiConfig.baseUrl}/price-history?name=${Uri.encodeComponent(name)}');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+      return List<Map<String, dynamic>>.from(data);
+    } else {
+      return [];
+    }
+  }
+
   Widget _buildComparisonSection() {
     return Container(
       padding: EdgeInsets.all(12),
@@ -176,124 +191,177 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             )
           else
-            Column(
-              children: similarProducts
-                  .map((product) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ProductDetailPage(product: product),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
+            Builder(
+              builder: (context) {
+                final allPrices = [
+                  widget.product.price,
+                  ...similarProducts.map((p) => p.price)
+                ];
+                final minPrice = allPrices.isNotEmpty
+                    ? allPrices.reduce((a, b) => a < b ? a : b)
+                    : null;
+                final maxPrice = allPrices.isNotEmpty
+                    ? allPrices.reduce((a, b) => a > b ? a : b)
+                    : null;
+                return Column(
+                  children: similarProducts
+                      .map((product) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProductDetailPage(product: product),
                                   ),
-                                  child: product.imageUrl.isNotEmpty
-                                      ? Image.network(
-                                          product.imageUrl,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                            return Icon(
-                                              Icons.broken_image,
+                                );
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: product.imageUrl.isNotEmpty
+                                          ? Image.network(
+                                              product.imageUrl,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Icon(
+                                                  Icons.broken_image,
+                                                  size: 24,
+                                                  color: Colors.grey[400],
+                                                );
+                                              },
+                                            )
+                                          : Icon(
+                                              Icons.image_not_supported,
                                               size: 24,
                                               color: Colors.grey[400],
-                                            );
-                                          },
-                                        )
-                                      : Icon(
-                                          Icons.image_not_supported,
-                                          size: 24,
-                                          color: Colors.grey[400],
-                                        ),
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        product.name,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      SizedBox(height: 4),
-                                      Row(
+                                            ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[100],
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
+                                          Text(
+                                            product.name,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black87,
                                             ),
-                                            child: Text(
-                                              product.marketName,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey[700],
-                                              ),
-                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          Spacer(),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                          SizedBox(height: 4),
+                                          Row(
                                             children: [
-                                              Text(
-                                                '₺${product.price.toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.green[700],
-                                                  fontWeight: FontWeight.w500,
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[100],
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
                                                 ),
-                                              ),
-                                              if (product.highPrice != null)
-                                                Text(
-                                                  '₺${product.highPrice!.toStringAsFixed(2)}',
+                                                child: Text(
+                                                  product.marketName,
                                                   style: TextStyle(
                                                     fontSize: 12,
-                                                    color: Colors.grey[500],
-                                                    decoration: TextDecoration
-                                                        .lineThrough,
+                                                    color: Colors.grey[700],
                                                   ),
                                                 ),
+                                              ),
+                                              Spacer(),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        '₺${product.price.toStringAsFixed(2)}',
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          color:
+                                                              Colors.green[700],
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      if (product.price ==
+                                                          minPrice) ...[
+                                                        SizedBox(width: 6),
+                                                        Icon(Icons.star,
+                                                            color: Colors.green,
+                                                            size: 18),
+                                                        SizedBox(width: 2),
+                                                        Text('En Ucuz',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .green,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 12)),
+                                                      ],
+                                                      if (product.price ==
+                                                          maxPrice) ...[
+                                                        SizedBox(width: 6),
+                                                        Icon(Icons.trending_up,
+                                                            color: Colors.red,
+                                                            size: 18),
+                                                        SizedBox(width: 2),
+                                                        Text('En Pahalı',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    Colors.red,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 12)),
+                                                      ],
+                                                    ],
+                                                  ),
+                                                  if (product.highPrice != null)
+                                                    Text(
+                                                      '₺${product.highPrice!.toStringAsFixed(2)}',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey[500],
+                                                        decoration:
+                                                            TextDecoration
+                                                                .lineThrough,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      ))
-                  .toList(),
+                          ))
+                      .toList(),
+                );
+              },
             ),
         ],
       ),
@@ -302,6 +370,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final allPrices = [
+      widget.product.price,
+      ...similarProducts.map((p) => p.price)
+    ];
+    final minPrice =
+        allPrices.isNotEmpty ? allPrices.reduce((a, b) => a < b ? a : b) : null;
+    final maxPrice =
+        allPrices.isNotEmpty ? allPrices.reduce((a, b) => a > b ? a : b) : null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -383,9 +460,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         SizedBox(height: 12),
                         _buildInfoRow(
                           'Fiyat',
-                          '₺${widget.product.price.toStringAsFixed(2)}',
+                          null,
                           Icons.payment,
                           valueColor: Colors.green[700],
+                          price: widget.product.price,
+                          minPrice: minPrice,
+                          maxPrice: maxPrice,
                         ),
                         if (widget.product.highPrice != null) ...[
                           SizedBox(height: 12),
@@ -441,6 +521,150 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   SizedBox(height: 16),
                   _buildComparisonSection(),
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _priceHistoryFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError ||
+                          !snapshot.hasData ||
+                          snapshot.data!.isEmpty) {
+                        return SizedBox.shrink();
+                      }
+                      final history = snapshot.data!;
+                      final spots = <FlSpot>[];
+                      double? maxPrice;
+                      for (int i = 0; i < history.length; i++) {
+                        final price =
+                            (history[i]['price'] as num?)?.toDouble() ?? 0.0;
+                        spots.add(FlSpot(i.toDouble(), price));
+                        if (maxPrice == null || price > maxPrice)
+                          maxPrice = price;
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Fiyat Geçmişi',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            SizedBox(height: 8),
+                            SizedBox(
+                              height: 200,
+                              child: LineChart(
+                                LineChartData(
+                                  lineBarsData: [
+                                    LineChartBarData(
+                                      spots: spots,
+                                      isCurved: true,
+                                      color: Theme.of(context).primaryColor,
+                                      barWidth: 2,
+                                      dotData: FlDotData(
+                                        show: true,
+                                        getDotPainter:
+                                            (spot, percent, barData, index) {
+                                          return FlDotCirclePainter(
+                                            radius: 4,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            strokeWidth: 2,
+                                            strokeColor: Colors.white,
+                                          );
+                                        },
+                                      ),
+                                      belowBarData: BarAreaData(
+                                        show: true,
+                                        color: Theme.of(context)
+                                            .primaryColor
+                                            .withOpacity(0.1),
+                                      ),
+                                    ),
+                                  ],
+                                  titlesData: FlTitlesData(
+                                    leftTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        reservedSize: 40,
+                                        getTitlesWidget: (value, meta) {
+                                          return Text(
+                                            '₺${value.toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 10,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    rightTitles: AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
+                                    ),
+                                    topTitles: AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
+                                    ),
+                                    bottomTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        getTitlesWidget: (value, meta) {
+                                          if (value == 0 ||
+                                              value == spots.length - 1) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 8.0),
+                                              child: Text(
+                                                history[value.toInt()]['date']
+                                                    .toString()
+                                                    .substring(5, 10),
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  gridData: FlGridData(
+                                    show: true,
+                                    drawVerticalLine: false,
+                                    horizontalInterval: 1,
+                                    getDrawingHorizontalLine: (value) {
+                                      return FlLine(
+                                        color: Colors.grey[200]!,
+                                        strokeWidth: 1,
+                                      );
+                                    },
+                                  ),
+                                  borderData: FlBorderData(
+                                    show: true,
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey[300]!,
+                                        width: 1,
+                                      ),
+                                      left: BorderSide(
+                                        color: Colors.grey[300]!,
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                  minX: 0,
+                                  maxX: spots.length - 1,
+                                  minY: 0,
+                                  maxY: maxPrice != null ? maxPrice * 1.1 : 0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                   SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => _launchURL(widget.product.productLink),
@@ -476,8 +700,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon,
-      {Color? valueColor}) {
+  Widget _buildInfoRow(String label, String? value, IconData icon,
+      {Color? valueColor, double? price, double? minPrice, double? maxPrice}) {
     return Row(
       children: [
         Icon(
@@ -498,13 +722,37 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
               SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: valueColor ?? Colors.black87,
-                ),
+              Row(
+                children: [
+                  Text(
+                    value ?? '₺${price?.toStringAsFixed(2) ?? ''}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: valueColor ?? Colors.black87,
+                    ),
+                  ),
+                  if (price != null && price == minPrice) ...[
+                    SizedBox(width: 6),
+                    Icon(Icons.star, color: Colors.green, size: 18),
+                    SizedBox(width: 2),
+                    Text('En Ucuz',
+                        style: TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12)),
+                  ],
+                  if (price != null && price == maxPrice) ...[
+                    SizedBox(width: 6),
+                    Icon(Icons.trending_up, color: Colors.red, size: 18),
+                    SizedBox(width: 2),
+                    Text('En Pahalı',
+                        style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12)),
+                  ],
+                ],
               ),
             ],
           ),

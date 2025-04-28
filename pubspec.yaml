@@ -1,0 +1,6 @@
+environment:
+  sdk: '^3.5.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  fl_chart: ^0.66.0 

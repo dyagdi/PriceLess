@@ -496,6 +496,3 @@ class _AuthPageState extends State<AuthPage> {
     );
   }
 }
-
-//const String baseUrl = 'http://144.122.207.230:8000/api/';
-//const String baseUrl = 'http://127.0.0.1:8000/api/';

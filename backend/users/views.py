@@ -166,7 +166,7 @@ def cheapest_products(request):
                             "name": product.name,
                             "price": product.price,
                             "image": product.image_url,
-                            "market_name": "Mopas"  # Add market name
+                            "market_name": "mopas"  # Add market name
                         })
                 except Exception as e:
                     print(f"Error processing MopasProduct: {e}")
@@ -182,7 +182,7 @@ def cheapest_products(request):
                             "name": product.name,
                             "price": product.price,
                             "image": product.image_url,
-                            "market_name": "Migros"  # Add market name
+                            "market_name": "migros"  # Add market name
                         })
                 except Exception as e:
                     print(f"Error processing MigrosProduct: {e}")
@@ -198,7 +198,7 @@ def cheapest_products(request):
                             "name": product.name,
                             "price": product.price,
                             "image": product.image_url,
-                            "market_name": "Şok Market"  # Add market name
+                            "market_name": "sokmarket"  # Add market name
                         })
                 except Exception as e:
                     print(f"Error processing SokmarketProduct: {e}")
@@ -214,7 +214,7 @@ def cheapest_products(request):
                             "name": product.name,
                             "price": product.price,
                             "image": product.image_url,
-                            "market_name": "Market Paketi"  # Add market name
+                            "market_name": "marketpaketi"  # Add market name
                         })
                 except Exception as e:
                     print(f"Error processing MarketpaketiProduct: {e}")
@@ -230,7 +230,7 @@ def cheapest_products(request):
                             "name": product.name,
                             "price": product.price,
                             "image": product.image_url,
-                            "market_name": "Carrefour"  # Add market name
+                            "market_name": "carrefour"  # Add market name
                         })
                 except Exception as e:
                     print(f"Error processing CarrefourProduct: {e}")
@@ -286,7 +286,7 @@ def cheapest_products_per_category(request):
                             "price": product.price,
                             "image": product.image_url,
                             "category": product.main_category,
-                            "market_name": "Mopas"
+                            "market_name": "mopas"
                         })
                 except Exception as e:
                     print(f"Error processing MopasProduct: {e}")
@@ -303,7 +303,7 @@ def cheapest_products_per_category(request):
                             "price": product.price,
                             "image": product.image_url,
                             "category": product.main_category,
-                            "market_name": "Migros"
+                            "market_name": "migros"
                         })
                 except Exception as e:
                     print(f"Error processing MigrosProduct: {e}")
@@ -320,7 +320,7 @@ def cheapest_products_per_category(request):
                             "price": product.price,
                             "image": product.image_url,
                             "category": product.main_category,
-                            "market_name": "Şok Market"
+                            "market_name": "sokmarket"
                         })
                 except Exception as e:
                     print(f"Error processing SokmarketProduct: {e}")
@@ -337,7 +337,7 @@ def cheapest_products_per_category(request):
                             "price": product.price,
                             "image": product.image_url,
                             "category": product.main_category,
-                            "market_name": "Market Paketi"
+                            "market_name": "marketpaketi"
                         })
                 except Exception as e:
                     print(f"Error processing MarketpaketiProduct: {e}")
@@ -354,7 +354,7 @@ def cheapest_products_per_category(request):
                             "price": product.price,
                             "image": product.image_url,
                             "category": product.main_category,
-                            "market_name": "Carrefour"
+                            "market_name": "carrefour"
                         })
                 except Exception as e:
                     print(f"Error processing CarrefourProduct: {e}")
@@ -398,11 +398,11 @@ def search_products(request):
         # Search in each market table using simple name__icontains filter
         # avoiding any search_vector functionality
         for table_name, model, market_name in [
-            ('mopas_products', MopasProduct, "Mopas"),
-            ('migros_products', MigrosProduct, "Migros"),
-            ('sokmarket_products', SokmarketProduct, "Şok Market"),
-            ('marketpaketi_products', MarketpaketiProduct, "Market Paketi"),
-            ('carrefour_products', CarrefourProduct, "Carrefour")
+            ('mopas_products', MopasProduct, "mopas"),
+            ('migros_products', MigrosProduct, "migros"),
+            ('sokmarket_products', SokmarketProduct, "sokmarket"),
+            ('marketpaketi_products', MarketpaketiProduct, "marketpaketi"),
+            ('carrefour_products', CarrefourProduct, "carrefour")
         ]:
             try:
                 # Use basic filtering with name__icontains
@@ -810,7 +810,7 @@ def cheapest_products_by_categories(request):
                             "image": product.image_url,
                             "category": normalized_category,
                             "original_category": category,
-                            "market_name": "Migros"
+                            "market_name": "migros"
                         })
         except Exception as e:
             print(f"Error processing Migros categories: {e}")
@@ -840,7 +840,7 @@ def cheapest_products_by_categories(request):
                             "image": product.image_url,
                             "category": normalized_category,
                             "original_category": category,
-                            "market_name": "Şok Market"
+                            "market_name": "sokmarket"
                         })
         except Exception as e:
             print(f"Error processing Şok Market categories: {e}")
@@ -870,7 +870,7 @@ def cheapest_products_by_categories(request):
                             "image": product.image_url,
                             "category": normalized_category,
                             "original_category": category,
-                            "market_name": "Mopas"
+                            "market_name": "mopas"
                         })
         except Exception as e:
             print(f"Error processing Mopas categories: {e}")
@@ -900,7 +900,7 @@ def cheapest_products_by_categories(request):
                             "image": product.image_url,
                             "category": normalized_category,
                             "original_category": category,
-                            "market_name": "Market Paketi"
+                            "market_name": "marketpaketi"
                         })
         except Exception as e:
             print(f"Error processing Market Paketi categories: {e}")
@@ -930,7 +930,7 @@ def cheapest_products_by_categories(request):
                             "image": product.image_url,
                             "category": normalized_category,
                             "original_category": category,
-                            "market_name": "Carrefour"
+                            "market_name": "carrefour"
                         })
         except Exception as e:
             print(f"Error processing Carrefour categories: {e}")
@@ -960,7 +960,7 @@ def discounted_products(request):
             'main_category': product.main_category,
             'sub_category': product.sub_category,
             'lowest_category': product.lowest_category,
-            'market_name': 'Mopas',
+            'market_name': 'mopas',
             'high_price': product.high_price,
             'product_link': product.product_link
         } for product in mopas_products])
@@ -975,7 +975,7 @@ def discounted_products(request):
             'main_category': product.main_category,
             'sub_category': product.sub_category,
             'lowest_category': product.lowest_category,
-            'market_name': 'Migros',
+            'market_name': 'migros',
             'high_price': product.high_price,
             'product_link': product.product_link
         } for product in migros_products])
@@ -990,7 +990,7 @@ def discounted_products(request):
             'main_category': product.main_category,
             'sub_category': product.sub_category,
             'lowest_category': product.lowest_category,
-            'market_name': 'Şok Market',
+            'market_name': 'sokmarket',
             'high_price': product.high_price,
             'product_link': product.product_link
         } for product in sokmarket_products])
@@ -1005,7 +1005,7 @@ def discounted_products(request):
             'main_category': product.main_category,
             'sub_category': product.sub_category,
             'lowest_category': product.lowest_category,
-            'market_name': 'Market Paketi',
+            'market_name': 'marketpaketi',
             'high_price': product.high_price,
             'product_link': product.product_link
         } for product in marketpaketi_products])
@@ -1020,7 +1020,7 @@ def discounted_products(request):
             'main_category': product.main_category,
             'sub_category': product.sub_category,
             'lowest_category': product.lowest_category,
-            'market_name': 'Carrefour',
+            'market_name': 'carrefour',
             'high_price': product.high_price,
             'product_link': product.product_link
         } for product in carrefour_products])

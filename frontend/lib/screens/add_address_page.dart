@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:convert'; 
-import 'package:flutter/services.dart'; 
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 class AddAddressPage extends StatefulWidget {
@@ -26,12 +26,14 @@ class _AddAddressPageState extends State<AddAddressPage> {
   }
 
   Future<void> _loadCityStateData() async {
-    final String response = await rootBundle.loadString('assets/cities_states.json');
+    final String response =
+        await rootBundle.loadString('assets/cities_states.json');
     final Map<String, dynamic> data = json.decode(response);
 
     setState(() {
       cities = data.keys.toList();
-      statesByCity = data.map((key, value) => MapEntry(key, List<String>.from(value)));
+      statesByCity =
+          data.map((key, value) => MapEntry(key, List<String>.from(value)));
     });
   }
 
@@ -60,39 +62,40 @@ class _AddAddressPageState extends State<AddAddressPage> {
               maxLines: 2,
             ),
             const SizedBox(height: 16),
-          Row(
-            children: [
-              Flexible(
-                flex: 1,
-                child: _buildDropdown(
-                  label: 'İl*',
-                  value: selectedCity,
-                  items: cities,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCity = value;
-                      selectedState = null; 
-                    });
-                  },
+            Row(
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: _buildDropdown(
+                    label: 'İl*',
+                    value: selectedCity,
+                    items: cities,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCity = value;
+                        selectedState = null;
+                      });
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6), 
-              Flexible(
-                flex: 1,
-                child: _buildDropdown(
-                  label: 'İlçe*',
-                  value: selectedState,
-                  items: selectedCity != null ? statesByCity[selectedCity!] ?? [] : [],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedState = value;
-                    });
-                  },
+                const SizedBox(width: 6),
+                Flexible(
+                  flex: 1,
+                  child: _buildDropdown(
+                    label: 'İlçe*',
+                    value: selectedState,
+                    items: selectedCity != null
+                        ? statesByCity[selectedCity!] ?? []
+                        : [],
+                    onChanged: (value) {
+                      setState(() {
+                        selectedState = value;
+                      });
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-
+              ],
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -119,7 +122,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
                 onPressed: () async {
                   final addressData = {
                     'address_title': _addressTitleController.text.trim(),
-                    'address_details': _addressLineController.text.trim(), 
+                    'address_details': _addressLineController.text.trim(),
                     'city': selectedCity,
                     'state': selectedState,
                     'country': 'Turkey',
@@ -135,29 +138,33 @@ class _AddAddressPageState extends State<AddAddressPage> {
                     addressData['mahalle'],
                   ].any((value) => value == null || value.toString().isEmpty)) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Lütfen zorunlu alanları doldurunuz')),
+                      const SnackBar(
+                          content: Text('Lütfen zorunlu alanları doldurunuz')),
                     );
                     return;
                   }
 
                   try {
                     final response = await http.post(
-                      Uri.parse('http://127.0.0.1:8000/api/addresses/'), 
+                      Uri.parse(
+                          'https://de15-176-233-26-194.ngrok-free.app/api/addresses/'),
                       headers: {
                         'Content-Type': 'application/json',
                       },
-
                       body: json.encode(addressData),
                     );
 
                     if (response.statusCode == 201) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Adres başarıyla kaydedildi!')),
+                        const SnackBar(
+                            content: Text('Adres başarıyla kaydedildi!')),
                       );
                       Navigator.pop(context);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Hata: ${response.statusCode} - ${response.body}')),
+                        SnackBar(
+                            content: Text(
+                                'Hata: ${response.statusCode} - ${response.body}')),
                       );
                     }
                   } catch (e) {
@@ -166,7 +173,6 @@ class _AddAddressPageState extends State<AddAddressPage> {
                     );
                   }
                 },
-
                 child: const Text('Adresi kaydet'),
               ),
             ),
@@ -185,7 +191,8 @@ class _AddAddressPageState extends State<AddAddressPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(label,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -199,38 +206,37 @@ class _AddAddressPageState extends State<AddAddressPage> {
     );
   }
 
- Widget _buildDropdown({
-  required String label,
-  required String? value,
-  required List<String> items,
-  required ValueChanged<String?> onChanged,
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      const SizedBox(height: 8),
-      DropdownButtonFormField<String>(
-        value: value,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
+  Widget _buildDropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        items: items
-            .map((item) => DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: const TextStyle(fontSize: 14), 
-                  ),
-                ))
-            .toList(),
-        onChanged: onChanged,
-      ),
-    ],
-  );
-}
-
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+          ),
+          items: items
+              .map((item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
 }
