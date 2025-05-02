@@ -76,7 +76,7 @@ class ApiService {
     if (token == null) return;
 
     final response = await http.post(
-      Uri.parse('${baseUrl}users/change-password/'),
+      Uri.parse('${baseUrl}change-password/'),
       headers: {
         'Authorization': 'Token $token',
         'Content-Type': 'application/json',
