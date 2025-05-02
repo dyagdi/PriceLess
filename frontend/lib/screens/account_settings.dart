@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'change_password_page.dart';
 import '../services/api_service.dart';
+import 'auth_page.dart';
 
 class AccountSettingsPage extends StatelessWidget {
   const AccountSettingsPage({super.key});
@@ -10,7 +11,10 @@ class AccountSettingsPage extends StatelessWidget {
     try {
       await ApiService.logout();
       if (context.mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const AuthPage()),
+          (route) => false,
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -32,8 +36,8 @@ class AccountSettingsPage extends StatelessWidget {
       
       if (success && context.mounted) {
         print('Account deleted successfully, navigating to auth page');
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/auth',
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const AuthPage()),
           (route) => false,
         );
       } else if (context.mounted) {
