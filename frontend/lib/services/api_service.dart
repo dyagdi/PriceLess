@@ -1,9 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/constants/constants_url.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'https://priceless.onrender.com/api';
   static const String tokenKey = 'auth_token';
 
   static Future<String?> getToken() async {
