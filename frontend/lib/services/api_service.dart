@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:frontend/constants/constants_url.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://priceless.onrender.com/api';
   static const String tokenKey = 'auth_token';
 
   static Future<String?> getToken() async {
@@ -43,7 +42,7 @@ class ApiService {
 
       print('Attempting to delete account with token: $token');
       final response = await http.delete(
-        Uri.parse('$baseUrl/delete-account/'),
+        Uri.parse('${baseUrl}delete-account/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -77,7 +76,7 @@ class ApiService {
     if (token == null) return;
 
     final response = await http.post(
-      Uri.parse('${baseUrl}/users/change-password/'),
+      Uri.parse('${baseUrl}users/change-password/'),
       headers: {
         'Authorization': 'Token $token',
         'Content-Type': 'application/json',

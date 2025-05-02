@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/constants/constants_url.dart';
+import 'package:frontend/services/api_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../services/api_service.dart';
+import 'package:frontend/screens/auth_page.dart';
 import '../theme/app_theme.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -20,57 +22,37 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   bool _showCurrentPassword = false;
   bool _showNewPassword = false;
   bool _showConfirmPassword = false;
+  String? _errorMessage;
 
   Future<void> _changePassword() async {
-    print('Starting password change process...');
-    
-    if (!_formKey.currentState!.validate()) {
-      print('Form validation failed');
-      return;
-    }
-    print('Form validation passed');
+    if (!_validateInputs()) return;
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     try {
-      print('Getting token...');
       final token = await ApiService.getToken();
       if (token == null) {
-        print('Token is null');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-        }
+        setState(() {
+          _errorMessage = 'Oturum bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.';
+          _isLoading = false;
+        });
         return;
       }
-      print('Token retrieved successfully');
 
-      final requestData = {
-        'current_password': _currentPasswordController.text,
-        'new_password': _newPasswordController.text,
-        'confirm_password': _confirmPasswordController.text,
-      };
-      print('Request data prepared: $requestData');
-
-      print('Sending request to ${ApiService.baseUrl}/change-password/');
       final response = await http.post(
-        Uri.parse('${ApiService.baseUrl}/change-password/'),
+        Uri.parse('${baseUrl}users/change-password/'),
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
         },
-        body: json.encode(requestData),
+        body: jsonEncode({
+          'old_password': _currentPasswordController.text,
+          'new_password': _newPasswordController.text,
+        }),
       );
-
-      print('Response status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
@@ -119,6 +101,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         });
       }
     }
+  }
+
+  bool _validateInputs() {
+    if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
+      return false;
+    }
+    print('Form validation passed');
+    return true;
   }
 
   @override

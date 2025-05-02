@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/constants/constants_url.dart';
 
 
 class RegistrationPage extends StatefulWidget {
@@ -173,6 +174,4 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 }
-
-const String baseUrl = 'http://144.122.207.230:8000/api/';
 

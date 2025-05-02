@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:frontend/constants/constants_url.dart';
 
 class InvitationsPage extends StatefulWidget {
   const InvitationsPage({super.key});
@@ -31,7 +32,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/invitations/pending/'),
+        Uri.parse('${baseUrl}invitations/pending/'),
         headers: {'Authorization': 'Token $token'},
       );
 
@@ -55,7 +56,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
     try {
       _channel = WebSocketChannel.connect(
-        Uri.parse('ws://127.0.0.1:8000/ws/notifications/?token=$token'),
+        Uri.parse('wss://priceless.onrender.com/ws/notifications/?token=$token'),
       );
 
       _channel?.stream.listen((message) {
@@ -77,7 +78,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/api/invitations/respond/'),
+        Uri.parse('${baseUrl}invitations/respond/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
