@@ -1,14 +1,26 @@
 import logging
-from django.contrib.auth import authenticate
+import json
+import secrets
+import datetime
+import ssl
+import traceback
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
+from django.db import transaction, connection
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.utils import timezone
+from django.core.mail import get_connection, EmailMessage
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
-from django.http import JsonResponse
-from django.db import transaction
+from django.db.models import F
+from itertools import chain
+
 from .models import (
     FavoriteCart, Product, FavoriteCartProduct, MopasProduct, MigrosProduct,
     SokmarketProduct, MarketpaketiProduct, CarrefourProduct, UserAddress,
@@ -16,63 +28,17 @@ from .models import (
 )
 from .serializers import (
     UserSerializer, FavoriteCartSerializer, ProductSerializer,
-    UserAddressSerializer, ShoppingListSerializer, ShoppingListItemSerializer
+    UserAddressSerializer, ShoppingListSerializer, ShoppingListItemSerializer,
+    MopasProductSerializer, MigrosProductSerializer, SokmarketProductSerializer,
+    MarketpaketiProductSerializer, CarrefourProductSerializer
 )
-from django.conf import settings
-import json
-import secrets
-import datetime
-from django.utils import timezone
-import ssl
-from django.core.mail import get_connection, EmailMessage
-import traceback
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-from django.contrib.auth.models import User  
-from django.db import connection
-from rest_framework import generics
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.http import HttpResponse, JsonResponse
-from django.contrib.auth import authenticate, login
-from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import (
-    FavoriteCartProduct, Product, MopasProduct, MigrosProduct, 
-    SokmarketProduct, MarketpaketiProduct, CarrefourProduct,
-    UserPhoneNumber, UserAddress, FavoriteCart
-)
-from .serializers import (
-    UserSerializer, ProductSerializer, MopasProductSerializer, 
-    MigrosProductSerializer, SokmarketProductSerializer, 
-    MarketpaketiProductSerializer, CarrefourProductSerializer,
-    FavoriteCartSerializer
-)
-# Commenting out search vector imports as they're not currently being used
-# from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-from rest_framework import permissions
-from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view
-from itertools import chain
-from django.db.models import F
-from .serializers import UserAddressSerializer
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import IsAuthenticated
-
-
-
-
-
-
-
-
 def test_view(request):
     """API'nin çalışıp çalışmadığını test etmek için bir view"""
     return HttpResponse("Server is up and running!")
-
 
 class UserRegistrationView(generics.CreateAPIView):
     """Kullanıcı kayıt işlemi"""
@@ -94,7 +60,6 @@ class UserRegistrationView(generics.CreateAPIView):
             'username': user.username
         }, status=status.HTTP_201_CREATED)
 
-
 @api_view(['POST'])
 def user_login(request):
     """Kullanıcı girişi için view"""
@@ -115,8 +80,6 @@ def user_login(request):
         })
     
     return Response({'error': 'Invalid credentials'}, status=400)
-
-
 
 class ProductListAPIView(APIView):
     """Tüm ürünleri dönen bir API"""
@@ -141,7 +104,6 @@ class ProductListAPIView(APIView):
             return Response(combined_data, status=200)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
-
 
 class HomePageProductListAPIView(APIView):
     """Filtrelenmiş ürünleri dönen bir API"""
@@ -185,7 +147,6 @@ class HomePageProductListAPIView(APIView):
             return Response(combined_data, status=200)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
-
 
 def cheapest_products(request):
     """Her marketten en ucuz 4 ürünü döner."""
@@ -428,7 +389,7 @@ def cheapest_products_per_category(request):
         print(f"Error in cheapest_products_per_category: {e}")
         print(traceback.format_exc())
         # Return an empty list instead of an error to prevent the frontend from breaking
-        return JsonResponse([], safe=False)
+        return JsonResponse([], safe=False)    
     
 def search_products(request):
     """Ürün aramak için kullanılan endpoint"""
