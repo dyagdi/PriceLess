@@ -8,12 +8,19 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 import json
-from .models import FavoriteCartProduct, Product, MopasProduct, MigrosProduct, SokmarketProduct, MarketpaketiProduct, CarrefourProduct 
-from .serializers import UserSerializer, ProductSerializer, MopasProductSerializer, MigrosProductSerializer, SokmarketProductSerializer, MarketpaketiProductSerializer, CarrefourProductSerializer
+from .models import (
+    FavoriteCartProduct, Product, MopasProduct, MigrosProduct, 
+    SokmarketProduct, MarketpaketiProduct, CarrefourProduct,
+    UserPhoneNumber, UserAddress, FavoriteCart
+)
+from .serializers import (
+    UserSerializer, ProductSerializer, MopasProductSerializer, 
+    MigrosProductSerializer, SokmarketProductSerializer, 
+    MarketpaketiProductSerializer, CarrefourProductSerializer,
+    FavoriteCartSerializer
+)
 # Commenting out search vector imports as they're not currently being used
 # from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-from .models import FavoriteCart
-from .serializers import FavoriteCartSerializer
 from rest_framework import permissions
 from rest_framework import status
 from rest_framework.authtoken.models import Token
