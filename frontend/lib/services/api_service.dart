@@ -71,7 +71,7 @@ class ApiService {
     }
   }
 
-  static Future<void> changePassword(String newPassword) async {
+  static Future<void> changePassword(String currentPassword, String newPassword, String confirmPassword) async {
     final token = await getToken();
     if (token == null) return;
 
@@ -81,7 +81,11 @@ class ApiService {
         'Authorization': 'Token $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'new_password': newPassword}),
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword
+      }),
     );
 
     if (response.statusCode != 200) {

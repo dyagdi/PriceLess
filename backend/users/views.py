@@ -1,7 +1,38 @@
+import logging
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from rest_framework import generics, status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
+from django.http import JsonResponse
+from django.db import transaction
+from .models import (
+    FavoriteCart, Product, FavoriteCartProduct, MopasProduct, MigrosProduct,
+    SokmarketProduct, MarketpaketiProduct, CarrefourProduct, UserAddress,
+    UserPhoneNumber, ShoppingList, ShoppingListItem, Invitation
+)
+from .serializers import (
+    UserSerializer, FavoriteCartSerializer, ProductSerializer,
+    UserAddressSerializer, ShoppingListSerializer, ShoppingListItemSerializer
+)
+from django.conf import settings
+import json
+import secrets
+import datetime
+from django.utils import timezone
+import ssl
+from django.core.mail import get_connection, EmailMessage
+import traceback
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
 from django.contrib.auth.models import User  
 from django.db import connection
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse

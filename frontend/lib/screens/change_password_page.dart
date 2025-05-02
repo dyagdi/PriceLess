@@ -33,56 +33,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     });
 
     try {
-      final token = await ApiService.getToken();
-      if (token == null) {
-        setState(() {
-          _errorMessage = 'Oturum bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final response = await http.post(
-        Uri.parse('${baseUrl}change-password/'),
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'old_password': _currentPasswordController.text,
-          'new_password': _newPasswordController.text,
-        }),
+      await ApiService.changePassword(
+        _currentPasswordController.text,
+        _newPasswordController.text,
+        _confirmPasswordController.text,
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        print('Password change successful');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(data['message']),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
-          Navigator.of(context).pop();
-        }
-      } else {
-        print('Password change failed with status code: ${response.statusCode}');
-        String errorMessage = 'Bir hata oluştu';
-        try {
-          final data = json.decode(utf8.decode(response.bodyBytes));
-          errorMessage = data['error'] ?? errorMessage;
-        } catch (e) {
-          print('Error parsing response: $e');
-        }
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Şifreniz başarıyla değiştirildi'),
+            backgroundColor: AppTheme.primaryColor,
+          ),
+        );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       print('Error during password change: $e');
