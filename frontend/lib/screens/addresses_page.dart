@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/constants/constants_url.dart';
 import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/widgets/loading_indicator.dart';
 import 'add_address_page.dart';
 
 class AddressManagementPage extends StatefulWidget {
@@ -16,7 +19,7 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
 
   String _fixTurkishChars(String? text) {
     if (text == null) return '';
-    
+
     final Map<String, String> turkishChars = {
       'Ä±': 'ı',
       'Ä°': 'İ',
@@ -128,76 +131,143 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Adreslerim'),
+        title: Text(
+          'Adreslerim',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
+          ? const CustomLoadingIndicator(message: "Adresleriniz yükleniyor...")
+          : Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
                     'Kayıtlı Adreslerim',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: addresses.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Kayıtlı adresiniz bulunmamaktadır!',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
+                ),
+                Expanded(
+                  child: addresses.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 64,
+                                color: Colors.grey[400],
                               ),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: addresses.length,
-                            itemBuilder: (context, index) {
-                              final address = addresses[index];
-                              return Card(
-                                margin: EdgeInsets.only(bottom: 8),
-                                child: ListTile(
-                                  title: Text(address['address_title']),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('${address['mahalle']}, ${address['state']}, ${address['city']}'),
-                                      Text(address['address_details']),
-                                    ],
+                              const SizedBox(height: 16),
+                              Text(
+                                'Kayıtlı adresiniz bulunmamaktadır!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: addresses.length,
+                          itemBuilder: (context, index) {
+                            final address = addresses[index];
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                    BorderRadius.circular(AppTheme.radiusL),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
-                                  trailing: IconButton(
-                                    icon: Icon(Icons.edit),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => AddAddressPage(
-                                            existingAddress: address,
-                                          ),
-                                        ),
-                                      ).then((_) {
-                                        _loadAddresses(); // Refresh the list when returning from edit page
-                                      });
-                                    },
+                                ],
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                title: Text(
+                                  address['address_title'],
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${address['mahalle']}, ${address['state']}, ${address['city']}',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      address['address_details'],
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: IconButton(
+                                  icon: Icon(
+                                    Icons.edit_outlined,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddAddressPage(
+                                          existingAddress: address,
+                                        ),
+                                      ),
+                                    ).then((_) {
+                                      _loadAddresses();
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        ),
+                        elevation: 0,
                       ),
                       onPressed: () {
                         Navigator.push(
@@ -206,14 +276,20 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                             builder: (context) => AddAddressPage(),
                           ),
                         ).then((_) {
-                          _loadAddresses(); // Refresh the list when returning from add page
+                          _loadAddresses();
                         });
                       },
-                      child: const Text('Yeni Adres Ekle'),
+                      child: Text(
+                        'Yeni Adres Ekle',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
     );
   }

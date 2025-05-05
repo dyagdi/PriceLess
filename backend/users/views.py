@@ -1614,8 +1614,8 @@ def add_member_to_list(request, list_id):
                     {
                         "type": "notification_message",
                         "message": {
-                            "title": "Shopping List Invitation",
-                            "body": f"{request.user.username} invited you to join '{shopping_list.name}'",
+                            "title": "Ortak Alışveriş Listesi Davetleri",
+                            "body": f"{request.user.username} seni '{shopping_list.name}' ortak alışveriş listesine davet etti",
                             "type": "invitation",
                             "invitation_id": invitation.id,
                             "shopping_list_id": shopping_list.id,
@@ -1627,11 +1627,11 @@ def add_member_to_list(request, list_id):
             # Log the error but don't fail the request
             logger.error(f"Error sending notification: {str(e)}")
         
-        return Response({'message': 'Invitation sent successfully'}, status=status.HTTP_200_OK)
+        return Response({'message': 'İstek başarıyla gönderildi'}, status=status.HTTP_200_OK)
     except ShoppingList.DoesNotExist:
-        return Response({'error': 'Shopping list not found or unauthorized'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Alışveriş listesi bulunamadı'}, status=status.HTTP_404_NOT_FOUND)
     except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Kullanıcı bulunamadı'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

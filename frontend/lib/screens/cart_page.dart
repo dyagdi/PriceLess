@@ -9,6 +9,7 @@ import 'package:frontend/screens/to_do_list_page.dart';
 import 'package:frontend/screens/category_page.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/constants/constants_url.dart' as url_constants;
+import 'package:frontend/theme/app_theme.dart';
 import 'walking.dart';
 
 class CartPage extends StatefulWidget {
@@ -30,29 +31,46 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Sepetim"),
+        title: const Text(
+          "Sepetim",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Colors.black),
-        titleTextStyle: TextStyle(color: Colors.black),
-        automaticallyImplyLeading: true,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green,
+                color: Colors.green.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.directions_walk,
-                color: Colors.white,
+                color: Colors.green,
                 size: 20,
               ),
             ),
             onPressed: _openWalkingPage,
           ),
           IconButton(
-            icon: Icon(Icons.favorite_border, color: Colors.black),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.favorite_border,
+                color: Colors.red,
+                size: 20,
+              ),
+            ),
             onPressed: () => saveCartToFavorites(context),
           ),
         ],
@@ -63,9 +81,29 @@ class _CartPageState extends State<CartPage> {
 
           if (cartItems.isEmpty) {
             return Center(
-              child: Text(
-                "Listeniz boş",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Sepetiniz Boş",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Alışverişe başlamak için ürün ekleyin",
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                  ),
+                ],
               ),
             );
           }
@@ -74,78 +112,198 @@ class _CartPageState extends State<CartPage> {
             children: [
               Expanded(
                 child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {
                     final item = cartItems[index];
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      child: ListTile(
-                        leading: Image.network(
-                          item.image,
-                          fit: BoxFit.cover,
-                          width: 50,
-                          height: 50,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset("images/default.png");
-                          },
-                        ),
-                        title: Text(
-                          item.name,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                            "₺${(item.price * item.quantity).toStringAsFixed(2)}"),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.remove),
-                              onPressed: () {
-                                cartProvider.removeItem(item);
-                              },
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // Product Image
+                          ClipRRect(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(AppTheme.radiusL),
+                              bottom: Radius.circular(AppTheme.radiusL),
                             ),
-                            Text(
-                              item.quantity.toString(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                            child: SizedBox(
+                              width: 100,
+                              height: 100,
+                              child: Image.network(
+                                item.image,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.image_not_supported_outlined,
+                                        color: Colors.grey[400],
+                                        size: 32,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                            IconButton(
-                              icon: Icon(Icons.add),
-                              onPressed: () {
-                                cartProvider.addItem(item);
-                              },
+                          ),
+                          // Product Details
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "₺${(item.price * item.quantity).toStringAsFixed(2)}",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Theme.of(context).primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Quantity Controls
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(
+                                              AppTheme.radiusM),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove,
+                                                  size: 18),
+                                              onPressed: () {
+                                                cartProvider.removeItem(item);
+                                              },
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                            ),
+                                            Text(
+                                              item.quantity.toString(),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.add,
+                                                  size: 18),
+                                              onPressed: () {
+                                                cartProvider.addItem(item);
+                                              },
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline,
+                                            color: Colors.red),
+                                        onPressed: () {
+                                          cartProvider.removeItem(item);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
+              // Bottom Summary
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      "Toplam: ₺${cartProvider.cartItems.fold(0.0, (double sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Toplam",
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(
+                          "₺${cartProvider.cartItems.fold(0.0, (double sum, item) => sum + (item.price * item.quantity)).toStringAsFixed(2)}",
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
-                        // TODO:
+                        // TODO: Implement market comparison
                       },
-                      child: Text("Marketleri Karşılaştır"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: EdgeInsets.all(16),
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                        ),
+                      ),
+                      child: const Text(
+                        "Marketleri Karşılaştır",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -161,63 +319,64 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  
-void saveCartToFavorites(BuildContext context) async {
-  final cartProvider = Provider.of<CartProvider>(context, listen: false);
-  final cartItems = cartProvider.cartItems;
+  void saveCartToFavorites(BuildContext context) async {
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final cartItems = cartProvider.cartItems;
 
-  if (cartItems.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Sepetiniz boş, favorilere eklenemez!")),
-    );
-    return;
-  }
-
-  final products = cartItems.map((item) => {
-    'name': item.name,
-    'price': item.price,
-    'image': item.image,
-    'quantity': item.quantity,
-  }).toList();
-
-  try {
-    final token = await AuthService.getToken();
-    if (token == null) {
+    if (cartItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lütfen önce giriş yapın")),
+        SnackBar(content: Text("Sepetiniz boş, favorilere eklenemez!")),
       );
       return;
     }
 
-    final url = Uri.parse('${url_constants.baseUrl}favorite-carts/');  
-    print('Sending request to: $url'); 
-    print('Request data: ${jsonEncode({'products': products})}'); 
+    final products = cartItems
+        .map((item) => {
+              'name': item.name,
+              'price': item.price,
+              'image': item.image,
+              'quantity': item.quantity,
+            })
+        .toList();
 
-    final response = await http.post(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",  
-      },
-      body: jsonEncode({'products': products}),
-    );
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Lütfen önce giriş yapın")),
+        );
+        return;
+      }
 
-    if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Sepetiniz favorilere eklendi!")),
+      final url = Uri.parse('${url_constants.baseUrl}favorite-carts/');
+      print('Sending request to: $url');
+      print('Request data: ${jsonEncode({'products': products})}');
+
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Token $token",
+        },
+        body: jsonEncode({'products': products}),
       );
-    } else {
-      print('Error response: ${response.body}');
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Sepetiniz favorilere eklendi!")),
+        );
+      } else {
+        print('Error response: ${response.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Sepet favorilere eklenirken bir hata oluştu")),
+        );
+      }
+    } catch (e) {
+      print('Error saving cart to favorites: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Sepet favorilere eklenirken bir hata oluştu")),
+        SnackBar(content: Text("Bir hata oluştu, lütfen tekrar deneyin")),
       );
     }
-  } catch (e) {
-    print('Error saving cart to favorites: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Bir hata oluştu, lütfen tekrar deneyin")),
-    );
   }
-}
-
 }

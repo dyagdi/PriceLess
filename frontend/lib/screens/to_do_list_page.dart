@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/constants/constants_url.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ToDoListPage extends StatefulWidget {
   const ToDoListPage({super.key});
@@ -11,7 +13,8 @@ class ToDoListPage extends StatefulWidget {
   _ToDoListPageState createState() => _ToDoListPageState();
 }
 
-class _ToDoListPageState extends State<ToDoListPage> {
+class _ToDoListPageState extends State<ToDoListPage>
+    with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> _toDoItems = [];
   final TextEditingController _controller = TextEditingController();
   final TextEditingController _inviteController = TextEditingController();
@@ -19,10 +22,37 @@ class _ToDoListPageState extends State<ToDoListPage> {
   int? _selectedListId;
   List<Map<String, dynamic>> _shoppingLists = [];
 
+  late final AnimationController _animationController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+
   @override
   void initState() {
     super.initState();
     _fetchShoppingLists();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<String?> _getAuthToken() async {
@@ -42,7 +72,8 @@ class _ToDoListPageState extends State<ToDoListPage> {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
-        _shoppingLists = List<Map<String, dynamic>>.from(data['shopping_lists']);
+        _shoppingLists =
+            List<Map<String, dynamic>>.from(data['shopping_lists']);
         if (_shoppingLists.isNotEmpty && _selectedListId == null) {
           _selectedListId = _shoppingLists[0]['id'];
           _fetchItems();
@@ -82,10 +113,11 @@ class _ToDoListPageState extends State<ToDoListPage> {
       print("No list selected, cannot fetch items");
       return;
     }
-    
+
     String? token = await _getAuthToken();
-    print("Auth token for fetching items: ${token != null ? 'present' : 'missing'}");
-    
+    print(
+        "Auth token for fetching items: ${token != null ? 'present' : 'missing'}");
+
     if (token == null) {
       print("No auth token available");
       return;
@@ -101,9 +133,10 @@ class _ToDoListPageState extends State<ToDoListPage> {
       print("Fetch items response body: ${response.body}");
 
       if (response.statusCode == 200) {
-        final items = List<Map<String, dynamic>>.from(json.decode(response.body));
+        final items =
+            List<Map<String, dynamic>>.from(json.decode(response.body));
         print("Fetched ${items.length} items");
-        
+
         setState(() {
           _toDoItems = items;
         });
@@ -121,10 +154,10 @@ class _ToDoListPageState extends State<ToDoListPage> {
       print("Empty item or no list selected");
       return;
     }
-    
+
     String? token = await _getAuthToken();
     print("Auth token: ${token != null ? 'present' : 'missing'}");
-    
+
     if (token == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +178,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
       );
 
       if (!mounted) return;
-      
+
       print("API response status: ${response.statusCode}");
       print("API response body: ${response.body}");
 
@@ -155,7 +188,8 @@ class _ToDoListPageState extends State<ToDoListPage> {
         _fetchItems();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Öğe eklenirken hata oluştu: ${response.body}")),
+          SnackBar(
+              content: Text("Öğe eklenirken hata oluştu: ${response.body}")),
         );
       }
     } catch (e) {
@@ -209,9 +243,7 @@ class _ToDoListPageState extends State<ToDoListPage> {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json'
         },
-        body: json.encode({
-          'email': email
-        }),
+        body: json.encode({'email': email}),
       );
 
       if (!mounted) return;
@@ -224,7 +256,9 @@ class _ToDoListPageState extends State<ToDoListPage> {
       } else {
         final errorData = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorData['error'] ?? "Davet gönderilirken hata oluştu")),
+          SnackBar(
+              content: Text(
+                  errorData['error'] ?? "Davet gönderilirken hata oluştu")),
         );
       }
     } catch (e) {
@@ -284,14 +318,15 @@ class _ToDoListPageState extends State<ToDoListPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Sahip: ${listData['owner']}", 
+                Text("Sahip: ${listData['owner']}",
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text("Paylaşılan kişiler:", 
+                const Text("Paylaşılan kişiler:",
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                ...List<Map<String, dynamic>>.from(listData['members']).map<Widget>((member) => 
-                    Text("• ${member['name'] ?? member['username'] ?? member['email']}")
-                ).toList(),
+                ...List<Map<String, dynamic>>.from(listData['members'])
+                    .map<Widget>((member) => Text(
+                        "• ${member['name'] ?? member['username'] ?? member['email']}"))
+                    .toList(),
               ],
             ),
             actions: [
@@ -314,128 +349,450 @@ class _ToDoListPageState extends State<ToDoListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Paylaşılan Alışveriş Listesi"),
-        backgroundColor: Colors.blue,
+        title: Text(
+          "Alışveriş Listeleri",
+          style: GoogleFonts.poppins(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.people),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.people,
+                color: Colors.blue,
+                size: 20,
+              ),
+            ),
             onPressed: _showListMembers,
-            color: Colors.white,
           ),
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.add,
+                color: Colors.green,
+                size: 20,
+              ),
+            ),
             onPressed: _showCreateListDialog,
-            color: Colors.white,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    DropdownButton<int>(
-                      value: _selectedListId,
-                      isExpanded: true,
-                      hint: const Text("Liste seçin"),
-                      items: _shoppingLists.map((list) {
-                        return DropdownMenuItem<int>(
-                          value: list['id'],
-                          child: Text(list['name']),
-                        );
-                      }).toList(),
-                      onChanged: (int? newValue) {
-                        setState(() {
-                          _selectedListId = newValue;
-                          _fetchItems();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _inviteController,
-                            decoration: const InputDecoration(
-                              hintText: "E-posta ile kullanıcı davet et",
-                              border: OutlineInputBorder(),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // List Selection Section
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Liste Seçin",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: _showCreateListDialog,
+                              icon: const Icon(Icons.add, size: 18),
+                              label: Text(
+                                "Yeni Liste",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        ),
+                        child: DropdownButton<int>(
+                          value: _selectedListId,
+                          isExpanded: true,
+                          hint: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              "Liste seçin",
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          onPressed: () => _inviteUser(_inviteController.text),
-                          icon: const Icon(Icons.person_add),
-                          label: const Text("Davet Et"),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: const InputDecoration(
-                          hintText: "Yeni öğe ekle",
-                          border: OutlineInputBorder(),
+                          items: _shoppingLists.map((list) {
+                            return DropdownMenuItem<int>(
+                              value: list['id'],
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  list['name'],
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              _selectedListId = newValue;
+                              _fetchItems();
+                            });
+                          },
+                          underline: const SizedBox(),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () => _addItem(_controller.text),
-                      icon: const Icon(Icons.add),
-                      label: const Text("Ekle"),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _toDoItems.length,
-              itemBuilder: (context, index) {
-                final item = _toDoItems[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  child: ListTile(
-                    leading: Checkbox(
-                      value: item['is_done'],
-                      onChanged: (_) => _toggleItem(index),
-                    ),
-                    title: Text(
-                      item['name'],
-                      style: TextStyle(
-                        decoration: item['is_done']
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                      ),
-                    ),
-                    subtitle: Text("Ekleyen: ${item['added_by']}"),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _deleteItem(index),
-                    ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                );
-              },
+                ),
+
+                // Quick Actions Section
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          "Hızlı İşlemler",
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildQuickAction(
+                              "Ürün Ekle",
+                              Icons.add_circle_outline,
+                              Colors.blue,
+                              () => _showAddItemDialog(),
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildQuickAction(
+                              "Davet Et",
+                              Icons.person_add,
+                              Colors.green,
+                              () => _showInviteDialog(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Items List Section
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          "Liste Öğeleri",
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (_toDoItems.isEmpty)
+                        _buildEmptyState()
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _toDoItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _toDoItems[index];
+                            return _buildListItem(item, index);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(
+      String title, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          border: Border(
+            right: BorderSide(color: Colors.grey[200]!),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          Icon(
+            Icons.shopping_basket_outlined,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Henüz öğe eklenmemiş",
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Listeye ürün eklemek için yukarıdaki 'Ürün Ekle' butonunu kullanın",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListItem(Map<String, dynamic> item, int index) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: ListTile(
+        leading: Checkbox(
+          value: item['is_done'],
+          onChanged: (_) => _toggleItem(index),
+          activeColor: Colors.green,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        title: Text(
+          item['name'],
+          style: GoogleFonts.poppins(
+            decoration: item['is_done'] ? TextDecoration.lineThrough : null,
+            color: item['is_done'] ? Colors.grey[600] : Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        subtitle: Text(
+          "Ekleyen: ${item['added_by']}",
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete_outline, color: Colors.red),
+          onPressed: () => _deleteItem(index),
+        ),
+      ),
+    );
+  }
+
+  void _showAddItemDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Yeni Ürün Ekle",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            hintText: "Ürün adını yazın",
+            hintStyle: GoogleFonts.poppins(
+              color: Colors.grey[600],
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "İptal",
+              style: GoogleFonts.poppins(),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _addItem(_controller.text);
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Ekle",
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInviteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Kullanıcı Davet Et",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: TextField(
+          controller: _inviteController,
+          decoration: InputDecoration(
+            hintText: "E-posta adresi",
+            hintStyle: GoogleFonts.poppins(
+              color: Colors.grey[600],
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "İptal",
+              style: GoogleFonts.poppins(),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _inviteUser(_inviteController.text);
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Davet Et",
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/account_settings.dart';
-import 'addresses_page.dart'; 
-import 'user_info_page.dart'; 
-import 'favorite_carts_page.dart'; 
+import 'addresses_page.dart';
+import 'user_info_page.dart';
+import 'favorite_carts_page.dart';
 import 'package:frontend/widgets/bottom_navigation.dart';
 
 class UserAccountPage extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +28,7 @@ class UserAccountPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomNavigation(
-        currentIndex: -1,  
+        currentIndex: -1,
         categorizedProducts: const {},
       ),
     );

@@ -174,7 +174,7 @@ class BottomNavigation extends StatelessWidget {
               _buildNavItem(
                   Icons.category_outlined, Icons.category, 'Kategoriler', 1),
               _buildNavItem(
-                  Icons.list_alt_outlined, Icons.list_alt, 'Alışveriş', 2),
+                  Icons.list_alt_outlined, Icons.list_alt, 'Ortak Liste', 2),
               _buildNavItem(Icons.store_outlined, Icons.store, 'Marketler', 3),
               _buildNavItem(
                 Icons.shopping_cart_outlined,

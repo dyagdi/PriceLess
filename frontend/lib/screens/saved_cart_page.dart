@@ -5,6 +5,9 @@ import 'package:frontend/models/cart_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/constants/constants_url.dart';
 import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
 
 class SavedCartPage extends StatefulWidget {
   final List<dynamic> products;
@@ -28,6 +31,16 @@ class _SavedCartPageState extends State<SavedCartPage> {
   }
 
   String _fixTurkishChars(String text) {
+    if (text == null) return '';
+
+    // First, try to decode the text if it's encoded
+    try {
+      text = utf8.decode(text.runes.toList());
+    } catch (e) {
+      // If decoding fails, continue with the original text
+    }
+
+    // Map of common Turkish character encoding issues
     final Map<String, String> charMap = {
       'Ã¼': 'ü',
       'Ã¶': 'ö',
@@ -36,6 +49,16 @@ class _SavedCartPageState extends State<SavedCartPage> {
       'Ã§': 'ç',
       'Ä': 'ğ',
       'Ã': 'İ',
+      'Ãœ': 'Ü',
+      'Ã–': 'Ö',
+      'ÅŸ': 'ş',
+      'ÄŸ': 'ğ',
+      'Ã‡': 'Ç',
+      'â€™': "'",
+      'â€"': "–",
+      'â€"': "-",
+      'â€œ': '"',
+      'â€': '"',
     };
 
     String fixedText = text;
@@ -47,7 +70,7 @@ class _SavedCartPageState extends State<SavedCartPage> {
 
   void _addToCurrentCart(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    
+
     for (var product in widget.products) {
       final cartItem = CartItem(
         name: _fixTurkishChars(product['name']),
@@ -59,10 +82,19 @@ class _SavedCartPageState extends State<SavedCartPage> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Ürünler güncel sepete eklendi")),
+      SnackBar(
+        content: Text(
+          "Ürünler güncel sepete eklendi",
+          style: GoogleFonts.poppins(),
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        ),
+      ),
     );
 
-    Navigator.pop(context);  
+    Navigator.pop(context);
   }
 
   Future<void> deleteFavoriteCart() async {
@@ -70,7 +102,16 @@ class _SavedCartPageState extends State<SavedCartPage> {
       final token = await AuthService.getToken();
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Lütfen önce giriş yapın")),
+          SnackBar(
+            content: Text(
+              "Lütfen önce giriş yapın",
+              style: GoogleFonts.poppins(),
+            ),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            ),
+          ),
         );
         return;
       }
@@ -87,14 +128,32 @@ class _SavedCartPageState extends State<SavedCartPage> {
         widget.onCartDeleted();
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Sepet favorilerden kaldırıldı")),
+          SnackBar(
+            content: Text(
+              "Sepet favorilerden kaldırıldı",
+              style: GoogleFonts.poppins(),
+            ),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+            ),
+          ),
         );
       } else {
         throw Exception('Failed to delete cart');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Sepet silinirken hata oluştu")),
+        SnackBar(
+          content: Text(
+            "Sepet silinirken hata oluştu",
+            style: GoogleFonts.poppins(),
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          ),
+        ),
       );
     }
   }
@@ -104,17 +163,34 @@ class _SavedCartPageState extends State<SavedCartPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Sepeti Favorilerden Kaldır'),
-          content: Text('Bu sepeti favorilerden kaldırmak istediğinizden emin misiniz?'),
+          title: Text(
+            'Sepeti Favorilerden Kaldır',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Bu sepeti favorilerden kaldırmak istediğinizden emin misiniz?',
+            style: GoogleFonts.poppins(),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          ),
           actions: <Widget>[
             TextButton(
-              child: Text('İptal'),
+              child: Text(
+                'İptal',
+                style: GoogleFonts.poppins(),
+              ),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: Text('Kaldır'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
+              child: Text(
+                'Kaldır',
+                style: GoogleFonts.poppins(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -130,87 +206,192 @@ class _SavedCartPageState extends State<SavedCartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text("Kayıtlı Sepetim"),
+        title: Text(
+          "Kayıtlı Sepetim",
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Colors.black),
-        titleTextStyle: TextStyle(color: Colors.black, fontSize: 20),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: Icon(Icons.favorite, color: Colors.red),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.favorite,
+                color: Colors.red,
+                size: 20,
+              ),
+            ),
             onPressed: showDeleteConfirmation,
           ),
         ],
       ),
-      body: SingleChildScrollView( 
-        child: Column(
-          children: [
-            ListView.builder(
-              shrinkWrap: true, 
-              physics: NeverScrollableScrollPhysics(),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: widget.products.length,
               itemBuilder: (context, index) {
                 final item = widget.products[index];
                 final price = _getPrice(item['price']);
                 final quantity = item['quantity'] ?? 1;
-                
-                return Card(
-                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: ListTile(
-                    leading: Image.network(
-                      item['image'] ?? '',
-                      fit: BoxFit.cover,
-                      width: 50,
-                      height: 50,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset("images/default.png");
-                      },
-                    ),
-                    title: Text(
-                      _fixTurkishChars(item['name'] ?? ''),
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      "₺${(price * quantity).toStringAsFixed(2)}",
-                    ),
-                    trailing: Text(
-                      "Adet: $quantity",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Product Image
+                      ClipRRect(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(AppTheme.radiusL),
+                          bottom: Radius.circular(AppTheme.radiusL),
+                        ),
+                        child: SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: Image.network(
+                            item['image'] ?? '',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: Icon(
+                                    Icons.image_not_supported_outlined,
+                                    color: Colors.grey[400],
+                                    size: 32,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      // Product Details
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _fixTurkishChars(item['name'] ?? ''),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "₺${(price * quantity).toStringAsFixed(2)}",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Adet: $quantity",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    "Toplam: ₺${widget.products.fold(0.0, (sum, item) => sum + (_getPrice(item['price']) * (item['quantity'] ?? 1))).toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => _addToCurrentCart(context),
-                    child: Text("Güncel Sepete Ekle"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: EdgeInsets.all(16),
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          // Bottom Summary
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
-          ],
-        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Toplam",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      "₺${widget.products.fold(0.0, (sum, item) => sum + (_getPrice(item['price']) * (item['quantity'] ?? 1))).toStringAsFixed(2)}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _addToCurrentCart(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    ),
+                  ),
+                  child: Text(
+                    "Güncel Sepete Ekle",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

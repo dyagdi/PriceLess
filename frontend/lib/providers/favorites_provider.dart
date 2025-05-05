@@ -1,41 +1,50 @@
 import 'package:flutter/foundation.dart';
 import 'package:frontend/models/cheapest_pc.dart';
 
-class FavoritesProvider extends ChangeNotifier {
+class FavoritesProvider with ChangeNotifier {
   final List<CheapestProductPc> _items = [];
 
-  List<CheapestProductPc> get items => List.unmodifiable(_items);
+  List<CheapestProductPc> get items => _items;
 
-  bool isFavorite(String? productId) {
-    if (productId == null) return false;
-    return _items.any((item) => item.id == productId);
+  bool isFavorite(String? productName) {
+    if (productName == null) return false;
+    return _items.any((item) => item.name == productName);
   }
 
   void toggleFavorite(CheapestProductPc product) {
-    if (product.id == null) return;
+    print('Toggling favorite for product: ${product.name}');
 
-    final isAlreadyFavorite = _items.any((item) => item.id == product.id);
-
-    if (isAlreadyFavorite) {
-      _items.removeWhere((item) => item.id == product.id);
-    } else {
-      _items.add(product);
+    if (product.name.isEmpty) {
+      print('Product name is empty, cannot toggle favorite');
+      return;
     }
 
+    final isAlreadyFavorite = _items.any((item) => item.name == product.name);
+    print('Is already favorite: $isAlreadyFavorite');
+
+    if (isAlreadyFavorite) {
+      _items.removeWhere((item) => item.name == product.name);
+      print('Removed from favorites');
+    } else {
+      _items.add(product);
+      print('Added to favorites');
+    }
+
+    print('Current favorites count: ${_items.length}');
     notifyListeners();
   }
 
   void addToFavorites(CheapestProductPc product) {
-    if (product.id == null) return;
+    if (product.name.isEmpty) return;
 
-    if (!isFavorite(product.id)) {
+    if (!isFavorite(product.name)) {
       _items.add(product);
       notifyListeners();
     }
   }
 
-  void removeFromFavorites(String productId) {
-    _items.removeWhere((item) => item.id == productId);
+  void removeFromFavorites(String productName) {
+    _items.removeWhere((item) => item.name == productName);
     notifyListeners();
   }
 

@@ -15,6 +15,7 @@ import 'package:frontend/config/api_config.dart';
 import 'package:frontend/widgets/product_detail_page.dart';
 import 'package:frontend/models/product_search_result.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:frontend/providers/price_history_provider.dart';
 
 class DiscountedProductPage extends StatefulWidget {
   @override
@@ -274,21 +275,24 @@ class CategorySection extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => ProductDetailSheet(
-          name: product.name,
-          price: product.price,
-          image: product.imageUrl,
-          highPrice: product.highPrice,
-          category: product.mainCategory,
-          marketName: product.marketName,
-          scrollController: scrollController,
-          id: product.id,
-          productLink: product.productLink,
+      builder: (context) => ChangeNotifierProvider<PriceHistoryProvider>.value(
+        value: Provider.of<PriceHistoryProvider>(context, listen: false),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) => ProductDetailSheet(
+            name: product.name,
+            price: product.price,
+            image: product.imageUrl,
+            highPrice: product.highPrice,
+            category: product.mainCategory,
+            marketName: product.marketName,
+            scrollController: scrollController,
+            id: product.id,
+            productLink: product.productLink,
+          ),
         ),
       ),
     );
@@ -376,7 +380,8 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
         }
       });
     });
-    _priceHistoryFuture = _fetchPriceHistory(widget.name);
+    _priceHistoryFuture =
+        context.read<PriceHistoryProvider>().fetchPriceHistory(widget.name);
   }
 
   @override
@@ -1160,18 +1165,6 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
       return [];
     } catch (e) {
       print('Error fetching similar products: $e');
-      return [];
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchPriceHistory(String name) async {
-    final url = Uri.parse(
-        '${ApiConfig.baseUrl}/price-history?name=${Uri.encodeComponent(name)}');
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-      return List<Map<String, dynamic>>.from(data);
-    } else {
       return [];
     }
   }

@@ -31,7 +31,7 @@ import 'package:frontend/providers/favorites_provider.dart';
 import 'package:frontend/screens/splash_screen.dart';
 import 'package:frontend/screens/markets_page.dart';
 import 'package:frontend/screens/invitations_page.dart';
-
+import 'package:frontend/providers/price_history_provider.dart';
 
 void main() {
   runApp(
@@ -40,6 +40,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => RecentlyViewedProvider()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => PriceHistoryProvider()),
       ],
       child: const MyApp(),
     ),

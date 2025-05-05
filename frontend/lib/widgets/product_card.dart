@@ -3,6 +3,10 @@ import 'package:frontend/models/product_search_result.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/widgets/category_badge.dart';
 import 'package:frontend/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend/providers/favorites_provider.dart';
+import 'package:frontend/providers/recently_viewed_provider.dart';
+import 'package:frontend/models/cheapest_pc.dart';
 
 class ProductCard extends StatelessWidget {
   final String name;
@@ -13,6 +17,7 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onAddToCart;
   final String? category;
   final String? marketName;
+  final String? id;
 
   const ProductCard({
     required this.name,
@@ -23,8 +28,32 @@ class ProductCard extends StatelessWidget {
     required this.onAddToCart,
     this.category,
     this.marketName,
+    this.id,
     Key? key,
   }) : super(key: key);
+
+  void _handleTap(BuildContext context) {
+    // Add to recently viewed
+    try {
+      final product = CheapestProductPc(
+        id: id,
+        name: name,
+        price: price,
+        image: imageUrl,
+        category: category,
+        marketName: marketName,
+      );
+      final provider = context.read<RecentlyViewedProvider>();
+      provider.addItem(product);
+      print('Added to recently viewed from ProductCard: $name');
+      print('Current items count: ${provider.items.length}');
+    } catch (e) {
+      print('Error adding to recently viewed: $e');
+    }
+
+    // Call the original onTap
+    onTap();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +62,9 @@ class ProductCard extends StatelessWidget {
         : null;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _handleTap(context),
       child: Container(
-        height: 270, // Fixed height to prevent overflow
+        height: 270,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
@@ -50,7 +79,6 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product image with discount badge and favorite icon
             Stack(
               children: [
                 Hero(
@@ -117,22 +145,41 @@ class ProductCard extends StatelessWidget {
                 Positioned(
                   top: 8,
                   left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.favorite_border,
-                      color: Colors.grey[600],
-                      size: 18,
-                    ),
+                  child: Consumer<FavoritesProvider>(
+                    builder: (context, favoritesProvider, child) {
+                      final isFavorite = favoritesProvider.isFavorite(name);
+                      print('Product $name is favorite: $isFavorite');
+                      return GestureDetector(
+                        onTap: () {
+                          print('Tapping favorite button for product: $name');
+                          final product = CheapestProductPc(
+                            id: id,
+                            name: name,
+                            price: price,
+                            image: imageUrl,
+                            category: category,
+                            marketName: marketName,
+                          );
+                          favoritesProvider.toggleFavorite(product);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.8),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite ? Colors.red : Colors.grey[600],
+                            size: 18,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-            // Product details section with better spacing
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8),
@@ -140,7 +187,6 @@ class ProductCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.max,
                   children: [
-                    // Category and market badges with constrained height
                     SizedBox(
                       height: (category != null || marketName != null) ? 26 : 0,
                       child: SingleChildScrollView(
@@ -187,10 +233,8 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-
-                    // Product name with fixed height
                     SizedBox(
-                      height: 40, // Fixed height for name
+                      height: 40,
                       child: Text(
                         name,
                         maxLines: 2,
@@ -200,8 +244,6 @@ class ProductCard extends StatelessWidget {
                             ),
                       ),
                     ),
-
-                    // Price section
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -231,11 +273,7 @@ class ProductCard extends StatelessWidget {
                           ),
                       ],
                     ),
-
-                    // Spacer to push button to the bottom
                     const Spacer(),
-
-                    // Add to cart button always at the bottom
                     SizedBox(
                       width: double.infinity,
                       height: 30,

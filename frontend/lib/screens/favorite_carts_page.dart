@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/constants/constants_url.dart';
 import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/widgets/loading_indicator.dart';
 import 'package:frontend/screens/saved_cart_page.dart';
 
 class FavoriteCartsPage extends StatefulWidget {
@@ -39,7 +42,7 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
       );
 
       if (response.statusCode == 200) {
-        print("Response body: ${response.body}"); 
+        print("Response body: ${response.body}");
         final decodedData = jsonDecode(response.body);
         setState(() {
           favoriteCarts = decodedData;
@@ -100,7 +103,8 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Sepeti Favorilerden Kaldır'),
-          content: Text('Bu sepeti favorilerden kaldırmak istediğinizden emin misiniz?'),
+          content: Text(
+              'Bu sepeti favorilerden kaldırmak istediğinizden emin misiniz?'),
           actions: <Widget>[
             TextButton(
               child: Text('İptal'),
@@ -125,56 +129,120 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Kayıtlı Sepetlerim'),
+        title: Text(
+          'Kayıtlı Sepetlerim',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: isLoading 
-        ? Center(child: CircularProgressIndicator())
-        : favoriteCarts.isEmpty 
-          ? Center(
-              child: Text('Henüz favori sepetiniz bulunmamaktadır',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: favoriteCarts.length,
-              itemBuilder: (context, index) {
-                final cart = favoriteCarts[index];
-                final products = cart['products'] ?? [];
-                return Card(
-                  margin: EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    title: Text('Favori Sepetim ${index + 1}'),
-                    trailing: Icon(Icons.shopping_cart),
-                    onTap: () {
-                      if (products.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SavedCartPage(
-                              products: products,
-                              cartId: cart['id'],
-                              onCartDeleted: () {
-                                setState(() {
-                                  favoriteCarts.removeWhere((c) => c['id'] == cart['id']);
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Bu sepette ürün bulunmamaktadır")),
-                        );
-                      }
-                    },
+      body: isLoading
+          ? const CustomLoadingIndicator(message: "Sepetleriniz yükleniyor...")
+          : favoriteCarts.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Henüz favori sepetiniz bulunmamaktadır',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: favoriteCarts.length,
+                  itemBuilder: (context, index) {
+                    final cart = favoriteCarts[index];
+                    final products = cart['products'] ?? [];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        title: Text(
+                          'Favori Sepetim ${index + 1}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${products.length} ürün',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.shopping_cart_outlined,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        onTap: () {
+                          if (products.isNotEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SavedCartPage(
+                                  products: products,
+                                  cartId: cart['id'],
+                                  onCartDeleted: () {
+                                    setState(() {
+                                      favoriteCarts.removeWhere(
+                                          (c) => c['id'] == cart['id']);
+                                    });
+                                  },
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Bu sepette ürün bulunmamaktadır",
+                                  style: GoogleFonts.poppins(),
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppTheme.radiusM),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }

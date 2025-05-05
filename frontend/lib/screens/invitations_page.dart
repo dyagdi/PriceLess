@@ -27,7 +27,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
   Future<void> _loadInvitations() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-    
+
     if (token == null) return;
 
     try {
@@ -51,12 +51,13 @@ class _InvitationsPageState extends State<InvitationsPage> {
   Future<void> _connectWebSocket() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-    
+
     if (token == null) return;
 
     try {
       _channel = WebSocketChannel.connect(
-        Uri.parse('wss://priceless.onrender.com/ws/notifications/?token=$token'),
+        Uri.parse(
+            'wss://priceless.onrender.com/ws/notifications/?token=$token'),
       );
 
       _channel?.stream.listen((message) {
@@ -73,7 +74,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
   Future<void> _respondToInvitation(int invitationId, String action) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-    
+
     if (token == null) return;
 
     try {
@@ -117,7 +118,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shopping List Invitations'),
+        title: const Text('Ortak Alışveriş Listesi Davetleri'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -136,11 +137,13 @@ class _InvitationsPageState extends State<InvitationsPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextButton(
-                              onPressed: () => _respondToInvitation(invitation['id'], 'accept'),
+                              onPressed: () => _respondToInvitation(
+                                  invitation['id'], 'accept'),
                               child: const Text('Accept'),
                             ),
                             TextButton(
-                              onPressed: () => _respondToInvitation(invitation['id'], 'decline'),
+                              onPressed: () => _respondToInvitation(
+                                  invitation['id'], 'decline'),
                               child: const Text('Decline'),
                             ),
                           ],
@@ -151,4 +154,4 @@ class _InvitationsPageState extends State<InvitationsPage> {
                 ),
     );
   }
-} 
+}

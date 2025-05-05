@@ -26,6 +26,8 @@ import 'package:frontend/models/address_model.dart';
 import 'package:frontend/providers/recently_viewed_provider.dart';
 import 'package:frontend/providers/favorites_provider.dart';
 import 'package:frontend/theme/app_theme.dart';
+import 'package:frontend/screens/nearby_markets_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -40,6 +42,9 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String currentAddress = "Konum alınıyor...";
   String? selectedAddressId;
+  List<Map<String, dynamic>> _nearbyMarkets = [];
+  double _userLatitude = 0.0;
+  double _userLongitude = 0.0;
 
   final List<SavedAddress> savedAddresses = [
     SavedAddress(
@@ -117,26 +122,35 @@ class _HomePageState extends State<HomePage> {
         final utf8DecodedBody = utf8.decode(response.bodyBytes);
         final data = json.decode(utf8DecodedBody);
 
-        print("Full API Response: $utf8DecodedBody");
-
         List<dynamic> elements = data["elements"];
 
-        if (elements.isNotEmpty) {
-          print("\nMarkets within 1500 meters:");
-          for (var element in elements) {
-            String name = element["tags"]?["name"] ??
-                element["tags"]?["brand"] ??
-                element["tags"]?["shop"] ??
-                element["tags"]?["amenity"] ??
-                "Unnamed Market";
+        setState(() {
+          _nearbyMarkets = elements.map<Map<String, dynamic>>((element) {
+            // Calculate distance from current location
+            double distance = Geolocator.distanceBetween(
+                  latitude,
+                  longitude,
+                  element["lat"],
+                  element["lon"],
+                ) /
+                1000; // Convert to kilometers
 
-            print("- $name (Lat: ${element["lat"]}, Lon: ${element["lon"]})");
-          }
-        } else {
-          print("No markets found within 1500 meters.");
-        }
-      } else {
-        print("Failed to fetch markets. Status Code: ${response.statusCode}");
+            return {
+              "name": element["tags"]?["name"] ??
+                  element["tags"]?["brand"] ??
+                  element["tags"]?["shop"] ??
+                  element["tags"]?["amenity"] ??
+                  "Unnamed Market",
+              "lat": element["lat"],
+              "lon": element["lon"],
+              "distance": distance,
+            };
+          }).toList();
+
+          // Sort markets by distance
+          _nearbyMarkets.sort((a, b) =>
+              (a["distance"] as double).compareTo(b["distance"] as double));
+        });
       }
     } catch (e) {
       print("Error fetching markets: $e");
@@ -173,6 +187,11 @@ class _HomePageState extends State<HomePage> {
 
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
+
+      setState(() {
+        _userLatitude = position.latitude;
+        _userLongitude = position.longitude;
+      });
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
@@ -352,7 +371,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
-       
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.black),
             onPressed: () {
@@ -412,44 +430,13 @@ class _HomePageState extends State<HomePage> {
                     child: _buildFeaturedCategories(context),
                   ),
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'En Uygun Fiyatlı Ürünler',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              // Navigate to see all cheapest products
-                            },
-                            child: Text(
-                              'Tümünü Gör',
-                              style: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
                     child: _buildCheapestProducts(),
                   ),
                   SliverToBoxAdapter(
-                    child: _buildRecentlyViewed(),
+                    child: _buildPersonalizedRecommendations(),
                   ),
                   SliverToBoxAdapter(
-                    child: _buildPersonalizedRecommendations(),
+                    child: _buildRecentlyViewed(),
                   ),
                   // Add some bottom padding
                   SliverToBoxAdapter(
@@ -468,26 +455,55 @@ class _HomePageState extends State<HomePage> {
   Widget _buildLocationBar() {
     return GestureDetector(
       onTap: _showAddressSelector,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: Container(
+        margin: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
           children: [
-            Icon(Icons.location_on, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.location_on,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Teslimat Adresi',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   Text(
                     currentAddress,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -503,56 +519,77 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildWelcomeBanner(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).primaryColor.withOpacity(0.8),
-              Theme.of(context).primaryColor.withOpacity(0.6),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Hoş Geldiniz!',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'En uygun fiyatlı ürünleri keşfedin',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to markets page
-                Navigator.pushNamed(context, '/markets');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Theme.of(context).primaryColor,
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              child: const Text('Yakınımdaki Marketleri Gör'),
-            ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).primaryColor.withOpacity(0.8),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hoş Geldiniz!',
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'En uygun fiyatlı ürünleri keşfedin',
+            style: GoogleFonts.poppins(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NearbyMarketsPage(
+                    markets: _nearbyMarkets,
+                    userLatitude: _userLatitude,
+                    userLongitude: _userLongitude,
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Theme.of(context).primaryColor,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              ),
+            ),
+            child: Text(
+              'Yakınımdaki Marketleri Gör',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -572,19 +609,7 @@ class _HomePageState extends State<HomePage> {
         },
       },
       {
-        'name': 'Popüler\nÜrünler',
-        'icon': Icons.trending_up,
-        'color': Colors.blue.withOpacity(0.1),
-        'iconColor': Colors.blue,
-        'onTap': () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PopularProductPage()),
-          );
-        },
-      },
-      {
-        'name': 'Alışveriş\nListem',
+        'name': 'Alışveriş\nSepetim',
         'icon': Icons.checklist,
         'color': Theme.of(context).primaryColor.withOpacity(0.1),
         'iconColor': Theme.of(context).primaryColor,
@@ -613,56 +638,69 @@ class _HomePageState extends State<HomePage> {
       },
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: SizedBox(
-        height: 120,
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          scrollDirection: Axis.horizontal,
-          itemCount: categories.length,
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: GestureDetector(
-                onTap: category['onTap'] as VoidCallback,
-                child: Container(
-                  width: 100,
-                  decoration: BoxDecoration(
-                    color: category['color'] as Color,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
+    return Container(
+      height: 140,
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          return Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: category['onTap'] as VoidCallback,
+              child: Container(
+                width: 120,
+                decoration: BoxDecoration(
+                  color: category['color'] as Color,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
+                      child: Icon(
                         category['icon'] as IconData,
                         color: category['iconColor'] as Color,
-                        size: 32,
+                        size: 28,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category['name'] as String,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      category['name'] as String,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -688,40 +726,51 @@ class _HomePageState extends State<HomePage> {
         }
 
         final products = snapshot.data!;
-        return SizedBox(
-          height: 280,
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return SizedBox(
-                width: 160,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: ProductCard(
-                    name: _truncateName(product.name ?? ''),
-                    price: product.price ?? 0.0,
-                    imageUrl: product.image ?? '',
-                    category: product.category ?? '',
-                    marketName: product.marketName ?? '',
-                    onTap: () => _showProductDetail(context, product),
-                    onAddToCart: () => _addToCart(context, product),
-                  ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
+              child: Text(
+                'En Uygun Fiyatlı Ürünler',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+            SizedBox(
+              height: 300,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  final product = products[index];
+                  return Container(
+                    width: 180,
+                    margin: const EdgeInsets.only(right: 16),
+                    child: ProductCard(
+                      name: _truncateName(product.name ?? ''),
+                      price: product.price ?? 0.0,
+                      imageUrl: product.image ?? '',
+                      category: product.category ?? '',
+                      marketName: product.marketName ?? '',
+                      onTap: () => _showProductDetail(context, product),
+                      onAddToCart: () => _addToCart(context, product),
+                      id: product.id,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
   void _showProductDetail(BuildContext context, CheapestProductPc product) {
-    // Add to recently viewed when showing details
-    context.read<RecentlyViewedProvider>().addItem(product);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -776,41 +825,49 @@ class _HomePageState extends State<HomePage> {
   Widget _buildRecentlyViewed() {
     return Consumer<RecentlyViewedProvider>(
       builder: (context, provider, child) {
-        if (provider.items.isEmpty) return const SizedBox.shrink();
+        final items = provider.items;
+        print('Building recently viewed with ${items.length} items');
+        print('Items in list: ${items.map((item) => item.name).join(', ')}');
+
+        if (items.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
               child: Text(
                 'Son Görüntülenenler',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             SizedBox(
-              height: 280,
+              height: 300,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
-                itemCount: provider.items.length,
+                itemCount: items.length,
                 itemBuilder: (context, index) {
-                  final product = provider.items[index];
-                  return SizedBox(
-                    width: 160,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: ProductCard(
-                        name: _truncateName(product.name ?? ''),
-                        price: product.price ?? 0.0,
-                        imageUrl: product.image ?? '',
-                        category: product.category ?? '',
-                        marketName: product.marketName ?? '',
-                        onTap: () => _showProductDetail(context, product),
-                        onAddToCart: () => _addToCart(context, product),
-                      ),
+                  final product = items[index];
+                  print(
+                      'Building recently viewed item ${index + 1}: ${product.name}');
+                  return Container(
+                    width: 180,
+                    margin: const EdgeInsets.only(right: 16),
+                    child: ProductCard(
+                      name: _truncateName(product.name ?? ''),
+                      price: product.price ?? 0.0,
+                      imageUrl: product.image ?? '',
+                      category: product.category ?? '',
+                      marketName: product.marketName ?? '',
+                      onTap: () => _showProductDetail(context, product),
+                      onAddToCart: () => _addToCart(context, product),
+                      id: product.id,
                     ),
                   );
                 },
@@ -823,35 +880,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildPersonalizedRecommendations() {
-    // This would ideally be populated with personalized recommendations
-    // based on user behavior, but for now we'll use sample data
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Sizin İçin Önerilenler',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Navigate to see all recommendations
-                },
-                child: Text(
-                  'Tümünü Gör',
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          child: Text(
+            'Sizin İçin Önerilenler',
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         FutureBuilder<List<CheapestProductPc>>(
@@ -867,33 +906,31 @@ class _HomePageState extends State<HomePage> {
               return const SizedBox.shrink();
             }
 
-            // Shuffle the products to simulate personalized recommendations
             final recommendations = List<CheapestProductPc>.from(snapshot.data!)
               ..shuffle();
             final displayCount =
                 recommendations.length > 5 ? 5 : recommendations.length;
 
             return SizedBox(
-              height: 280,
+              height: 300,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 scrollDirection: Axis.horizontal,
                 itemCount: displayCount,
                 itemBuilder: (context, index) {
                   final product = recommendations[index];
-                  return SizedBox(
-                    width: 160,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: ProductCard(
-                        name: _truncateName(product.name ?? ''),
-                        price: product.price ?? 0.0,
-                        imageUrl: product.image ?? '',
-                        category: product.category ?? '',
-                        marketName: product.marketName ?? '',
-                        onTap: () => _showProductDetail(context, product),
-                        onAddToCart: () => _addToCart(context, product),
-                      ),
+                  return Container(
+                    width: 180,
+                    margin: const EdgeInsets.only(right: 16),
+                    child: ProductCard(
+                      name: _truncateName(product.name ?? ''),
+                      price: product.price ?? 0.0,
+                      imageUrl: product.image ?? '',
+                      category: product.category ?? '',
+                      marketName: product.marketName ?? '',
+                      onTap: () => _showProductDetail(context, product),
+                      onAddToCart: () => _addToCart(context, product),
+                      id: product.id,
                     ),
                   );
                 },

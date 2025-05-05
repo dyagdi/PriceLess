@@ -41,6 +41,8 @@ dependencies:
   speech_to_text: ^6.6.0
   fl_chart: ^0.66.0
   web_socket_channel: ^2.4.0
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
   
 
 
@@ -71,21 +73,24 @@ flutter:
   uses-material-design: true
   
   assets:
+    - images/
+    - images/branding/
+    - images/a101.png
+    - images/bim.png
+    - images/carrefour.png
+    - images/migros.png
+    - images/şok.png
+    - images/default.png
     - images/twix_white.webp
     - images/snickers.webp
     - images/reklam.jpg
     - images/bounty.webp
     - images/mars.webp
     - images/misir.jpg
-    - images/default.png
-    - assets/cities_states.json
-    - images/carrefour.png
-    - images/a101.png
-    - images/şok.png
-    - images/migros.png
     - images/meyve_sebze.jpeg
     - images/et_tavuk_balik.jpeg
     - images/sut_kahvaltilik.jpeg
+    - assets/cities_states.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

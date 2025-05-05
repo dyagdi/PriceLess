@@ -10,6 +10,8 @@ import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/screens/discounted_product_page.dart'
     show ProductDetailSheet;
 import 'package:frontend/providers/recently_viewed_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/screens/market_products_page.dart';
 
 class MarketsPage extends StatefulWidget {
   final Map<String, List<dynamic>> categorizedProducts;
@@ -60,10 +62,10 @@ class _MarketsPageState extends State<MarketsPage> {
             const SizedBox(width: 8),
             Text(
               "Marketler",
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 color: Colors.black,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -77,56 +79,6 @@ class _MarketsPageState extends State<MarketsPage> {
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
               slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).primaryColor.withOpacity(0.8),
-                                Theme.of(context).primaryColor.withOpacity(0.6),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusL),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Yakınımdaki Marketler',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineLarge
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'En uygun fiyatlı ürünleri keşfedin',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.copyWith(
-                                      color: Colors.white.withOpacity(0.9),
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 SliverPadding(
                   padding: const EdgeInsets.all(8.0),
                   sliver: SliverList(
@@ -309,7 +261,14 @@ class MarketSection extends StatelessWidget {
               child: Center(
                 child: OutlinedButton(
                   onPressed: () {
-                    // TODO: Navigate to market detail page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MarketProductsPage(
+                          marketData: marketData,
+                        ),
+                      ),
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Theme.of(context).primaryColor),

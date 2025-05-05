@@ -170,9 +170,8 @@ class _AuthPageState extends State<AuthPage> {
           await AuthService.saveToken(token);
 
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(_isLoginMode
-                  ? "Login successful!"
-                  : "Registration successful!")));
+              content: Text(
+                  _isLoginMode ? "Giriş yapıldı!" : "Hesap oluşturuldu!")));
 
           Navigator.pushReplacement(
             context,
