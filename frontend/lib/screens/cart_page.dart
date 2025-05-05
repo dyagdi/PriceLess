@@ -11,6 +11,7 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/constants/constants_url.dart' as url_constants;
 import 'package:frontend/theme/app_theme.dart';
 import 'walking.dart';
+import 'package:frontend/screens/market_comparison_page.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -288,16 +289,13 @@ class _CartPageState extends State<CartPage> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
-                        // TODO: Implement market comparison
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MarketComparisonPage(),
+                          ),
+                        );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                        ),
-                      ),
                       child: const Text(
                         "Marketleri Karşılaştır",
                         style: TextStyle(
