@@ -449,8 +449,12 @@ class FavoriteCartListCreateView(generics.ListCreateAPIView):
         try:
             user = request.user
             cart_data = request.data.get('products', [])
+            cart_name = request.data.get('name', None)
             
-            favorite_cart = FavoriteCart.objects.create(user=user)
+            favorite_cart = FavoriteCart.objects.create(
+                user=user,
+                name=cart_name
+            )
             
             for product in cart_data:
                 FavoriteCartProduct.objects.create(

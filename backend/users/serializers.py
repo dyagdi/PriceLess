@@ -66,7 +66,7 @@ class FavoriteCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FavoriteCart
-        fields = ['id', 'user', 'products']
+        fields = ['id', 'user', 'products', 'name']
         read_only_fields = ['user']
 
     def get_products(self, obj):

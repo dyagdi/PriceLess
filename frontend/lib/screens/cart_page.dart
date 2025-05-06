@@ -21,10 +21,150 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  bool _isHeartFilled = false;
+
   Future<void> _openWalkingPage() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const WalkingPage()),
+    );
+  }
+
+  void _showNameCartDialog() {
+    final TextEditingController nameController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Sepetinizi İsimlendirin',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        setState(() {
+                          _isHeartFilled = false;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'Sepet adı girin',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                    final cartItems = cartProvider.cartItems;
+
+                    if (cartItems.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Sepetiniz boş, favorilere eklenemez!")),
+                      );
+                      Navigator.of(context).pop();
+                      setState(() {
+                        _isHeartFilled = false;
+                      });
+                      return;
+                    }
+
+                    final products = cartItems
+                        .map((item) => {
+                              'name': item.name,
+                              'price': item.price,
+                              'image': item.image,
+                              'quantity': item.quantity,
+                            })
+                        .toList();
+
+                    try {
+                      final token = await AuthService.getToken();
+                      if (token == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Lütfen önce giriş yapın")),
+                        );
+                        Navigator.of(context).pop();
+                        setState(() {
+                          _isHeartFilled = false;
+                        });
+                        return;
+                      }
+
+                      final url = Uri.parse('${url_constants.baseUrl}favorite-carts/');
+                      final response = await http.post(
+                        url,
+                        headers: {
+                          "Content-Type": "application/json",
+                          "Authorization": "Token $token",
+                        },
+                        body: jsonEncode({
+                          'products': products,
+                          'name': nameController.text.trim(),
+                        }),
+                      );
+
+                      if (response.statusCode == 201) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Sepetiniz favorilere eklendi!")),
+                        );
+                        Navigator.of(context).pop();
+                      } else {
+                        print('Error response: ${response.body}');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Sepet favorilere eklenirken bir hata oluştu")),
+                        );
+                        Navigator.of(context).pop();
+                        setState(() {
+                          _isHeartFilled = false;
+                        });
+                      }
+                    } catch (e) {
+                      print('Error saving cart to favorites: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Bir hata oluştu, lütfen tekrar deneyin")),
+                      );
+                      Navigator.of(context).pop();
+                      setState(() {
+                        _isHeartFilled = false;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    minimumSize: const Size(double.infinity, 45),
+                  ),
+                  child: const Text('Kaydet'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -66,13 +206,20 @@ class _CartPageState extends State<CartPage> {
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.favorite_border,
+              child: Icon(
+                _isHeartFilled ? Icons.favorite : Icons.favorite_border,
                 color: Colors.red,
                 size: 20,
               ),
             ),
-            onPressed: () => saveCartToFavorites(context),
+            onPressed: () {
+              setState(() {
+                _isHeartFilled = !_isHeartFilled;
+              });
+              if (_isHeartFilled) {
+                _showNameCartDialog();
+              }
+            },
           ),
         ],
       ),

@@ -99,9 +99,8 @@ class _WalkingPageState extends State<WalkingPage> {
                     child: Slider(
                       value: _currentValue,
                       min: 0,
-                      max: 5,
-                      divisions: 5,
-                      label: '${_currentValue.toInt()}',
+                      max: 4,
+                      divisions: 4,
                       onChanged: (value) {
                         setState(() {
                           _currentValue = value;
@@ -115,7 +114,7 @@ class _WalkingPageState extends State<WalkingPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (index) {
+                        children: List.generate(5, (index) {
                           return Container(
                             width: 8,
                             height: 8,
@@ -131,20 +130,6 @@ class _WalkingPageState extends State<WalkingPage> {
                 ],
               ),
               const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text('0'),
-                    Text('1'),
-                    Text('2'),
-                    Text('3'),
-                    Text('4'),
-                    Text('5'),
-                  ],
-                ),
-              ),
               const SizedBox(height: 30),
               const Text(
                 'Carrefour Süt 200 Ml',

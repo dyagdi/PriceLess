@@ -29,6 +29,7 @@ class Product(models.Model):
 class FavoriteCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     id = models.AutoField(primary_key=True)  # Django automatically assigns an ID, so no need for shopping_cart_id separately.
+    name = models.CharField(max_length=255, null=True, blank=True)  # Optional name field
 
     class Meta:
         db_table = 'favorite_carts'
