@@ -29,7 +29,6 @@ from .views import (
     add_member_to_list,
     respond_to_invitation,
     get_pending_invitations,
-    MarketLocationsAPIView,
     NearbyMarketsWithPricesAPIView
 )
 from . import views
