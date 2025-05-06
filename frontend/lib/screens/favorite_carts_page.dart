@@ -189,7 +189,9 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         title: Text(
-                          'Favori Sepetim ${index + 1}',
+                          cart['name']?.toString().isEmpty ?? true 
+                              ? 'Favori Sepetim ${index + 1}' 
+                              : cart['name'],
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
