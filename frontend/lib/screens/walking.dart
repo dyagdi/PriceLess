@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bottom_navigation.dart';
 import 'cart_page.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend/providers/cart_provider.dart';
+import 'package:frontend/services/market_comparison_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:frontend/constants/constants_url.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class WalkingPage extends StatefulWidget {
   const WalkingPage({super.key});
@@ -11,51 +19,111 @@ class WalkingPage extends StatefulWidget {
 }
 
 class _WalkingPageState extends State<WalkingPage> {
-  double _currentValue = 3.0; 
+  double _currentValue = 3.0;
+  bool _isLoading = true;
+  String _error = '';
+  List<Map<String, dynamic>> _marketComparisons = [];
+  List<Map<String, dynamic>> _nearbyMarkets = [];
+  double _userLatitude = 0.0;
+  double _userLongitude = 0.0;
 
-  
-  final Map<String, Map<String, dynamic>> _markets = {
-    'Migros': {
-      'price': 45.90,
-      'distance': 0.5, 
-      'color': Colors.blue,
-    },
-    'Şok': {
-      'price': 35.90, 
-      'distance': 1.5, 
-      'color': Colors.red,
-    },
-    'A101': {
-      'price': 25.90, 
-      'distance': 3.0, 
-      'color': Colors.orange,
-    },
-  };
-
-  double _calculateMarketScore(Map<String, dynamic> market) {
-   
-    final distanceWeight = 1.0 - (_currentValue / 5.0); 
-    final priceWeight = _currentValue / 5.0;
-    
-    
-    final normalizedDistance = market['distance'] / 5.0;
-    final normalizedPrice = market['price'] / 100.0;
-    
-    
-    return (normalizedDistance * distanceWeight) + (normalizedPrice * priceWeight);
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
   }
 
-  
-  List<String> _getRecommendations() {
-    final List<MapEntry<String, Map<String, dynamic>>> sortedMarkets = 
-        _markets.entries.toList()
-          ..sort((a, b) {
-            final scoreA = _calculateMarketScore(a.value);
-            final scoreB = _calculateMarketScore(b.value);
-            return scoreA.compareTo(scoreB);
-          });
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
 
-    return sortedMarkets.map((e) => e.key).toList();
+    try {
+      // Get user's location
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high
+      );
+      setState(() {
+        _userLatitude = position.latitude;
+        _userLongitude = position.longitude;
+      });
+
+      // Get market comparisons
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      final comparisons = await MarketComparisonService.compareProducts(
+        cartProvider.cartItems
+      );
+
+      // Get nearby markets with prices
+      final response = await http.get(
+        Uri.parse('${baseUrl}nearby-markets/?latitude=$_userLatitude&longitude=$_userLongitude&radius=1500')
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> marketsData = json.decode(response.body);
+        
+        setState(() {
+          _marketComparisons = comparisons;
+          _nearbyMarkets = List<Map<String, dynamic>>.from(marketsData);
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load nearby markets');
+      }
+    } catch (e) {
+      print('Error loading data: $e');
+      setState(() {
+        _error = 'Veriler yüklenirken bir hata oluştu.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  double _calculateMarketScore(Map<String, dynamic> market) {
+    // Find matching market in nearby markets
+    final nearbyMarket = _nearbyMarkets.firstWhere(
+      (m) => m['name'].toLowerCase().contains(market['marketName'].toLowerCase()),
+      orElse: () => {'distance': 5.0, 'total_price': null}
+    );
+
+    final distance = nearbyMarket['distance'] as double;
+    final price = market['totalPrice'] as double;
+    final hasPriceData = nearbyMarket['has_price_data'] as bool;
+
+    // Normalize values
+    final maxDistance = 5.0; // Maximum distance we consider
+    final maxPrice = _marketComparisons.isNotEmpty 
+        ? _marketComparisons[0]['totalPrice'] * 1.5 // Use 1.5x the cheapest price as max
+        : 1000.0;
+
+    final normalizedDistance = distance / maxDistance;
+    final normalizedPrice = price / maxPrice;
+
+    // Calculate weights based on user preference
+    final distanceWeight = 1.0 - (_currentValue / 4.0); // 0 to 1
+    final priceWeight = _currentValue / 4.0; // 0 to 1
+
+    // Calculate score (lower is better)
+    double score = (normalizedDistance * distanceWeight) + (normalizedPrice * priceWeight);
+    
+    // Penalize markets without price data
+    if (!hasPriceData) {
+      score *= 1.5;
+    }
+
+    return score;
+  }
+
+  List<Map<String, dynamic>> _getRecommendations() {
+    if (_marketComparisons.isEmpty) return [];
+
+    return List<Map<String, dynamic>>.from(_marketComparisons)
+      ..sort((a, b) {
+        final scoreA = _calculateMarketScore(a);
+        final scoreB = _calculateMarketScore(b);
+        return scoreA.compareTo(scoreB);
+      });
   }
 
   @override
@@ -64,192 +132,216 @@ class _WalkingPageState extends State<WalkingPage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kendim Alacağım'),
+        title: Text(
+          'Kendim Alacağım',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            children: [
-              const Text(
-                'Ne kadar uzağa gitmek istersiniz?',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Stack(
-                children: [
-                  
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.green,
-                      inactiveTrackColor: Colors.green.withOpacity(0.3),
-                      thumbColor: Colors.green,
-                      overlayColor: Colors.green.withOpacity(0.1),
-                      trackHeight: 4.0,
-                      trackShape: const RectangularSliderTrackShape(),
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
-                    ),
-                    child: Slider(
-                      value: _currentValue,
-                      min: 0,
-                      max: 4,
-                      divisions: 4,
-                      onChanged: (value) {
-                        setState(() {
-                          _currentValue = value;
-                        });
-                      },
-                    ),
-                  ),
-                  // Dots
-                  Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(5, (index) {
-                          return Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: _currentValue >= index ? Colors.green : Colors.grey,
-                              shape: BoxShape.circle,
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              const SizedBox(height: 30),
-              const Text(
-                'Carrefour Süt 200 Ml',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ..._markets.entries.map((market) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: market.value['color'],
-                              shape: BoxShape.circle,
-                            ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error.isNotEmpty
+              ? Center(child: Text(_error))
+              : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ne kadar uzağa gitmek istersiniz?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            market.key,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            '₺${market.value['price'].toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '(${market.value['distance']} km)',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Önerilen Market Sıralaması',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ...recommendations.asMap().entries.map((entry) {
-                      final market = entry.key;
-                      final rank = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
+                        ),
+                        const SizedBox(height: 20),
+                        Stack(
                           children: [
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
+                            SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                activeTrackColor: Theme.of(context).primaryColor,
+                                inactiveTrackColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                                thumbColor: Theme.of(context).primaryColor,
+                                overlayColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                trackHeight: 4.0,
+                                trackShape: const RectangularSliderTrackShape(),
+                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
                               ),
-                              child: Center(
-                                child: Text(
-                                  '${market + 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              child: Slider(
+                                value: _currentValue,
+                                min: 0,
+                                max: 4,
+                                divisions: 4,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _currentValue = value;
+                                  });
+                                },
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              rank,
-                              style: const TextStyle(
-                                fontSize: 16,
+                            Positioned.fill(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: List.generate(5, (index) {
+                                    return Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: _currentValue >= index 
+                                            ? Theme.of(context).primaryColor 
+                                            : Colors.grey,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    );
+                                  }),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      );
-                    }).toList(),
-                  ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Fiyat Önemli',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                'Mesafe Önemli',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        Text(
+                          'Önerilen Marketler',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ...recommendations.map((market) {
+                          final marketName = market['marketName'];
+                          final nearbyMarket = _nearbyMarkets.firstWhere(
+                            (m) => m['name'].toLowerCase().contains(marketName.toLowerCase()),
+                            orElse: () => {'distance': 0.0, 'has_price_data': false}
+                          );
+                          final distance = nearbyMarket['distance'] as double;
+                          final price = market['totalPrice'] as double;
+                          final isComplete = market['isComplete'] as bool;
+                          final hasPriceData = nearbyMarket['has_price_data'] as bool;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              marketName,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${distance.toStringAsFixed(1)} km uzaklıkta',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isComplete 
+                                              ? Colors.green.withOpacity(0.1)
+                                              : Colors.orange.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          isComplete ? 'Tüm ürünler mevcut' : 'Bazı ürünler eksik',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            color: isComplete ? Colors.green : Colors.orange,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Toplam Tutar:',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      Text(
+                                        hasPriceData 
+                                            ? '${price.toStringAsFixed(2)} TL'
+                                            : 'Fiyat bilgisi yok',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: hasPriceData 
+                                              ? Theme.of(context).primaryColor
+                                              : Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: const BottomNavigation(
-        currentIndex: 4,
-      ),
+      bottomNavigationBar: const BottomNavigation(currentIndex: 0),
     );
   }
 } 

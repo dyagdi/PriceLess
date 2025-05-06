@@ -28,7 +28,9 @@ from .views import (
     delete_shopping_list_item,
     add_member_to_list,
     respond_to_invitation,
-    get_pending_invitations
+    get_pending_invitations,
+    MarketLocationsAPIView,
+    NearbyMarketsWithPricesAPIView
 )
 from . import views
 
@@ -66,4 +68,5 @@ urlpatterns = [
     path('invitations/pending/', get_pending_invitations, name='get_pending_invitations'),
     path('favorite-carts/<int:pk>/', DeleteFavoriteCartView.as_view(), name='delete-favorite-cart'),
     path('user-info/', UserInfoView.as_view(), name='user-info'),
+    path('nearby-markets/', NearbyMarketsWithPricesAPIView.as_view(), name='nearby-markets'),
 ]

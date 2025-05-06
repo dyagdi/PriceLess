@@ -20,6 +20,9 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from django.db.models import F
 from itertools import chain
+import requests
+from geopy.geocoders import Nominatim
+from geopy.distance import distance as Geolocator
 
 from .models import (
     FavoriteCart, Product, FavoriteCartProduct, MopasProduct, MigrosProduct,
@@ -1690,3 +1693,98 @@ def get_pending_invitations(request):
         'created_at': inv.created_at
     } for inv in invitations]
     return Response({'invitations': data}, status=status.HTTP_200_OK)
+
+class NearbyMarketsWithPricesAPIView(APIView):
+    """API endpoint for retrieving nearby markets with their price data"""
+    def get(self, request):
+        try:
+            # Get query parameters
+            latitude = float(request.query_params.get('latitude', 0))
+            longitude = float(request.query_params.get('longitude', 0))
+            radius = int(request.query_params.get('radius', 1500))  # Default 1.5km
+
+            # Get all products from each market to calculate total prices
+            market_products = {
+                "mopas": MopasProduct.objects.all(),
+                "migros": MigrosProduct.objects.all(),
+                "sokmarket": SokmarketProduct.objects.all(),
+                "marketpaketi": MarketpaketiProduct.objects.all(),
+                "carrefour": CarrefourProduct.objects.all()
+            }
+
+            # Calculate total prices for each market
+            market_prices = {}
+            for market_name, products in market_products.items():
+                total_price = sum(product.price for product in products if product.price is not None)
+                market_prices[market_name] = total_price
+
+            # Fetch nearby markets using Overpass API
+            overpass_query = f"""
+            [out:json];
+            (
+              node["shop"="supermarket"](around:{radius},{latitude},{longitude});
+              node["shop"="grocery"](around:{radius},{latitude},{longitude});
+              node["amenity"="marketplace"](around:{radius},{latitude},{longitude});
+            );
+            out;
+            """
+
+            url = "https://overpass-api.de/api/interpreter?data=" + Uri.encodeComponent(overpass_query)
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                elements = data.get("elements", [])
+                
+                # Process and combine market data
+                markets = []
+                for element in elements:
+                    market_name = (
+                        element.get("tags", {}).get("name") or
+                        element.get("tags", {}).get("brand") or
+                        element.get("tags", {}).get("shop") or
+                        element.get("tags", {}).get("amenity") or
+                        "Unnamed Market"
+                    )
+                    
+                    # Calculate distance
+                    distance = Geolocator.distanceBetween(
+                        latitude,
+                        longitude,
+                        element["lat"],
+                        element["lon"]
+                    ) / 1000  # Convert to kilometers
+                    
+                    # Find matching market in our database
+                    market_key = None
+                    for key in market_prices.keys():
+                        if key.lower() in market_name.lower():
+                            market_key = key
+                            break
+                    
+                    market_data = {
+                        "name": market_name,
+                        "latitude": element["lat"],
+                        "longitude": element["lon"],
+                        "distance": distance,
+                        "total_price": market_prices.get(market_key, 0) if market_key else None,
+                        "has_price_data": market_key is not None
+                    }
+                    
+                    markets.append(market_data)
+                
+                # Sort by distance
+                markets.sort(key=lambda x: x["distance"])
+                
+                return Response(markets, status=200)
+            else:
+                return Response(
+                    {"error": "Failed to fetch nearby markets"},
+                    status=500
+                )
+                
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=500
+            )
