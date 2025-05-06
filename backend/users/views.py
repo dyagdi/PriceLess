@@ -22,7 +22,7 @@ from django.db.models import F
 from itertools import chain
 import requests
 from geopy.geocoders import Nominatim
-from geopy.distance import distance as Geolocator
+from geopy.distance import geodesic
 from urllib.parse import quote
 
 from .models import (
@@ -1748,13 +1748,10 @@ class NearbyMarketsWithPricesAPIView(APIView):
                         "Unnamed Market"
                     )
                     
-                    # Calculate distance
-                    distance = Geolocator.distanceBetween(
-                        latitude,
-                        longitude,
-                        element["lat"],
-                        element["lon"]
-                    ) / 1000  # Convert to kilometers
+                    # Calculate distance using geodesic
+                    user_location = (latitude, longitude)
+                    market_location = (element["lat"], element["lon"])
+                    distance = geodesic(user_location, market_location).kilometers
                     
                     # Find matching market in our database
                     market_key = None
@@ -1785,6 +1782,7 @@ class NearbyMarketsWithPricesAPIView(APIView):
                 )
                 
         except Exception as e:
+            print(f"Error in NearbyMarketsWithPricesAPIView: {str(e)}")
             return Response(
                 {"error": str(e)},
                 status=500
