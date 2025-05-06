@@ -4,9 +4,10 @@ import 'package:frontend/constants/constants_url.dart';
 import 'package:frontend/models/cart_model.dart';
 
 class MarketComparisonService {
-  static Future<Map<String, List<Map<String, dynamic>>>> compareProducts(
+  static Future<List<Map<String, dynamic>>> compareProducts(
       List<CartItem> cartItems) async {
-    final Map<String, List<Map<String, dynamic>>> marketProducts = {};
+    final List<Map<String, dynamic>> marketComparisons = [];
+    final List<Map<String, dynamic>> incompleteMarketComparisons = [];
 
     try {
       // Fetch products from all markets
@@ -16,16 +17,15 @@ class MarketComparisonService {
         final List<dynamic> marketsData = json.decode(response.body);
         print('Markets data: $marketsData'); // Debug log
 
-        // Process each product in the cart
-        for (final cartItem in cartItems) {
-          final List<Map<String, dynamic>> productPrices = [];
+        // Process each market
+        for (final market in marketsData) {
+          final marketName = market['marketName'];
+          final products = market['products'] as List;
+          double totalPrice = 0;
+          List<Map<String, dynamic>> availableProducts = [];
 
-          // Search for the product in each market
-          for (final market in marketsData) {
-            final marketName = market['marketName'];
-            final products = market['products'] as List;
-            print('Market products: $products'); // Debug log
-
+          // Check each product in cart against this market
+          for (final cartItem in cartItems) {
             // Find matching product in this market
             final matchingProduct = products.firstWhere(
               (product) =>
@@ -35,9 +35,9 @@ class MarketComparisonService {
             );
 
             if (matchingProduct != null) {
-              print('Matching product: $matchingProduct'); // Debug log
-              productPrices.add({
-                'marketName': marketName,
+              totalPrice += matchingProduct['price'];
+              availableProducts.add({
+                'name': cartItem.name,
                 'price': matchingProduct['price'],
                 'image': matchingProduct['image'],
                 'category': matchingProduct['category'],
@@ -45,19 +45,40 @@ class MarketComparisonService {
             }
           }
 
-          // Sort by price
-          productPrices.sort(
-              (a, b) => (a['price'] as double).compareTo(b['price'] as double));
+          // Only add markets that have at least one product
+          if (availableProducts.isNotEmpty) {
+            final marketData = {
+              'marketName': marketName,
+              'totalPrice': totalPrice,
+              'products': availableProducts,
+              'isComplete': availableProducts.length == cartItems.length,
+            };
 
-          // Add to results
-          marketProducts[cartItem.name] = productPrices;
+            // Separate complete and incomplete baskets
+            if (availableProducts.length == cartItems.length) {
+              marketComparisons.add(marketData);
+            } else {
+              incompleteMarketComparisons.add(marketData);
+            }
+          }
         }
+
+        // Sort complete baskets by total price
+        marketComparisons.sort((a, b) => 
+          (a['totalPrice'] as double).compareTo(b['totalPrice'] as double));
+
+        // Sort incomplete baskets by total price
+        incompleteMarketComparisons.sort((a, b) => 
+          (a['totalPrice'] as double).compareTo(b['totalPrice'] as double));
+
+        // Combine the lists with complete baskets first
+        return [...marketComparisons, ...incompleteMarketComparisons];
       }
     } catch (e) {
       print('Error comparing products: $e');
     }
 
-    return marketProducts;
+    return marketComparisons;
   }
 
   static String _normalizeProductName(String name) {

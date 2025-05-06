@@ -15,7 +15,7 @@ class MarketComparisonPage extends StatefulWidget {
 
 class _MarketComparisonPageState extends State<MarketComparisonPage> {
   bool _isLoading = true;
-  Map<String, List<Map<String, dynamic>>> _marketProducts = {};
+  List<Map<String, dynamic>> _marketComparisons = [];
   String _error = '';
 
   @override
@@ -36,7 +36,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
           await MarketComparisonService.compareProducts(cartProvider.cartItems);
 
       setState(() {
-        _marketProducts = comparison;
+        _marketComparisons = comparison;
         _isLoading = false;
       });
     } catch (e) {
@@ -81,7 +81,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                     ],
                   ),
                 )
-              : _marketProducts.isEmpty
+              : _marketComparisons.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -98,15 +98,11 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                       padding: const EdgeInsets.all(16),
                       separatorBuilder: (context, idx) =>
                           const SizedBox(height: 16),
-                      itemCount: _marketProducts.length,
+                      itemCount: _marketComparisons.length,
                       itemBuilder: (context, index) {
-                        final productName =
-                            _marketProducts.keys.elementAt(index);
-                        final prices = _marketProducts[productName]!;
-                        final productImage =
-                            prices.isNotEmpty ? prices[0]['image'] : null;
-                        final productCategory =
-                            prices.isNotEmpty ? prices[0]['category'] : null;
+                        final market = _marketComparisons[index];
+                        final isComplete = market['isComplete'] as bool;
+                        final isCheapest = index == 0 && isComplete;
 
                         return Card(
                           elevation: 2,
@@ -121,115 +117,139 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                               children: [
                                 Row(
                                   children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: productImage != null &&
-                                              productImage.isNotEmpty
-                                          ? Image.network(
-                                              productImage,
-                                              width: 60,
-                                              height: 60,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  Container(
-                                                width: 60,
-                                                height: 60,
-                                                color: Colors.grey[200],
-                                                child: Icon(
-                                                    Icons.image_not_supported,
-                                                    color: Colors.grey[400]),
-                                              ),
-                                            )
-                                          : Container(
-                                              width: 60,
-                                              height: 60,
-                                              color: Colors.grey[200],
-                                              child: Icon(
-                                                  Icons.image_not_supported,
-                                                  color: Colors.grey[400]),
-                                            ),
+                                    Icon(
+                                      isCheapest
+                                          ? Icons.star
+                                          : Icons.store,
+                                      color: isCheapest
+                                          ? AppTheme.primaryColor
+                                          : AppTheme.primaryColor
+                                              .withOpacity(0.5),
                                     ),
-                                    const SizedBox(width: 16),
+                                    const SizedBox(width: 8),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(productName,
+                                          Text(
+                                            market['marketName'],
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleLarge
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          if (!isComplete)
+                                            Text(
+                                              '${market['products'].length}/${_marketComparisons[0]['products'].length} ürün mevcut',
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .titleLarge),
-                                          if (productCategory != null)
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 4.0),
-                                              child: Text(productCategory,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.copyWith(
-                                                          color: Colors
-                                                              .grey[600])),
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: Colors.orange[700],
+                                                  ),
                                             ),
                                         ],
                                       ),
                                     ),
+                                    if (isCheapest)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.successColor
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          'En Ucuz',
+                                          style: TextStyle(
+                                            color: AppTheme.successColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Toplam Fiyat: ₺${market['totalPrice'].toStringAsFixed(2)}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: isCheapest
+                                            ? AppTheme.successColor
+                                            : AppTheme.textSecondary,
+                                        fontWeight: isCheapest
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Divider(),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Ürünler',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 8),
                                 ListView.separated(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  separatorBuilder: (context, idx) => Divider(
-                                      height: 1, color: Colors.grey[200]),
-                                  itemCount: prices.length,
-                                  itemBuilder: (context, priceIndex) {
-                                    final priceInfo = prices[priceIndex];
-                                    final isCheapest = priceIndex == 0;
+                                  separatorBuilder: (context, idx) =>
+                                      const Divider(height: 1),
+                                  itemCount: market['products'].length,
+                                  itemBuilder: (context, productIndex) {
+                                    final product =
+                                        market['products'][productIndex];
                                     return ListTile(
                                       contentPadding: EdgeInsets.zero,
-                                      leading: isCheapest
-                                          ? Icon(Icons.star,
-                                              color: AppTheme.primaryColor)
-                                          : Icon(Icons.store,
-                                              color: AppTheme.primaryColor
-                                                  .withOpacity(0.5)),
-                                      title: Text(priceInfo['marketName'],
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge),
-                                      subtitle: Text(
-                                        '₺${priceInfo['price'].toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                          color: isCheapest
-                                              ? AppTheme.successColor
-                                              : AppTheme.textSecondary,
-                                          fontWeight: isCheapest
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          product['image'],
+                                          width: 50,
+                                          height: 50,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error,
+                                                  stackTrace) =>
+                                              Container(
+                                            width: 50,
+                                            height: 50,
+                                            color: Colors.grey[200],
+                                            child: const Icon(Icons.image),
+                                          ),
                                         ),
                                       ),
-                                      trailing: isCheapest
-                                          ? Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: AppTheme.successColor
-                                                    .withOpacity(0.1),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Text('En Ucuz',
-                                                  style: TextStyle(
-                                                      color:
-                                                          AppTheme.successColor,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            )
-                                          : null,
+                                      title: Text(
+                                        product['name'],
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge,
+                                      ),
+                                      subtitle: Text(
+                                        product['category'] ?? 'Kategori Yok',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                                color: Colors.grey[600]),
+                                      ),
+                                      trailing: Text(
+                                        '₺${product['price'].toStringAsFixed(2)}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
                                     );
                                   },
                                 ),
