@@ -57,7 +57,7 @@ class _WalkingPageState extends State<WalkingPage> {
 
       // Get nearby markets with prices
       final response = await http.get(
-        Uri.parse('${baseUrl}nearby-markets/?latitude=$_userLatitude&longitude=$_userLongitude&radius=1500')
+        Uri.parse('${baseUrl}nearby-markets/?latitude=$_userLatitude&longitude=$_userLongitude&radius=6500')
       );
 
       if (response.statusCode == 200) {
@@ -247,7 +247,7 @@ class _WalkingPageState extends State<WalkingPage> {
                           final nearbyMarket = _nearbyMarkets.firstWhere(
                             (m) => m['name'].toLowerCase().contains(marketName.toLowerCase()),
                             orElse: () => {
-                              'distance': 0.0,
+                              'distance': 5.0,
                               'has_price_data': false,
                               'total_price': null
                             }

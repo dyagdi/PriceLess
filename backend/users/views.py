@@ -1702,7 +1702,7 @@ class NearbyMarketsWithPricesAPIView(APIView):
             # Get query parameters
             latitude = float(request.query_params.get('latitude', 0))
             longitude = float(request.query_params.get('longitude', 0))
-            radius = int(request.query_params.get('radius', 1500))  # Default 1.5km
+            radius = int(request.query_params.get('radius', 6500))  # Default 6.5km
 
             # Get all products from each market to calculate total prices
             market_products = {
@@ -1726,6 +1726,13 @@ class NearbyMarketsWithPricesAPIView(APIView):
               node["shop"="supermarket"](around:{radius},{latitude},{longitude});
               node["shop"="grocery"](around:{radius},{latitude},{longitude});
               node["amenity"="marketplace"](around:{radius},{latitude},{longitude});
+              node["shop"="convenience"](around:{radius},{latitude},{longitude});
+              node["shop"="department_store"](around:{radius},{latitude},{longitude});
+              node["shop"="mall"](around:{radius},{latitude},{longitude});
+              node["shop"="wholesale"](around:{radius},{latitude},{longitude});
+              node["shop"="general"](around:{radius},{latitude},{longitude});
+              node["shop"="variety_store"](around:{radius},{latitude},{longitude});
+              node["shop"="discount"](around:{radius},{latitude},{longitude});
             );
             out;
             """
