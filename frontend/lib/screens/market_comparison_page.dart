@@ -142,13 +142,11 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                           ),
                                           if (!isComplete)
                                             Text(
-                                              '${market['products'].length}/${_marketComparisons[0]['products'].length} ürün mevcut',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                    color: Colors.orange[700],
-                                                  ),
+                                              '${market['foundProducts']}/${market['totalProducts']} ürünler',
+                                              style: TextStyle(
+                                                color: market['isComplete'] ? Colors.green : Colors.orange,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                         ],
                                       ),
@@ -204,16 +202,16 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   separatorBuilder: (context, idx) =>
                                       const Divider(height: 1),
-                                  itemCount: market['products'].length,
+                                  itemCount: market['availableProducts'].length,
                                   itemBuilder: (context, productIndex) {
                                     final product =
-                                        market['products'][productIndex];
+                                        market['availableProducts'][productIndex];
                                     return ListTile(
                                       contentPadding: EdgeInsets.zero,
                                       leading: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
-                                          product['image'],
+                                          product['image'] ?? '',
                                           width: 50,
                                           height: 50,
                                           fit: BoxFit.cover,
@@ -228,7 +226,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                         ),
                                       ),
                                       title: Text(
-                                        product['name'],
+                                        product['name'] ?? 'İsimsiz Ürün',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyLarge,
@@ -242,7 +240,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                                 color: Colors.grey[600]),
                                       ),
                                       trailing: Text(
-                                        '₺${product['price'].toStringAsFixed(2)}',
+                                        '₺${(product['price'] ?? 0.0).toStringAsFixed(2)}',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyLarge

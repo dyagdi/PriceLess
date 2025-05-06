@@ -7,7 +7,6 @@ class MarketComparisonService {
   static Future<List<Map<String, dynamic>>> compareProducts(
       List<CartItem> cartItems) async {
     final List<Map<String, dynamic>> marketComparisons = [];
-    final List<Map<String, dynamic>> incompleteMarketComparisons = [];
 
     try {
       // Fetch products from all markets
@@ -16,6 +15,9 @@ class MarketComparisonService {
       if (response.statusCode == 200) {
         final List<dynamic> marketsData = json.decode(response.body);
         print('Markets data: $marketsData'); // Debug log
+
+        // Get total number of unique products in cart
+        final totalUniqueProducts = cartItems.length;
 
         // Process each market
         for (final market in marketsData) {
@@ -47,38 +49,36 @@ class MarketComparisonService {
 
           // Only add markets that have at least one product
           if (availableProducts.isNotEmpty) {
-            final marketData = {
+            marketComparisons.add({
               'marketName': marketName,
               'totalPrice': totalPrice,
-              'products': availableProducts,
-              'isComplete': availableProducts.length == cartItems.length,
-            };
-
-            // Separate complete and incomplete baskets
-            if (availableProducts.length == cartItems.length) {
-              marketComparisons.add(marketData);
-            } else {
-              incompleteMarketComparisons.add(marketData);
-            }
+              'availableProducts': availableProducts,
+              'totalProducts': totalUniqueProducts,
+              'foundProducts': availableProducts.length,
+              'isComplete': availableProducts.length == totalUniqueProducts,
+            });
           }
         }
 
-        // Sort complete baskets by total price
-        marketComparisons.sort((a, b) => 
-          (a['totalPrice'] as double).compareTo(b['totalPrice'] as double));
+        // Sort markets by total price, with complete baskets first
+        marketComparisons.sort((a, b) {
+          // If one basket is complete and the other isn't, complete basket comes first
+          if (a['isComplete'] != b['isComplete']) {
+            return a['isComplete'] ? -1 : 1;
+          }
+          // If both are complete or both are incomplete, sort by total price
+          return a['totalPrice'].compareTo(b['totalPrice']);
+        });
 
-        // Sort incomplete baskets by total price
-        incompleteMarketComparisons.sort((a, b) => 
-          (a['totalPrice'] as double).compareTo(b['totalPrice'] as double));
-
-        // Combine the lists with complete baskets first
-        return [...marketComparisons, ...incompleteMarketComparisons];
+        return marketComparisons;
+      } else {
+        print('Error fetching market products: ${response.statusCode}');
+        return [];
       }
     } catch (e) {
-      print('Error comparing products: $e');
+      print('Error in compareProducts: $e');
+      return [];
     }
-
-    return marketComparisons;
   }
 
   static String _normalizeProductName(String name) {
