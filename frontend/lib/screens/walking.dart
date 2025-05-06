@@ -84,12 +84,16 @@ class _WalkingPageState extends State<WalkingPage> {
     // Find matching market in nearby markets
     final nearbyMarket = _nearbyMarkets.firstWhere(
       (m) => m['name'].toLowerCase().contains(market['marketName'].toLowerCase()),
-      orElse: () => {'distance': 5.0, 'total_price': null}
+      orElse: () => {
+        'distance': 5.0,
+        'total_price': null,
+        'has_price_data': false
+      }
     );
 
     final distance = nearbyMarket['distance'] as double;
     final price = market['totalPrice'] as double;
-    final hasPriceData = nearbyMarket['has_price_data'] as bool;
+    final hasPriceData = nearbyMarket['has_price_data'] as bool? ?? false;
 
     // Normalize values
     final maxDistance = 5.0; // Maximum distance we consider
@@ -242,12 +246,16 @@ class _WalkingPageState extends State<WalkingPage> {
                           final marketName = market['marketName'];
                           final nearbyMarket = _nearbyMarkets.firstWhere(
                             (m) => m['name'].toLowerCase().contains(marketName.toLowerCase()),
-                            orElse: () => {'distance': 0.0, 'has_price_data': false}
+                            orElse: () => {
+                              'distance': 0.0,
+                              'has_price_data': false,
+                              'total_price': null
+                            }
                           );
                           final distance = nearbyMarket['distance'] as double;
                           final price = market['totalPrice'] as double;
                           final isComplete = market['isComplete'] as bool;
-                          final hasPriceData = nearbyMarket['has_price_data'] as bool;
+                          final hasPriceData = nearbyMarket['has_price_data'] as bool? ?? false;
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
