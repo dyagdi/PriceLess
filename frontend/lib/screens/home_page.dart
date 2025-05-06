@@ -28,6 +28,7 @@ import 'package:frontend/providers/favorites_provider.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/screens/nearby_markets_page.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/screens/chatbot_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -449,6 +450,17 @@ class _HomePageState extends State<HomePage> {
         currentIndex: 0,
         categorizedProducts: categorizedProducts,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ChatbotPage()),
+          );
+        },
+        backgroundColor: AppTheme.primaryColor,
+        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
