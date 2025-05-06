@@ -23,6 +23,7 @@ from itertools import chain
 import requests
 from geopy.geocoders import Nominatim
 from geopy.distance import distance as Geolocator
+from urllib.parse import quote
 
 from .models import (
     FavoriteCart, Product, FavoriteCartProduct, MopasProduct, MigrosProduct,
@@ -1729,7 +1730,7 @@ class NearbyMarketsWithPricesAPIView(APIView):
             out;
             """
 
-            url = "https://overpass-api.de/api/interpreter?data=" + Uri.encodeComponent(overpass_query)
+            url = "https://overpass-api.de/api/interpreter?data=" + quote(overpass_query)
             response = requests.get(url)
             
             if response.status_code == 200:
