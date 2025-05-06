@@ -1760,13 +1760,17 @@ class NearbyMarketsWithPricesAPIView(APIView):
                             market_key = key
                             break
                     
+                    # Ensure all values are non-null
                     market_data = {
                         "name": market_name,
-                        "latitude": element["lat"],
-                        "longitude": element["lon"],
-                        "distance": distance,
-                        "total_price": market_prices.get(market_key, 0) if market_key else None,
-                        "has_price_data": market_key is not None
+                        "latitude": float(element["lat"]),
+                        "longitude": float(element["lon"]),
+                        "distance": float(distance),
+                        "total_price": float(market_prices.get(market_key, 0)) if market_key else 0.0,
+                        "has_price_data": bool(market_key is not None),
+                        "is_open": True,  # Default to True since we don't have this data
+                        "rating": 0.0,    # Default rating
+                        "address": element.get("tags", {}).get("addr:full", "") or element.get("tags", {}).get("address", "") or ""
                     }
                     
                     markets.append(market_data)
