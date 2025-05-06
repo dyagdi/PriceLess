@@ -82,8 +82,19 @@ class _WalkingPageState extends State<WalkingPage> {
 
   double _calculateMarketScore(Map<String, dynamic> market) {
     // Find matching market in nearby markets
+    final marketName = market['marketName'].toLowerCase();
     final nearbyMarket = _nearbyMarkets.firstWhere(
-      (m) => m['name'].toLowerCase().contains(market['marketName'].toLowerCase()),
+      (m) {
+        final name = m['name'].toLowerCase();
+        // Check for various market name variations
+        return name.contains(marketName) || 
+               marketName.contains(name) ||
+               (marketName == 'mopas' && name.contains('mopaş')) ||
+               (marketName == 'migros' && name.contains('migros')) ||
+               (marketName == 'sokmarket' && name.contains('şok')) ||
+               (marketName == 'marketpaketi' && name.contains('market paketi')) ||
+               (marketName == 'carrefour' && name.contains('carrefour'));
+      },
       orElse: () => {
         'distance': 5.0,
         'total_price': null,
@@ -93,7 +104,7 @@ class _WalkingPageState extends State<WalkingPage> {
 
     final distance = nearbyMarket['distance'] as double;
     final price = market['totalPrice'] as double;
-    final hasPriceData = nearbyMarket['has_price_data'] as bool? ?? false;
+    final hasPriceData = market['totalPrice'] != null;  // Use price data from market comparison instead
 
     // Normalize values
     final maxDistance = 5.0; // Maximum distance we consider
@@ -217,14 +228,14 @@ class _WalkingPageState extends State<WalkingPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Fiyat Önemli',
+                                'Mesafe Önemli',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   color: Colors.grey[600],
                                 ),
                               ),
                               Text(
-                                'Mesafe Önemli',
+                                'Fiyat Önemli',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   color: Colors.grey[600],
@@ -245,7 +256,17 @@ class _WalkingPageState extends State<WalkingPage> {
                         ...recommendations.map((market) {
                           final marketName = market['marketName'];
                           final nearbyMarket = _nearbyMarkets.firstWhere(
-                            (m) => m['name'].toLowerCase().contains(marketName.toLowerCase()),
+                            (m) {
+                              final name = m['name'].toLowerCase();
+                              final marketNameLower = marketName.toLowerCase();
+                              return name.contains(marketNameLower) || 
+                                     marketNameLower.contains(name) ||
+                                     (marketNameLower == 'mopas' && name.contains('mopaş')) ||
+                                     (marketNameLower == 'migros' && name.contains('migros')) ||
+                                     (marketNameLower == 'sokmarket' && name.contains('şok')) ||
+                                     (marketNameLower == 'marketpaketi' && name.contains('market paketi')) ||
+                                     (marketNameLower == 'carrefour' && name.contains('carrefour'));
+                            },
                             orElse: () => {
                               'distance': 5.0,
                               'has_price_data': false,
@@ -255,7 +276,7 @@ class _WalkingPageState extends State<WalkingPage> {
                           final distance = nearbyMarket['distance'] as double;
                           final price = market['totalPrice'] as double;
                           final isComplete = market['isComplete'] as bool;
-                          final hasPriceData = nearbyMarket['has_price_data'] as bool? ?? false;
+                          final hasPriceData = market['totalPrice'] != null;  // Use price data from market comparison
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
