@@ -283,15 +283,17 @@ def cheapest_products_per_category(request):
             "Carrefour": []
         }
         
-        # Get all products from each market
+        # Try to get products from each model, but continue if one fails
         try:
             for product in MopasProduct.objects.all():
                 try:
                     # Only include products with valid price
                     if product.price is not None:
+                        # Convert price to float explicitly
+                        price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Mopas"].append({
                             "name": product.name,
-                            "price": product.price,
+                            "price": price,
                             "image": product.image_url,
                             "category": product.main_category,
                             "market_name": "mopas"
@@ -306,9 +308,11 @@ def cheapest_products_per_category(request):
                 try:
                     # Only include products with valid price
                     if product.price is not None:
+                        # Convert price to float explicitly
+                        price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Migros"].append({
                             "name": product.name,
-                            "price": product.price,
+                            "price": price,
                             "image": product.image_url,
                             "category": product.main_category,
                             "market_name": "migros"
@@ -323,9 +327,11 @@ def cheapest_products_per_category(request):
                 try:
                     # Only include products with valid price
                     if product.price is not None:
+                        # Convert price to float explicitly
+                        price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Şok Market"].append({
                             "name": product.name,
-                            "price": product.price,
+                            "price": price,
                             "image": product.image_url,
                             "category": product.main_category,
                             "market_name": "sokmarket"
@@ -340,9 +346,11 @@ def cheapest_products_per_category(request):
                 try:
                     # Only include products with valid price
                     if product.price is not None:
+                        # Convert price to float explicitly
+                        price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Market Paketi"].append({
                             "name": product.name,
-                            "price": product.price,
+                            "price": price,
                             "image": product.image_url,
                             "category": product.main_category,
                             "market_name": "marketpaketi"
