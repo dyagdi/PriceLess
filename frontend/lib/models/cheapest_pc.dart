@@ -36,11 +36,15 @@ class CheapestProductPc {
     return CheapestProductPc(
       id: json['id'],
       name: json['name'] ?? 'Ürün Adı',
-      price: (json['price'] ?? 0.0).toDouble(),
+      price: json['price'] is String
+          ? double.parse(json['price'])
+          : (json['price'] ?? 0.0).toDouble(),
       image: json['image'],
       category: json['category'],
       marketName: json['market_name'],
-      highPrice: json['high_price']?.toDouble(),
+      highPrice: json['high_price'] is String
+          ? double.parse(json['high_price'])
+          : json['high_price']?.toDouble(),
       productLink: json['product_link'],
     );
   }
