@@ -47,7 +47,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       final Uri uri =
           Uri.parse(ApiConfig.searchEndpoint).replace(queryParameters: {
         'query': widget.product.name,
-        'collection': 'SupermarketProducts2',
+        'collection': 'SupermarketProducts3',
       });
 
       print('Fetching similar products from: ${uri.toString()}');

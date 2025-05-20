@@ -1134,7 +1134,7 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
       final Uri uri = Uri.parse('${ApiConfig.baseUrl}/search').replace(
         queryParameters: {
           'query': widget.name,
-          'collection': 'SupermarketProducts2',
+          'collection': 'SupermarketProducts3',
         },
       );
       final response = await http.get(

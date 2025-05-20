@@ -65,7 +65,7 @@ class MopasProduct(models.Model):
     # search_vector = SearchVectorField(null=True, blank=True)
 
     class Meta:
-        db_table = 'mopas_2_products'
+        db_table = 'mopas_3_products'
 
 class MigrosProduct(models.Model):
     main_category = models.TextField()
@@ -84,7 +84,7 @@ class MigrosProduct(models.Model):
     # search_vector = SearchVectorField(null=True, blank=True)
 
     class Meta:
-        db_table = 'migros_2_products'
+        db_table = 'migros_3_products'
 
 class SokmarketProduct(models.Model):
     main_category = models.TextField()
@@ -103,7 +103,7 @@ class SokmarketProduct(models.Model):
     # search_vector = SearchVectorField(null=True, blank=True)
 
     class Meta:
-        db_table = 'sokmarket_2_products'
+        db_table = 'sokmarket_3_products'
 
 class MarketpaketiProduct(models.Model):
     main_category = models.TextField()
@@ -122,7 +122,7 @@ class MarketpaketiProduct(models.Model):
     # search_vector = SearchVectorField(null=True, blank=True)
 
     class Meta:
-        db_table = 'marketpaketi_2_products'
+        db_table = 'marketpaketi_3_products'
 
 class CarrefourProduct(models.Model):
     main_category = models.TextField()
@@ -141,7 +141,7 @@ class CarrefourProduct(models.Model):
     # search_vector = SearchVectorField(null=True, blank=True)
 
     class Meta:
-        db_table = 'carrefour_2_products'
+        db_table = 'carrefour_3_products'
         
 class UserPhoneNumber(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

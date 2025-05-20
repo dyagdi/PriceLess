@@ -107,7 +107,7 @@ class _SearchPageState extends State<SearchPage> {
               'https://priceless-weaviate-production.up.railway.app/search')
           .replace(queryParameters: {
         'query': Uri.encodeQueryComponent(query),
-        'collection': 'SupermarketProducts2',
+        'collection': 'SupermarketProducts3',
         'limit': '20',
       });
 
