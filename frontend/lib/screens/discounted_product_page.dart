@@ -602,154 +602,235 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return Center(child: CircularProgressIndicator());
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Fiyat geçmişi yükleniyor...',
+                                      style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              );
                             }
-                            if (snapshot.hasError ||
-                                !snapshot.hasData ||
-                                snapshot.data!.isEmpty) {
-                              return SizedBox.shrink();
+
+                            if (snapshot.hasError) {
+                              print('Price history error: ${snapshot.error}');
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.error_outline,
+                                        color: Colors.red[300], size: 48),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Fiyat geçmişi yüklenirken bir hata oluştu',
+                                      style: TextStyle(color: Colors.red[400]),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _priceHistoryFuture = context
+                                              .read<PriceHistoryProvider>()
+                                              .fetchPriceHistory(widget.name);
+                                        });
+                                      },
+                                      child: Text('Tekrar Dene'),
+                                    ),
+                                  ],
+                                ),
+                              );
                             }
+
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.history,
+                                        color: Colors.grey[400], size: 48),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'Bu ürün için fiyat geçmişi bulunmamaktadır',
+                                      style: TextStyle(color: Colors.grey[600]),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
                             final history = snapshot.data!;
                             final spots = <FlSpot>[];
                             double? maxPrice;
-                            for (int i = 0; i < history.length; i++) {
-                              final price =
-                                  (history[i]['price'] as num?)?.toDouble() ??
-                                      0.0;
-                              spots.add(FlSpot(i.toDouble(), price));
-                              if (maxPrice == null || price > maxPrice)
-                                maxPrice = price;
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Fiyat Geçmişi',
+                            double? minPrice;
+
+                            try {
+                              for (int i = 0; i < history.length; i++) {
+                                final price =
+                                    (history[i]['price'] as num?)?.toDouble() ??
+                                        0.0;
+                                spots.add(FlSpot(i.toDouble(), price));
+                                if (maxPrice == null || price > maxPrice)
+                                  maxPrice = price;
+                                if (minPrice == null || price < minPrice)
+                                  minPrice = price;
+                              }
+
+                              // Add some padding to the min and max values
+                              if (minPrice != null && maxPrice != null) {
+                                final padding = (maxPrice - minPrice) * 0.1;
+                                minPrice = minPrice - padding;
+                                maxPrice = maxPrice + padding;
+                              }
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Fiyat Geçmişi',
                                       style: Theme.of(context)
                                           .textTheme
-                                          .titleMedium),
-                                  SizedBox(height: 8),
-                                  SizedBox(
-                                    height: 200,
-                                    child: LineChart(
-                                      LineChartData(
-                                        lineBarsData: [
-                                          LineChartBarData(
-                                            spots: spots,
-                                            isCurved: true,
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            barWidth: 2,
-                                            dotData: FlDotData(
-                                              show: true,
-                                              getDotPainter: (spot, percent,
-                                                  barData, index) {
-                                                return FlDotCirclePainter(
-                                                  radius: 4,
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
-                                                  strokeWidth: 2,
-                                                  strokeColor: Colors.white,
-                                                );
-                                              },
-                                            ),
-                                            belowBarData: BarAreaData(
-                                              show: true,
+                                          .titleMedium,
+                                    ),
+                                    SizedBox(height: 8),
+                                    SizedBox(
+                                      height: 200,
+                                      child: LineChart(
+                                        LineChartData(
+                                          lineBarsData: [
+                                            LineChartBarData(
+                                              spots: spots,
+                                              isCurved: true,
                                               color: Theme.of(context)
-                                                  .primaryColor
-                                                  .withOpacity(0.1),
+                                                  .primaryColor,
+                                              barWidth: 2,
+                                              dotData: FlDotData(
+                                                show: true,
+                                                getDotPainter: (spot, percent,
+                                                    barData, index) {
+                                                  return FlDotCirclePainter(
+                                                    radius: 4,
+                                                    color: Theme.of(context)
+                                                        .primaryColor,
+                                                    strokeWidth: 2,
+                                                    strokeColor: Colors.white,
+                                                  );
+                                                },
+                                              ),
+                                              belowBarData: BarAreaData(
+                                                show: true,
+                                                color: Theme.of(context)
+                                                    .primaryColor
+                                                    .withOpacity(0.1),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                        titlesData: FlTitlesData(
-                                          leftTitles: AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: true,
-                                              reservedSize: 40,
-                                              getTitlesWidget: (value, meta) {
-                                                return Text(
-                                                  '₺${value.toStringAsFixed(0)}',
-                                                  style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 10,
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                          rightTitles: AxisTitles(
-                                            sideTitles:
-                                                SideTitles(showTitles: false),
-                                          ),
-                                          topTitles: AxisTitles(
-                                            sideTitles:
-                                                SideTitles(showTitles: false),
-                                          ),
-                                          bottomTitles: AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: true,
-                                              getTitlesWidget: (value, meta) {
-                                                if (value == 0 ||
-                                                    value == spots.length - 1) {
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 8.0),
-                                                    child: Text(
-                                                      history[value.toInt()]
-                                                              ['date']
-                                                          .toString()
-                                                          .substring(5, 10),
-                                                      style: TextStyle(
-                                                        color: Colors.grey[600],
-                                                        fontSize: 10,
-                                                      ),
+                                          ],
+                                          titlesData: FlTitlesData(
+                                            leftTitles: AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: true,
+                                                reservedSize: 40,
+                                                getTitlesWidget: (value, meta) {
+                                                  return Text(
+                                                    '₺${value.toStringAsFixed(0)}',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 10,
                                                     ),
                                                   );
-                                                }
-                                                return const SizedBox.shrink();
-                                              },
+                                                },
+                                              ),
+                                            ),
+                                            rightTitles: AxisTitles(
+                                              sideTitles:
+                                                  SideTitles(showTitles: false),
+                                            ),
+                                            topTitles: AxisTitles(
+                                              sideTitles:
+                                                  SideTitles(showTitles: false),
+                                            ),
+                                            bottomTitles: AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: true,
+                                                getTitlesWidget: (value, meta) {
+                                                  if (value == 0 ||
+                                                      value ==
+                                                          spots.length - 1) {
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 8.0),
+                                                      child: Text(
+                                                        history[value.toInt()]
+                                                                ['date']
+                                                            .toString()
+                                                            .substring(5, 10),
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[600],
+                                                          fontSize: 10,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                  return const SizedBox
+                                                      .shrink();
+                                                },
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        gridData: FlGridData(
-                                          show: true,
-                                          drawVerticalLine: false,
-                                          horizontalInterval: 1,
-                                          getDrawingHorizontalLine: (value) {
-                                            return FlLine(
-                                              color: Colors.grey[200]!,
-                                              strokeWidth: 1,
-                                            );
-                                          },
-                                        ),
-                                        borderData: FlBorderData(
-                                          show: true,
-                                          border: Border(
-                                            bottom: BorderSide(
-                                              color: Colors.grey[300]!,
-                                              width: 1,
-                                            ),
-                                            left: BorderSide(
-                                              color: Colors.grey[300]!,
-                                              width: 1,
+                                          gridData: FlGridData(
+                                            show: true,
+                                            drawVerticalLine: false,
+                                            horizontalInterval: 1,
+                                            getDrawingHorizontalLine: (value) {
+                                              return FlLine(
+                                                color: Colors.grey[200]!,
+                                                strokeWidth: 1,
+                                              );
+                                            },
+                                          ),
+                                          borderData: FlBorderData(
+                                            show: true,
+                                            border: Border(
+                                              bottom: BorderSide(
+                                                color: Colors.grey[300]!,
+                                                width: 1,
+                                              ),
+                                              left: BorderSide(
+                                                color: Colors.grey[300]!,
+                                                width: 1,
+                                              ),
                                             ),
                                           ),
+                                          minX: 0,
+                                          maxX: spots.length - 1,
+                                          minY: minPrice ?? 0,
+                                          maxY: maxPrice ?? 0,
                                         ),
-                                        minX: 0,
-                                        maxX: spots.length - 1,
-                                        minY: 0,
-                                        maxY: maxPrice != null
-                                            ? maxPrice * 1.1
-                                            : 0,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
+                                  ],
+                                ),
+                              );
+                            } catch (e) {
+                              print('Error rendering price history chart: $e');
+                              return Center(
+                                child: Text(
+                                  'Fiyat geçmişi gösterilirken bir hata oluştu',
+                                  style: TextStyle(color: Colors.red[400]),
+                                ),
+                              );
+                            }
                           },
                         ),
                         const SizedBox(height: 80),
