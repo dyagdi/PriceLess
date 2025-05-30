@@ -79,7 +79,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   border: Border.all(
                     color: Theme.of(context).primaryColor,
                     width: 1,
@@ -88,7 +88,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     MediaQuery.of(context).size.width * 0.06,
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Row(
                   children: [
                     Expanded(

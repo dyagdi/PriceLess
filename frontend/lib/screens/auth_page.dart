@@ -160,7 +160,7 @@ class _AuthPageState extends State<AuthPage> {
           headers: {'Content-Type': 'application/json; charset=UTF-8'},
           body: jsonEncode(body),
         );
-
+        print(response.body);
         if (response.statusCode == 201 || response.statusCode == 200) {
           // Parse the response to get the token
           final responseData = jsonDecode(response.body);

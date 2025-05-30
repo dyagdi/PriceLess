@@ -33,7 +33,7 @@ class AccountSettingsPage extends StatelessWidget {
       print('Starting account deletion process...');
       final success = await ApiService.deleteAccount();
       print('Account deletion result: $success');
-      
+
       if (success && context.mounted) {
         print('Account deleted successfully, navigating to auth page');
         Navigator.of(context).pushAndRemoveUntil(
@@ -44,7 +44,8 @@ class AccountSettingsPage extends StatelessWidget {
         print('Account deletion failed');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.'),
+            content: Text(
+                'Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.'),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -66,12 +67,15 @@ class AccountSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hesap Ayarları'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text('Hesap Ayarları',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: ListView(
         padding: const EdgeInsets.all(AppTheme.spacingM),
         children: [
@@ -170,7 +174,8 @@ class AccountSettingsPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Hesabı Kapat'),
-        content: const Text('Hesabınızı kapatmak istediğinizden emin misiniz? Bu işlem geri alınamaz.'),
+        content: const Text(
+            'Hesabınızı kapatmak istediğinizden emin misiniz? Bu işlem geri alınamaz.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

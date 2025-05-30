@@ -15,7 +15,7 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logoColor = color ?? Theme.of(context).primaryColor;
+    final logoColor = color ?? Theme.of(context).colorScheme.primary;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -24,7 +24,7 @@ class AppLogo extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: logoColor.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.surface,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -45,7 +45,7 @@ class AppLogo extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.all(size * 0.05),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       shape: BoxShape.circle,
                       border: Border.all(color: logoColor, width: 2),
                     ),
@@ -70,7 +70,7 @@ class AppLogo extends StatelessWidget {
             style: TextStyle(
               fontSize: size * 0.25,
               fontWeight: FontWeight.bold,
-              color: logoColor,
+              color: Theme.of(context).colorScheme.onSurface,
               letterSpacing: 1.2,
             ),
           ),

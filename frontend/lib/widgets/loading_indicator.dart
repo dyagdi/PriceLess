@@ -36,7 +36,7 @@ class CustomLoadingIndicator extends StatelessWidget {
             Text(
               message!,
               style: GoogleFonts.poppins(
-                color: AppTheme.textSecondary,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -70,8 +70,8 @@ class ShimmerLoading extends StatelessWidget {
       duration: AppTheme.animationDurationMedium,
       child: isLoading
           ? Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
+              baseColor: Theme.of(context).colorScheme.surfaceVariant,
+              highlightColor: Theme.of(context).colorScheme.surface,
               child: Container(
                 height: height,
                 width: width,

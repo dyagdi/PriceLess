@@ -110,7 +110,7 @@ class BottomNavigation extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -126,6 +126,7 @@ class BottomNavigation extends StatelessWidget {
             currentIndex: effectiveIndex,
             onTap: (index) async {
               if (currentIndex != index) {
+                cartProvider.isNavigating = true;
                 switch (index) {
                   case 0:
                     Navigator.pushAndRemoveUntil(
@@ -133,38 +134,48 @@ class BottomNavigation extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => HomePage()),
                       (route) => false,
                     );
+                    cartProvider.isNavigating = false;
                     break;
                   case 1:
                     final products = await _getCategorizedProducts();
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              CategoryPage(categorizedProducts: products)),
+                        builder: (context) =>
+                            CategoryPage(categorizedProducts: products),
+                      ),
+                      (route) => false,
                     );
+                    cartProvider.isNavigating = false;
                     break;
                   case 2:
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => ToDoListPage()),
+                      (route) => false,
                     );
+                    cartProvider.isNavigating = false;
                     break;
                   case 3:
                     final products = await _getCategorizedProducts();
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
                         builder: (context) => MarketsPage(
                           categorizedProducts: products,
                         ),
                       ),
+                      (route) => false,
                     );
+                    cartProvider.isNavigating = false;
                     break;
                   case 4:
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (context) => CartPage()),
+                      (route) => false,
                     );
+                    cartProvider.isNavigating = false;
                     break;
                 }
               }
@@ -184,8 +195,9 @@ class BottomNavigation extends StatelessWidget {
                 badgeCount: cartItemCount,
               ),
             ],
-            selectedItemColor: AppTheme.primaryColor,
-            unselectedItemColor: Colors.grey[600],
+            selectedItemColor: Theme.of(context).colorScheme.primary,
+            unselectedItemColor:
+                Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             backgroundColor: Colors.transparent,
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: true,

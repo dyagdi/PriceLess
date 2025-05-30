@@ -162,9 +162,9 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.background,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
@@ -202,7 +202,7 @@ class _SearchPageState extends State<SearchPage> {
                         fontSize: 16,
                       ),
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: Theme.of(context).colorScheme.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
@@ -295,7 +295,7 @@ class _SearchPageState extends State<SearchPage> {
                         itemBuilder: (context, index) {
                           final product = products[index];
                           return Material(
-                            color: Colors.grey[50],
+                            color: Theme.of(context).colorScheme.surface,
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(

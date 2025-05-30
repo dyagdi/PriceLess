@@ -87,7 +87,7 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -112,14 +112,14 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
             Text(
               widget.marketData.marketName,
               style: GoogleFonts.poppins(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
@@ -131,7 +131,7 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
               child: Text(
                 '${widget.marketData.products.length} ürün',
                 style: GoogleFonts.poppins(
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                 ),
               ),
@@ -149,6 +149,7 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -172,7 +173,7 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
                             onTap: () => _showProductDetail(context, product),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 borderRadius:
                                     BorderRadius.circular(AppTheme.radiusL),
                                 boxShadow: [
@@ -270,6 +271,9 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
                                             style: GoogleFonts.poppins(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
                                             ),
                                           ),
                                           const Spacer(),

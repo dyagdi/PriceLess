@@ -63,14 +63,14 @@ class _MarketsPageState extends State<MarketsPage> {
             Text(
               "Marketler",
               style: GoogleFonts.poppins(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         centerTitle: true,
@@ -136,7 +136,7 @@ class MarketSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16.0),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.05),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(AppTheme.radiusL),
                 topRight: Radius.circular(AppTheme.radiusL),
@@ -149,7 +149,7 @@ class MarketSection extends StatelessWidget {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -187,7 +187,7 @@ class MarketSection extends StatelessWidget {
                           Icon(
                             Icons.shopping_cart_outlined,
                             size: 16,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -196,7 +196,8 @@ class MarketSection extends StatelessWidget {
                                 .textTheme
                                 .bodyMedium
                                 ?.copyWith(
-                                  color: Colors.grey[600],
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                           ),
                         ],
@@ -309,7 +310,7 @@ class MarketProductCard extends StatelessWidget {
           onTap: () => _showProductDetail(context, product),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(AppTheme.radiusL),
               boxShadow: [
                 BoxShadow(
@@ -339,11 +340,14 @@ class MarketProductCard extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
-                                    color: Colors.grey[200],
+                                    color:
+                                        Theme.of(context).colorScheme.surface,
                                     child: Center(
                                       child: Icon(
                                         Icons.image_not_supported_outlined,
-                                        color: Colors.grey[400],
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
                                         size: 32,
                                       ),
                                     ),
@@ -351,11 +355,12 @@ class MarketProductCard extends StatelessWidget {
                                 },
                               )
                             : Container(
-                                color: Colors.grey[200],
+                                color: Theme.of(context).colorScheme.surface,
                                 child: Center(
                                   child: Icon(
                                     Icons.image_not_supported_outlined,
-                                    color: Colors.grey[400],
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                     size: 32,
                                   ),
                                 ),

@@ -66,7 +66,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -75,12 +75,12 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           SizedBox(width: 12),
@@ -92,7 +92,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                   title,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.outline,
                   ),
                 ),
                 SizedBox(height: 2),
@@ -101,6 +101,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -108,7 +109,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
           ),
           Icon(
             Icons.chevron_right,
-            color: Colors.grey[400],
+            color: Theme.of(context).colorScheme.outline,
           ),
         ],
       ),
@@ -152,7 +153,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.4,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -162,7 +163,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
               height: 4,
               margin: EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -199,13 +200,13 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                             Icon(
                               Icons.location_on_outlined,
                               size: 16,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.outline,
                             ),
                             SizedBox(width: 4),
                             Text(
                               '${market['distance']?.toStringAsFixed(1) ?? '0'} km uzaklıkta',
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.outline,
                                 fontSize: 14,
                               ),
                             ),
@@ -254,18 +255,19 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
     final LatLng center = LatLng(widget.userLatitude, widget.userLongitude);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Yakınımdaki Marketler',
           style: GoogleFonts.poppins(
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -331,7 +333,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                                 width: isSelected ? 50 : 40,
                                 height: isSelected ? 50 : 40,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(
                                       isSelected ? 25 : 20),
                                   boxShadow: [
@@ -369,13 +371,16 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                             Icon(
                               Icons.store_outlined,
                               size: 64,
-                              color: Colors.grey[400],
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withOpacity(0.4),
                             ),
                             SizedBox(height: 16),
                             Text(
                               'Yakında market bulunamadı',
                               style: GoogleFonts.poppins(
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.outline,
                                 fontSize: 16,
                               ),
                             ),
@@ -402,7 +407,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                                 side: BorderSide(
                                   color: isSelected
                                       ? Theme.of(context).primaryColor
-                                      : Colors.grey[200]!,
+                                      : Theme.of(context).colorScheme.outline,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -417,7 +422,7 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                                         width: 60,
                                         height: 60,
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: Theme.of(context).cardColor,
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           image: DecorationImage(
@@ -446,13 +451,17 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                                                 Icon(
                                                   Icons.location_on_outlined,
                                                   size: 16,
-                                                  color: Colors.grey[600],
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .outline,
                                                 ),
                                                 SizedBox(width: 4),
                                                 Text(
                                                   '${market['distance']?.toStringAsFixed(1) ?? '0'} km',
                                                   style: TextStyle(
-                                                    color: Colors.grey[600],
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .outline,
                                                     fontSize: 14,
                                                   ),
                                                 ),
@@ -463,7 +472,10 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
                                       ),
                                       Icon(
                                         Icons.chevron_right,
-                                        color: Colors.grey[400],
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.4),
                                       ),
                                     ],
                                   ),

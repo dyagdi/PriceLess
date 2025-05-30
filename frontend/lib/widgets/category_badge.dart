@@ -9,20 +9,22 @@ class CategoryBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.secondaryContainer;
+    final textColor = Theme.of(context).colorScheme.onSecondaryContainer;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: _getCategoryColor(category).withOpacity(0.1),
+        color: color,
         borderRadius: BorderRadius.circular(AppTheme.radiusS),
         border: Border.all(
-          color: _getCategoryColor(category).withOpacity(0.3),
+          color: color.withOpacity(0.3),
           width: 1,
         ),
       ),
       child: Text(
         category,
         style: TextStyle(
-          color: _getCategoryColor(category),
+          color: textColor,
           fontSize: 10,
           fontWeight: FontWeight.w500,
         ),

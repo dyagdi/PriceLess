@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/bottom_navigation.dart';
+
 class MarketDetailPage extends StatelessWidget {
   final String marketName;
   final Map<String, List<dynamic>> categorizedProducts;
 
   const MarketDetailPage({
-    super.key, 
+    super.key,
     required this.marketName,
     this.categorizedProducts = const {},
   });
@@ -22,11 +23,12 @@ class MarketDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           marketName,
-          style: const TextStyle(color: Colors.black),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(8.0),
@@ -37,15 +39,22 @@ class MarketDetailPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             child: ListTile(
               leading: Image.asset(product['image']!, width: 50, height: 50),
-              title: Text(product['name']!),
-              subtitle: Text("₺${product['price']}"),
+              title: Text(product['name']!,
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
+              subtitle: Text("₺${product['price']}",
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface)),
               trailing: IconButton(
                 icon: const Icon(Icons.add_shopping_cart),
                 onPressed: () {
                   // Add to cart logic
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text('${product['name']} sepete eklendi!')),
+                        content: Text('${product['name']} sepete eklendi!',
+                            style: TextStyle(
+                                color:
+                                    Theme.of(context).colorScheme.onSurface))),
                   );
                 },
               ),

@@ -29,6 +29,7 @@ import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/screens/nearby_markets_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/screens/chatbot_page.dart';
+import 'package:frontend/providers/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -348,23 +349,36 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+            color:
+                isDark ? Colors.amber : Theme.of(context).colorScheme.onSurface,
+          ),
+          tooltip: isDark ? 'Aydınlık Mod' : 'Karanlık Mod',
+          onPressed: () {
+            themeProvider.toggleTheme();
+          },
+        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.shopping_basket_rounded,
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).colorScheme.primary,
               size: 24,
             ),
             const SizedBox(width: 8),
             Text(
               "PriceLess",
               style: TextStyle(
-                color: Colors.black,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -373,19 +387,22 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.black),
+            icon: Icon(Icons.notifications,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () {
               Navigator.pushNamed(context, '/test-websocket');
             },
           ),
           IconButton(
-            icon: const Icon(Icons.mail, color: Colors.black),
+            icon: Icon(Icons.mail,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () {
               Navigator.pushNamed(context, '/invitations');
             },
           ),
           IconButton(
-            icon: const Icon(Icons.account_circle, color: Colors.black),
+            icon: Icon(Icons.account_circle,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () {
               Navigator.push(
                 context,
@@ -471,7 +488,7 @@ class _HomePageState extends State<HomePage> {
         margin: const EdgeInsets.all(16.0),
         padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
           boxShadow: [
             BoxShadow(
@@ -486,12 +503,12 @@ class _HomePageState extends State<HomePage> {
             Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.location_on,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
             ),
@@ -503,7 +520,10 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     'Teslimat Adresi',
                     style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.7),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -522,7 +542,7 @@ class _HomePageState extends State<HomePage> {
             ),
             Icon(
               Icons.keyboard_arrow_down,
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ],
         ),
@@ -537,8 +557,8 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).primaryColor,
-            Theme.of(context).primaryColor.withOpacity(0.8),
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -546,7 +566,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -586,8 +606,8 @@ class _HomePageState extends State<HomePage> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Theme.of(context).primaryColor,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              foregroundColor: Theme.of(context).colorScheme.primary,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -682,7 +702,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
