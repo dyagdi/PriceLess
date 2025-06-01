@@ -12,6 +12,7 @@ import 'package:frontend/screens/discounted_product_page.dart'
 import 'package:frontend/providers/recently_viewed_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/screens/market_products_page.dart';
+import 'package:frontend/screens/home_page.dart';
 
 class MarketsPage extends StatefulWidget {
   final Map<String, List<dynamic>> categorizedProducts;
@@ -51,29 +52,26 @@ class _MarketsPageState extends State<MarketsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.shopping_basket_rounded,
-              color: Theme.of(context).primaryColor,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "Marketler",
-              style: GoogleFonts.poppins(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
+        ),
+        title: Text(
+          'Marketler',
+          style: GoogleFonts.poppins(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        centerTitle: true,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

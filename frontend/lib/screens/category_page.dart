@@ -4,6 +4,8 @@ import 'package:frontend/services/product_service.dart';
 import 'package:frontend/screens/category_detail_page.dart';
 import 'package:frontend/widgets/bottom_navigation.dart';
 import 'package:frontend/constants/colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/screens/home_page.dart';
 
 class CategoryPage extends StatefulWidget {
   final Map<String, List<dynamic>> categorizedProducts;
@@ -88,15 +90,26 @@ class _CategoryPageState extends State<CategoryPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
+        ),
         title: Text(
-          "Kategoriler",
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          'Kategoriler',
+          style: GoogleFonts.poppins(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme:
-            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
-        automaticallyImplyLeading: true,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

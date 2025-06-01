@@ -12,6 +12,8 @@ import 'package:frontend/constants/constants_url.dart' as url_constants;
 import 'package:frontend/theme/app_theme.dart';
 import 'walking.dart';
 import 'package:frontend/screens/market_comparison_page.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/screens/home_page.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -231,12 +233,22 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
+        ),
         title: Text(
-          "Sepetim",
-          style: TextStyle(
+          'Sepetim',
+          style: GoogleFonts.poppins(
             color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,

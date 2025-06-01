@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/constants/constants_url.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/widgets/bottom_navigation.dart';
+import 'package:frontend/screens/home_page.dart';
 
 class ToDoListPage extends StatefulWidget {
   const ToDoListPage({super.key});
@@ -351,6 +353,16 @@ class _ToDoListPageState extends State<ToDoListPage>
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
+        ),
         title: Text(
           "Alışveriş Listeleri",
           style: GoogleFonts.poppins(
@@ -594,6 +606,10 @@ class _ToDoListPageState extends State<ToDoListPage>
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 2,
+        categorizedProducts: const {},
       ),
     );
   }
