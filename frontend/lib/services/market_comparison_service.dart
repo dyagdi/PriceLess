@@ -37,10 +37,12 @@ class MarketComparisonService {
             );
 
             if (matchingProduct != null) {
-              totalPrice += matchingProduct['price'];
+              // Convert price to double, handling both string and number types
+              final price = _parsePrice(matchingProduct['price']);
+              totalPrice += price;
               availableProducts.add({
                 'name': cartItem.name,
-                'price': matchingProduct['price'],
+                'price': price,
                 'image': matchingProduct['image'],
                 'category': matchingProduct['category'],
               });
@@ -83,5 +85,18 @@ class MarketComparisonService {
 
   static String _normalizeProductName(String name) {
     return name.toLowerCase().trim();
+  }
+
+  static double _parsePrice(dynamic price) {
+    if (price == null) return 0.0;
+    if (price is num) return price.toDouble();
+    if (price is String) {
+      // Remove any currency symbols and whitespace
+      final cleanPrice = price.replaceAll(RegExp(r'[^\d.,]'), '').trim();
+      // Replace comma with dot for decimal point
+      final normalizedPrice = cleanPrice.replaceAll(',', '.');
+      return double.tryParse(normalizedPrice) ?? 0.0;
+    }
+    return 0.0;
   }
 }
