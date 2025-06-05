@@ -22,89 +22,11 @@ class BottomNavigation extends StatelessWidget {
   }) : super(key: key);
 
   Future<Map<String, List<dynamic>>> _getCategorizedProducts() async {
-    // Always fetch fresh data to avoid caching issues
-    print('Fetching fresh product data from backend...');
-
-    try {
-      // First try to fetch from our new specific categories endpoint with normalized categories
-      final fetchedCategoryProducts = await fetchCheapestProductsByCategories();
-      print(
-          'Received ${fetchedCategoryProducts.length} products from specific categories backend');
-
-      if (fetchedCategoryProducts.isNotEmpty) {
-        // If we have specific category products, use them
-        final Map<String, List<dynamic>> specificCategorizedProducts = {};
-
-        for (var product in fetchedCategoryProducts) {
-          String category = product.category ?? "Uncategorized";
-          // Use the normalized category name from the backend
-          if (!specificCategorizedProducts.containsKey(category)) {
-            specificCategorizedProducts[category] = [];
-          }
-          specificCategorizedProducts[category]?.add(product);
-        }
-
-        print(
-            'Organized products into ${specificCategorizedProducts.keys.length} normalized categories');
-        return specificCategorizedProducts;
-      }
-    } catch (e) {
-      print(
-          'Error fetching specific category products: $e, falling back to regular categories');
-    }
-
-    // If specific categories fetch failed or was empty, fall back to original method
-    // with our own category normalization
-    final fetchedProducts = await fetchCheapestProductsPerCategory();
-    print('Received ${fetchedProducts.length} products from backend');
-
-    final Map<String, List<dynamic>> newCategorizedProducts = {};
-
-    // Define mapping for normalized categories
-    final Map<String, String> normalizedCategoryMapping = {
-      'Meyve, Sebze': 'Meyve ve Sebze',
-      'Meyve & Sebze': 'Meyve ve Sebze',
-      'Sebze & Meyve': 'Meyve ve Sebze',
-      'Sebzeler': 'Meyve ve Sebze',
-      'Meyveler': 'Meyve ve Sebze',
-      'İçecek': 'İçecekler',
-      'İçecekler': 'İçecekler',
-      'Et, Tavuk, Balık': 'Et, Tavuk ve Balık',
-      'Et & Tavuk & Şarküteri': 'Et, Tavuk ve Balık',
-      'Kırmızı/Beyaz Et': 'Et, Tavuk ve Balık',
-      'Et Ürünleri': 'Et, Tavuk ve Balık',
-      'Temel Gıda': 'Temel Gıda',
-      'Yemeklik Malzemeler': 'Temel Gıda',
-      'Gıda & Şekerleme': 'Temel Gıda',
-      'GIDA': 'Temel Gıda',
-      'Dondurulmuş Gıda': 'Dondurulmuş Gıda',
-      'Dondurulmuş Ürünler': 'Dondurulmuş Gıda',
-      'Hazır Yemek&Donuk Ürünler': 'Dondurulmuş Gıda',
-    };
-
-    // Process products with normalized categories
-    for (var product in fetchedProducts) {
-      // Get the category from the product, default to "Uncategorized"
-      String originalCategory = product.category ?? "Uncategorized";
-
-      // Try to normalize the category
-      String normalizedCategory =
-          normalizedCategoryMapping[originalCategory] ?? originalCategory;
-
-      // Add the product to the appropriate category
-      if (!newCategorizedProducts.containsKey(normalizedCategory)) {
-        newCategorizedProducts[normalizedCategory] = [];
-      }
-      newCategorizedProducts[normalizedCategory]?.add(product);
-    }
-
-    return newCategorizedProducts;
+    return await ProductService.getCategorizedProducts();
   }
 
   @override
   Widget build(BuildContext context) {
-    // If currentIndex is -1, default to first item but don't highlight any
-    final effectiveIndex = currentIndex < 0 ? 0 : currentIndex;
     final cartProvider = Provider.of<CartProvider>(context);
     final cartItemCount = cartProvider.cartItems.length;
 
@@ -113,99 +35,82 @@ class BottomNavigation extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
             offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: BottomNavigationBar(
-            currentIndex: effectiveIndex,
-            onTap: (index) async {
-              if (currentIndex != index) {
-                cartProvider.isNavigating = true;
-                switch (index) {
-                  case 0:
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                      (route) => false,
-                    );
-                    cartProvider.isNavigating = false;
-                    break;
-                  case 1:
-                    final products = await _getCategorizedProducts();
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CategoryPage(categorizedProducts: products),
-                      ),
-                      (route) => false,
-                    );
-                    cartProvider.isNavigating = false;
-                    break;
-                  case 2:
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => ToDoListPage()),
-                      (route) => false,
-                    );
-                    cartProvider.isNavigating = false;
-                    break;
-                  case 3:
-                    final products = await _getCategorizedProducts();
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MarketsPage(
-                          categorizedProducts: products,
-                        ),
-                      ),
-                      (route) => false,
-                    );
-                    cartProvider.isNavigating = false;
-                    break;
-                  case 4:
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => CartPage()),
-                      (route) => false,
-                    );
-                    cartProvider.isNavigating = false;
-                    break;
-                }
+        child: BottomNavigationBar(
+          currentIndex: currentIndex,
+          onTap: (index) async {
+            // Prevent multiple taps while navigating
+            if (cartProvider.isNavigating) return;
+            
+            // Prevent navigating to the same screen
+            if (currentIndex == index) return;
+
+            cartProvider.isNavigating = true;
+            try {
+              Widget nextScreen;
+              switch (index) {
+                case 0:
+                  nextScreen = HomePage();
+                  break;
+                case 1:
+                  final products = await _getCategorizedProducts();
+                  nextScreen = CategoryPage(categorizedProducts: products);
+                  break;
+                case 2:
+                  nextScreen = ToDoListPage();
+                  break;
+                case 3:
+                  final products = await _getCategorizedProducts();
+                  nextScreen = MarketsPage(categorizedProducts: products);
+                  break;
+                case 4:
+                  nextScreen = CartPage();
+                  break;
+                default:
+                  nextScreen = HomePage();
               }
-            },
-            items: [
-              _buildNavItem(Icons.home_outlined, Icons.home, 'Anasayfa', 0),
-              _buildNavItem(
-                  Icons.category_outlined, Icons.category, 'Kategoriler', 1),
-              _buildNavItem(
-                  Icons.list_alt_outlined, Icons.list_alt, 'Ortak Liste', 2),
-              _buildNavItem(Icons.store_outlined, Icons.store, 'Marketler', 3),
-              _buildNavItem(
-                Icons.shopping_cart_outlined,
-                Icons.shopping_cart,
-                'Sepetim',
-                4,
-                badgeCount: cartItemCount,
-              ),
-            ],
-            selectedItemColor: Theme.of(context).colorScheme.primary,
-            unselectedItemColor:
-                Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-            backgroundColor: Colors.transparent,
-            type: BottomNavigationBarType.fixed,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            elevation: 0,
-          ),
+
+              // Use pushReplacement instead of pushAndRemoveUntil to maintain proper navigation
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) => nextScreen,
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            } finally {
+              cartProvider.isNavigating = false;
+            }
+          },
+          items: [
+            _buildNavItem(Icons.home_outlined, Icons.home, 'Anasayfa', 0),
+            _buildNavItem(Icons.category_outlined, Icons.category, 'Kategoriler', 1),
+            _buildNavItem(Icons.list_alt_outlined, Icons.list_alt, 'Ortak Liste', 2),
+            _buildNavItem(Icons.store_outlined, Icons.store, 'Marketler', 3),
+            _buildNavItem(
+              Icons.shopping_cart_outlined,
+              Icons.shopping_cart,
+              'Sepetim',
+              4,
+              badgeCount: cartItemCount,
+            ),
+          ],
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+          backgroundColor: Colors.transparent,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          elevation: 0,
         ),
       ),
     );
@@ -214,31 +119,67 @@ class BottomNavigation extends StatelessWidget {
   BottomNavigationBarItem _buildNavItem(
       IconData unselectedIcon, IconData selectedIcon, String label, int index,
       {int badgeCount = 0}) {
-    final isSelected = currentIndex == index;
-
-    if (badgeCount > 0) {
-      return BottomNavigationBarItem(
-        icon: Badge(
-          label: Text(
-            badgeCount.toString(),
-            style: const TextStyle(color: Colors.white, fontSize: 10),
-          ),
-          child: Icon(isSelected ? selectedIcon : unselectedIcon),
-        ),
-        activeIcon: Badge(
-          label: Text(
-            badgeCount.toString(),
-            style: const TextStyle(color: Colors.white, fontSize: 10),
-          ),
-          child: Icon(selectedIcon),
-        ),
-        label: label,
-      );
-    }
-
     return BottomNavigationBarItem(
-      icon: Icon(unselectedIcon),
-      activeIcon: Icon(selectedIcon),
+      icon: Stack(
+        children: [
+          Icon(unselectedIcon),
+          if (badgeCount > 0)
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 16,
+                  minHeight: 16,
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
+      activeIcon: Stack(
+        children: [
+          Icon(selectedIcon),
+          if (badgeCount > 0)
+            Positioned(
+              right: -6,
+              top: -6,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 16,
+                  minHeight: 16,
+                ),
+                child: Text(
+                  '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
       label: label,
     );
   }

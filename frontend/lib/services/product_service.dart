@@ -108,3 +108,85 @@ class Product {
     );
   }
 }
+
+class ProductService {
+  static Map<String, dynamic>? _cachedCategorizedProducts;
+  static DateTime? _lastFetchTime;
+  static const Duration _cacheExpiration = Duration(minutes: 5);
+
+  static Future<Map<String, List<dynamic>>> getCategorizedProducts() async {
+    // Check if we have valid cached data
+    if (_cachedCategorizedProducts != null && _lastFetchTime != null) {
+      final now = DateTime.now();
+      if (now.difference(_lastFetchTime!) < _cacheExpiration) {
+        return Map<String, List<dynamic>>.from(_cachedCategorizedProducts!);
+      }
+    }
+
+    Map<String, List<dynamic>> newCategorizedProducts = {};
+    
+    try {
+      final List<CheapestProductPc> fetchedProducts = await fetchProducts();
+
+      final Map<String, String> normalizedCategoryMapping = {
+        'Meyve, Sebze': 'Meyve ve Sebze',
+        'Meyve & Sebze': 'Meyve ve Sebze',
+        'Sebze & Meyve': 'Meyve ve Sebze',
+        'Sebzeler': 'Meyve ve Sebze',
+        'Meyveler': 'Meyve ve Sebze',
+        'İçecek': 'İçecekler',
+        'İçecekler': 'İçecekler',
+        'Et, Tavuk, Balık': 'Et, Tavuk ve Balık',
+        'Et & Tavuk & Şarküteri': 'Et, Tavuk ve Balık',
+        'Kırmızı/Beyaz Et': 'Et, Tavuk ve Balık',
+        'Et Ürünleri': 'Et, Tavuk ve Balık',
+        'Temel Gıda': 'Temel Gıda',
+        'Yemeklik Malzemeler': 'Temel Gıda',
+        'Gıda & Şekerleme': 'Temel Gıda',
+        'GIDA': 'Temel Gıda',
+        'Dondurulmuş Gıda': 'Dondurulmuş Gıda',
+        'Dondurulmuş Ürünler': 'Dondurulmuş Gıda',
+        'Hazır Yemek&Donuk Ürünler': 'Dondurulmuş Gıda',
+      };
+
+      // Process products with normalized categories
+      for (var product in fetchedProducts) {
+        String originalCategory = product.category ?? "Uncategorized";
+        String normalizedCategory = normalizedCategoryMapping[originalCategory] ?? originalCategory;
+
+        if (!newCategorizedProducts.containsKey(normalizedCategory)) {
+          newCategorizedProducts[normalizedCategory] = [];
+        }
+        newCategorizedProducts[normalizedCategory]?.add(product);
+      }
+
+      // Cache the results
+      _cachedCategorizedProducts = Map<String, dynamic>.from(newCategorizedProducts);
+      _lastFetchTime = DateTime.now();
+
+      return newCategorizedProducts;
+    } catch (e) {
+      print('Error fetching categorized products: $e');
+      // If there's an error, return cached data if available, otherwise empty map
+      return _cachedCategorizedProducts?.cast<String, List<dynamic>>() ?? {};
+    }
+  }
+
+  static Future<List<CheapestProductPc>> fetchProducts() async {
+    try {
+      // First try to fetch from our new specific categories endpoint
+      final List<CheapestProductPc> specificCategoryProducts = await fetchCheapestProductsByCategories();
+      
+      if (specificCategoryProducts.isNotEmpty) {
+        return specificCategoryProducts;
+      }
+      
+      // If specific categories are empty, fall back to regular categories
+      return await fetchCheapestProductsPerCategory();
+    } catch (e) {
+      print('Error in fetchProducts: $e');
+      // If both attempts fail, return empty list rather than null
+      return [];
+    }
+  }
+}
