@@ -981,7 +981,12 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 12,
+                bottom: MediaQuery.of(context).padding.bottom + 12,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -1004,7 +1009,12 @@ class _ProductDetailSheetState extends State<ProductDetailSheet> {
                   icon: const Icon(Icons.shopping_cart),
                   label: const Text('Sepete Ekle'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    ),
                   ),
                 ),
               ),

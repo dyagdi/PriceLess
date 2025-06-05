@@ -6,6 +6,8 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/widgets/loading_indicator.dart';
+import 'package:flutter/services.dart';
+import 'package:frontend/widgets/elegant_toast.dart';
 
 class UserInfoPage extends StatefulWidget {
   @override
@@ -73,9 +75,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
     try {
       final token = await AuthService.getToken();
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Lütfen önce giriş yapın")),
-        );
+        ElegantToast.showError(context, "Lütfen önce giriş yapın");
         return;
       }
 
@@ -93,16 +93,12 @@ class _UserInfoPageState extends State<UserInfoPage> {
       );
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Bilgileriniz başarıyla güncellendi")),
-        );
+        ElegantToast.showSuccess(context, "Bilgileriniz başarıyla güncellendi");
       } else {
         throw Exception('Failed to update user info');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Bilgiler güncellenirken hata oluştu")),
-      );
+      ElegantToast.showError(context, "Bilgiler güncellenirken hata oluştu");
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:frontend/constants/constants_url.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/widgets/app_logo.dart';
+import 'package:frontend/widgets/elegant_toast.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -169,21 +170,26 @@ class _AuthPageState extends State<AuthPage> {
           // Save the token regardless of whether it's login or registration
           await AuthService.saveToken(token);
 
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(
-                  _isLoginMode ? "Giriş yapıldı!" : "Hesap oluşturuldu!")));
-
-          Navigator.pushReplacement(
+          // Show elegant success notification
+          ElegantToast.showSuccess(
             context,
-            MaterialPageRoute(builder: (context) => HomePage()),
+            _isLoginMode ? "Başarıyla giriş yaptınız!" : "Hesabınız başarıyla oluşturuldu!",
           );
+
+          // Small delay to show the notification before navigation
+          await Future.delayed(const Duration(milliseconds: 800));
+
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+            );
+          }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Failed: ${response.body}")));
+          ElegantToast.showError(context, "İşlem başarısız: ${response.body}");
         }
       } catch (e) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("An error occurred: $e")));
+        ElegantToast.showError(context, "Bir hata oluştu: $e");
       } finally {
         setState(() => _isLoading = false);
       }

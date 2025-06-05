@@ -28,10 +28,6 @@ class UserAccountPage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: -1,
-        categorizedProducts: const {},
-      ),
     );
   }
 

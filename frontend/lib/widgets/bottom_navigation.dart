@@ -42,36 +42,36 @@ class BottomNavigation extends StatelessWidget {
         ],
       ),
       child: SafeArea(
-        child: BottomNavigationBar(
+          child: BottomNavigationBar(
           currentIndex: currentIndex,
-          onTap: (index) async {
+            onTap: (index) async {
             // Prevent multiple taps while navigating
             if (cartProvider.isNavigating) return;
             
             // Prevent navigating to the same screen
             if (currentIndex == index) return;
 
-            cartProvider.isNavigating = true;
+                cartProvider.isNavigating = true;
             try {
               Widget nextScreen;
-              switch (index) {
-                case 0:
+                switch (index) {
+                  case 0:
                   nextScreen = HomePage();
-                  break;
-                case 1:
-                  final products = await _getCategorizedProducts();
+                    break;
+                  case 1:
+                    final products = await _getCategorizedProducts();
                   nextScreen = CategoryPage(categorizedProducts: products);
-                  break;
-                case 2:
+                    break;
+                  case 2:
                   nextScreen = ToDoListPage();
-                  break;
-                case 3:
-                  final products = await _getCategorizedProducts();
+                    break;
+                  case 3:
+                    final products = await _getCategorizedProducts();
                   nextScreen = MarketsPage(categorizedProducts: products);
-                  break;
-                case 4:
+                    break;
+                  case 4:
                   nextScreen = CartPage();
-                  break;
+                    break;
                 default:
                   nextScreen = HomePage();
               }
@@ -87,30 +87,30 @@ class BottomNavigation extends StatelessWidget {
               );
             } finally {
               cartProvider.isNavigating = false;
-            }
-          },
-          items: [
-            _buildNavItem(Icons.home_outlined, Icons.home, 'Anasayfa', 0),
+              }
+            },
+            items: [
+              _buildNavItem(Icons.home_outlined, Icons.home, 'Anasayfa', 0),
             _buildNavItem(Icons.category_outlined, Icons.category, 'Kategoriler', 1),
             _buildNavItem(Icons.list_alt_outlined, Icons.list_alt, 'Ortak Liste', 2),
-            _buildNavItem(Icons.store_outlined, Icons.store, 'Marketler', 3),
-            _buildNavItem(
-              Icons.shopping_cart_outlined,
-              Icons.shopping_cart,
-              'Sepetim',
-              4,
-              badgeCount: cartItemCount,
-            ),
-          ],
-          selectedItemColor: Theme.of(context).colorScheme.primary,
+              _buildNavItem(Icons.store_outlined, Icons.store, 'Marketler', 3),
+              _buildNavItem(
+                Icons.shopping_cart_outlined,
+                Icons.shopping_cart,
+                'Sepetim',
+                4,
+                badgeCount: cartItemCount,
+              ),
+            ],
+            selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-          backgroundColor: Colors.transparent,
-          type: BottomNavigationBarType.fixed,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          elevation: 0,
+            backgroundColor: Colors.transparent,
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
+            elevation: 0,
         ),
       ),
     );
@@ -121,24 +121,28 @@ class BottomNavigation extends StatelessWidget {
       {int badgeCount = 0}) {
     return BottomNavigationBarItem(
       icon: Stack(
+        clipBehavior: Clip.none,
         children: [
           Icon(unselectedIcon),
           if (badgeCount > 0)
             Positioned(
-              right: -6,
-              top: -6,
+              right: -8,
+              top: -8,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: EdgeInsets.symmetric(
+                  horizontal: badgeCount > 99 ? 4 : badgeCount > 9 ? 4 : 6,
+                  vertical: 2,
+                ),
                 decoration: const BoxDecoration(
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),
                 constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
+                  minWidth: 18,
+                  minHeight: 18,
                 ),
                 child: Text(
-                  '$badgeCount',
+                  badgeCount > 99 ? '99+' : '$badgeCount',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -151,24 +155,28 @@ class BottomNavigation extends StatelessWidget {
         ],
       ),
       activeIcon: Stack(
+        clipBehavior: Clip.none,
         children: [
           Icon(selectedIcon),
           if (badgeCount > 0)
             Positioned(
-              right: -6,
-              top: -6,
+              right: -8,
+              top: -8,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: EdgeInsets.symmetric(
+                  horizontal: badgeCount > 99 ? 4 : badgeCount > 9 ? 4 : 6,
+                  vertical: 2,
+                ),
                 decoration: const BoxDecoration(
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),
                 constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
+                  minWidth: 18,
+                  minHeight: 18,
                 ),
                 child: Text(
-                  '$badgeCount',
+                  badgeCount > 99 ? '99+' : '$badgeCount',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,

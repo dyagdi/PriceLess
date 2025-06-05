@@ -92,18 +92,19 @@ class _InvitationsPageState extends State<InvitationsPage> {
 
       if (response.statusCode == 200) {
         _loadInvitations(); // Reload the list after responding
+        String message = action == 'accept' ? 'Davet kabul edildi' : 'Davet reddedildi';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invitation ${action}ed')),
+          SnackBar(content: Text(message)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.body}')),
+          SnackBar(content: Text('Hata: ${response.body}')),
         );
       }
     } catch (e) {
       print('Error responding to invitation: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('Hata: $e')),
       );
     }
   }
@@ -123,7 +124,7 @@ class _InvitationsPageState extends State<InvitationsPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _pendingInvitations.isEmpty
-              ? const Center(child: Text('No pending invitations'))
+              ? const Center(child: Text('Bekleyen davet yok'))
               : ListView.builder(
                   itemCount: _pendingInvitations.length,
                   itemBuilder: (context, index) {
@@ -132,19 +133,19 @@ class _InvitationsPageState extends State<InvitationsPage> {
                       margin: const EdgeInsets.all(8.0),
                       child: ListTile(
                         title: Text(invitation['shopping_list_name']),
-                        subtitle: Text('From: ${invitation['sender_name']}'),
+                        subtitle: Text('Gönderen: ${invitation['sender_name']}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextButton(
                               onPressed: () => _respondToInvitation(
                                   invitation['id'], 'accept'),
-                              child: const Text('Accept'),
+                              child: const Text('Kabul Et'),
                             ),
                             TextButton(
                               onPressed: () => _respondToInvitation(
                                   invitation['id'], 'decline'),
-                              child: const Text('Decline'),
+                              child: const Text('Reddet'),
                             ),
                           ],
                         ),

@@ -116,29 +116,32 @@ class _NearbyMarketsPageState extends State<NearbyMarketsPage>
     );
   }
 
-  Future<void> _launchDirections(Map<String, dynamic> market) async {
+  void _launchDirections(Map<String, dynamic> market) async {
     final String url =
         'https://www.openstreetmap.org/directions?engine=osrm_car&route=${widget.userLatitude},${widget.userLongitude};${market['lat']},${market['lon']}';
-    final Uri uri = Uri.parse(url);
 
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (await canLaunch(url)) {
+        await launch(url);
       } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('OpenStreetMap açılamadı'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('OpenStreetMap açılamadı'),
+            content: Text('Bir hata oluştu'),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Bir hata oluştu'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
