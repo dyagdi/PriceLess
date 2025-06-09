@@ -6,6 +6,14 @@ class CartProvider with ChangeNotifier {
 
   List<CartItem> get cartItems => _cartItems;
 
+  bool _isNavigating = false;
+  bool get isNavigating => _isNavigating;
+
+  set isNavigating(bool value) {
+    _isNavigating = value;
+    notifyListeners();
+  }
+
   void addItem(CartItem item) {
     final existingItemIndex = _cartItems.indexWhere(
       (cartItem) => cartItem.name == item.name,

@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 
 class ChatbotService {
   static Future<String> sendMessage(String userId, String message) async {
-    final url = Uri.parse("http://127.0.0.1:8000/chat"); // use LAN IP for real device
+    // For local development use: http://127.0.0.1:8000/chat
+    final url = Uri.parse("https://priceless-chatbot.onrender.com/chat"); // Testing regular chat endpoint
 
     final response = await http.post(
       url,

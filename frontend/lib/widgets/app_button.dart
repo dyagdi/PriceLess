@@ -34,7 +34,7 @@ class AppButton extends StatelessWidget {
         height: height,
         width: width ?? double.infinity,
         decoration: BoxDecoration(
-          color: backgroundColor,
+          color: backgroundColor ?? Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -54,7 +54,8 @@ class AppButton extends StatelessWidget {
               Text(
                 buttonText,
                 style: TextStyle(
-                  color: buttonTextColor,
+                  color: buttonTextColor ??
+                      Theme.of(context).colorScheme.onPrimary,
                   fontSize: textSize,
                   fontWeight: FontWeight.w600,
                 ),

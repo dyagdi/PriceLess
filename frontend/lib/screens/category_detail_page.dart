@@ -64,17 +64,18 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
       appBar: AppBar(
         title: Text(
           widget.category,
-          style: const TextStyle(color: Colors.black),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           // Toggle button for view type
           IconButton(
             icon: Icon(
               isGroupedByMarket ? Icons.view_list : Icons.grid_view,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             onPressed: () {
               setState(() {

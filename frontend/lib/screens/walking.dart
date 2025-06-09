@@ -42,8 +42,7 @@ class _WalkingPageState extends State<WalkingPage> {
     try {
     
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
-      );
+          desiredAccuracy: LocationAccuracy.high);
       setState(() {
         _userLatitude = position.latitude;
         _userLongitude = position.longitude;
@@ -51,9 +50,8 @@ class _WalkingPageState extends State<WalkingPage> {
 
   
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
-      final comparisons = await MarketComparisonService.compareProducts(
-        cartProvider.cartItems
-      );
+      final comparisons =
+          await MarketComparisonService.compareProducts(cartProvider.cartItems);
 
    
       final response = await http.get(
@@ -62,7 +60,7 @@ class _WalkingPageState extends State<WalkingPage> {
 
       if (response.statusCode == 200) {
         final List<dynamic> marketsData = json.decode(response.body);
-        
+
         setState(() {
           _marketComparisons = comparisons;
           _nearbyMarkets = List<Map<String, dynamic>>.from(marketsData);
@@ -140,19 +138,21 @@ class _WalkingPageState extends State<WalkingPage> {
   @override
   Widget build(BuildContext context) {
     final recommendations = _getRecommendations();
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Kendim Alacağım',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -160,7 +160,8 @@ class _WalkingPageState extends State<WalkingPage> {
               ? Center(child: Text(_error))
               : SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0, vertical: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -176,13 +177,19 @@ class _WalkingPageState extends State<WalkingPage> {
                           children: [
                             SliderTheme(
                               data: SliderTheme.of(context).copyWith(
-                                activeTrackColor: Theme.of(context).primaryColor,
-                                inactiveTrackColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                                activeTrackColor:
+                                    Theme.of(context).primaryColor,
+                                inactiveTrackColor: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.3),
                                 thumbColor: Theme.of(context).primaryColor,
-                                overlayColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                overlayColor: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.1),
                                 trackHeight: 4.0,
                                 trackShape: const RectangularSliderTrackShape(),
-                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
+                                thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 8.0),
                               ),
                               child: Slider(
                                 value: _currentValue,
@@ -198,17 +205,23 @@ class _WalkingPageState extends State<WalkingPage> {
                             ),
                             Positioned.fill(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: List.generate(5, (index) {
                                     return Container(
                                       width: 8,
                                       height: 8,
                                       decoration: BoxDecoration(
-                                        color: _currentValue >= index 
-                                            ? Theme.of(context).primaryColor 
-                                            : Colors.grey,
+                                        color: _currentValue >= index
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .outline,
                                         shape: BoxShape.circle,
                                       ),
                                     );
@@ -227,14 +240,14 @@ class _WalkingPageState extends State<WalkingPage> {
                                 'Mesafe Önemli',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.outline,
                                 ),
                               ),
                               Text(
                                 'Fiyat Önemli',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.outline,
                                 ),
                               ),
                             ],
@@ -251,24 +264,27 @@ class _WalkingPageState extends State<WalkingPage> {
                         const SizedBox(height: 16),
                         ...recommendations.map((market) {
                           final marketName = market['marketName'];
-                          final nearbyMarket = _nearbyMarkets.firstWhere(
-                            (m) {
-                              final name = m['name'].toLowerCase();
-                              final marketNameLower = marketName.toLowerCase();
-                              return name.contains(marketNameLower) || 
-                                     marketNameLower.contains(name) ||
-                                     (marketNameLower == 'mopas' && name.contains('mopaş')) ||
-                                     (marketNameLower == 'migros' && name.contains('migros')) ||
-                                     (marketNameLower == 'sokmarket' && name.contains('şok')) ||
-                                     (marketNameLower == 'marketpaketi' && name.contains('market paketi')) ||
-                                     (marketNameLower == 'carrefour' && name.contains('carrefour'));
-                            },
-                            orElse: () => {
-                              'distance': 5.0,
-                              'has_price_data': false,
-                              'total_price': null
-                            }
-                          );
+                          final nearbyMarket = _nearbyMarkets.firstWhere((m) {
+                            final name = m['name'].toLowerCase();
+                            final marketNameLower = marketName.toLowerCase();
+                            return name.contains(marketNameLower) ||
+                                marketNameLower.contains(name) ||
+                                (marketNameLower == 'mopas' &&
+                                    name.contains('mopaş')) ||
+                                (marketNameLower == 'migros' &&
+                                    name.contains('migros')) ||
+                                (marketNameLower == 'sokmarket' &&
+                                    name.contains('şok')) ||
+                                (marketNameLower == 'marketpaketi' &&
+                                    name.contains('market paketi')) ||
+                                (marketNameLower == 'carrefour' &&
+                                    name.contains('carrefour'));
+                          },
+                              orElse: () => {
+                                    'distance': 5.0,
+                                    'has_price_data': false,
+                                    'total_price': null
+                                  });
                           final distance = nearbyMarket['distance'] as double;
                           final price = market['totalPrice'] as double;
                           final isComplete = market['isComplete'] as bool;
@@ -286,11 +302,13 @@ class _WalkingPageState extends State<WalkingPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               marketName,
@@ -304,7 +322,9 @@ class _WalkingPageState extends State<WalkingPage> {
                                               '${distance.toStringAsFixed(1)} km uzaklıkta',
                                               style: GoogleFonts.poppins(
                                                 fontSize: 14,
-                                                color: Colors.grey[600],
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .outline,
                                               ),
                                             ),
                                           ],
@@ -316,16 +336,31 @@ class _WalkingPageState extends State<WalkingPage> {
                                           vertical: 6,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: isComplete 
-                                              ? Colors.green.withOpacity(0.1)
-                                              : Colors.orange.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(20),
+                                          color: isComplete
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withOpacity(0.1)
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .error
+                                                  .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Text(
-                                          isComplete ? 'Tüm ürünler mevcut' : 'Bazı ürünler eksik',
+                                          isComplete
+                                              ? 'Tüm ürünler mevcut'
+                                              : 'Bazı ürünler eksik',
                                           style: GoogleFonts.poppins(
                                             fontSize: 12,
-                                            color: isComplete ? Colors.green : Colors.orange,
+                                            color: isComplete
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .error,
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -334,25 +369,32 @@ class _WalkingPageState extends State<WalkingPage> {
                                   ),
                                   const SizedBox(height: 12),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Toplam Tutar:',
                                         style: GoogleFonts.poppins(
                                           fontSize: 14,
-                                          color: Colors.grey[600],
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .outline,
                                         ),
                                       ),
                                       Text(
-                                        hasPriceData 
+                                        hasPriceData
                                             ? '${price.toStringAsFixed(2)} TL'
                                             : 'Fiyat bilgisi yok',
                                         style: GoogleFonts.poppins(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          color: hasPriceData 
-                                              ? Theme.of(context).primaryColor
-                                              : Colors.grey,
+                                          color: hasPriceData
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .outline,
                                         ),
                                       ),
                                     ],
@@ -369,4 +411,4 @@ class _WalkingPageState extends State<WalkingPage> {
       bottomNavigationBar: const BottomNavigation(currentIndex: 0),
     );
   }
-} 
+}

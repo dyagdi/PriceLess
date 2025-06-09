@@ -113,7 +113,7 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
             TextButton(
               child: Text('Kaldır'),
               style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
+                foregroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -129,19 +129,20 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
         title: Text(
           'Kayıtlı Sepetlerim',
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: isLoading
           ? const CustomLoadingIndicator(message: "Sepetleriniz yükleniyor...")
@@ -153,14 +154,17 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                       Icon(
                         Icons.shopping_cart_outlined,
                         size: 64,
-                        color: Colors.grey[400],
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.4),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Henüz favori sepetiniz bulunmamaktadır',
                         style: GoogleFonts.poppins(
                           fontSize: 16,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.outline,
                         ),
                       ),
                     ],
@@ -179,11 +183,14 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(AppTheme.radiusL),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withOpacity(0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -193,7 +200,9 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         title: Text(
-                          cartName,
+                          cart['name']?.toString().isEmpty ?? true
+                              ? 'Favori Sepetim ${index + 1}'
+                              : cart['name'],
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -203,12 +212,12 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                           '${products.length} ürün',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.outline,
                           ),
                         ),
                         trailing: Icon(
                           Icons.shopping_cart_outlined,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         onTap: () {
                           if (products.isNotEmpty) {

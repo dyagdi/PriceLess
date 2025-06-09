@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/screens/auth_page.dart';
 import '../theme/app_theme.dart';
+import 'package:frontend/widgets/elegant_toast.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -40,23 +41,17 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Şifreniz başarıyla değiştirildi'),
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
-        Navigator.of(context).pop();
+        ElegantToast.showSuccess(context, 'Şifreniz başarıyla değiştirildi');
+        // Small delay before navigation
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
       print('Error during password change: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Bir hata oluştu: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
+        ElegantToast.showError(context, 'Bir hata oluştu: $e');
       }
     } finally {
       if (mounted) {
@@ -88,11 +83,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Şifre Değiştir'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text('Şifre Değiştir',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -111,7 +108,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _showCurrentPassword ? Icons.visibility_off : Icons.visibility,
+                      _showCurrentPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -140,7 +139,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _showNewPassword ? Icons.visibility_off : Icons.visibility,
+                      _showNewPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -172,7 +173,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _showConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      _showConfirmPassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -199,7 +202,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppTheme.radiusL),
                   ),
@@ -214,4 +218,4 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ),
     );
   }
-} 
+}

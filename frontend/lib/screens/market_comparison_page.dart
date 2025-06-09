@@ -52,7 +52,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Market Karşılaştırma'),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         iconTheme: const IconThemeData(color: Colors.black),
         titleTextStyle: const TextStyle(color: Colors.black),
       ),
@@ -118,9 +118,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                 Row(
                                   children: [
                                     Icon(
-                                      isCheapest
-                                          ? Icons.star
-                                          : Icons.store,
+                                      isCheapest ? Icons.star : Icons.store,
                                       color: isCheapest
                                           ? AppTheme.primaryColor
                                           : AppTheme.primaryColor
@@ -129,7 +127,8 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             market['marketName'],
@@ -144,7 +143,9 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                             Text(
                                               '${market['foundProducts']}/${market['totalProducts']} ürünler',
                                               style: TextStyle(
-                                                color: market['isComplete'] ? Colors.green : Colors.orange,
+                                                color: market['isComplete']
+                                                    ? Colors.green
+                                                    : Colors.orange,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -204,8 +205,8 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                       const Divider(height: 1),
                                   itemCount: market['availableProducts'].length,
                                   itemBuilder: (context, productIndex) {
-                                    final product =
-                                        market['availableProducts'][productIndex];
+                                    final product = market['availableProducts']
+                                        [productIndex];
                                     return ListTile(
                                       contentPadding: EdgeInsets.zero,
                                       leading: ClipRRect(
@@ -215,9 +216,9 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                           width: 50,
                                           height: 50,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error,
-                                                  stackTrace) =>
-                                              Container(
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
                                             width: 50,
                                             height: 50,
                                             color: Colors.grey[200],
@@ -236,8 +237,7 @@ class _MarketComparisonPageState extends State<MarketComparisonPage> {
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
-                                            ?.copyWith(
-                                                color: Colors.grey[600]),
+                                            ?.copyWith(color: Colors.grey[600]),
                                       ),
                                       trailing: Text(
                                         '₺${(product['price'] ?? 0.0).toStringAsFixed(2)}',

@@ -21,7 +21,7 @@ class CustomSearchBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.mainWhite,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -33,7 +33,7 @@ class CustomSearchBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.search, color: AppColors.mainGray),
+          Icon(Icons.search, color: Theme.of(context).colorScheme.onSurface),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -41,7 +41,8 @@ class CustomSearchBar extends StatelessWidget {
               focusNode: focusNode,
               decoration: InputDecoration(
                 hintText: hintText,
-                hintStyle: TextStyle(color: AppColors.mainGray),
+                hintStyle:
+                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -59,7 +60,8 @@ class CustomSearchBar extends StatelessWidget {
                 controller.clear();
                 onSearch('');
               },
-              child: Icon(Icons.close, color: AppColors.mainGray),
+              child: Icon(Icons.close,
+                  color: Theme.of(context).colorScheme.onSurface),
             ),
         ],
       ),
@@ -85,7 +87,7 @@ class SearchBarButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
           boxShadow: [
             BoxShadow(
@@ -99,7 +101,7 @@ class SearchBarButton extends StatelessWidget {
           children: [
             Icon(
               Icons.search,
-              color: AppColors.mainGray,
+              color: Theme.of(context).colorScheme.onSurface,
               size: 22,
             ),
             const SizedBox(width: 12),
@@ -107,7 +109,7 @@ class SearchBarButton extends StatelessWidget {
               child: Text(
                 hintText,
                 style: TextStyle(
-                  color: AppColors.mainGray,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 15,
                 ),
               ),

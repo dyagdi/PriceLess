@@ -36,6 +36,7 @@ import 'package:frontend/utils/snackbar_helper.dart';
 import 'package:frontend/utils/feature_introduction.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:frontend/widgets/chat_tooltip.dart';
+import 'package:frontend/providers/theme_provider.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -424,128 +425,133 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.shopping_basket_rounded,
-                  color: Theme.of(context).primaryColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "PriceLess",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+            color: isDark ? Colors.amber : Theme.of(context).colorScheme.onSurface,
+          ),
+          tooltip: isDark ? 'Aydınlık Mod' : 'Karanlık Mod',
+          onPressed: () {
+            themeProvider.toggleTheme();
+          },
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.shopping_basket_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 24,
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.help_outline, color: Colors.black),
-                onPressed: () {
-                  FeatureIntroduction.startShowcase(context);
-                },
+            const SizedBox(width: 8),
+            Text(
+              "PriceLess",
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              IconButton(
-                icon: const Icon(Icons.notifications, color: Colors.black),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/test-websocket');
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.mail, color: Colors.black),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/invitations');
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.account_circle, color: Colors.black),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => UserAccountPage()),
-                  );
-                },
-              ),
-            ],
-            centerTitle: true,
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () {
+              Navigator.pushNamed(context, '/test-websocket');
+            },
           ),
-          body: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: () async {
-                    await loadProducts();
-                    await _getCurrentLocation();
-                  },
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildLocationBar(),
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: SearchBarButton(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => SearchPage()),
-                                  );
-                                },
-                                hintText: 'Ürün, marka veya kategori ara',
-                              ),
-                            ),
-                            _buildWelcomeBanner(context),
-                          ],
-                        ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _buildFeaturedCategories(context),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _buildCheapestProducts(),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _buildPersonalizedRecommendations(),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _buildRecentlyViewed(),
-                      ),
-                      SliverToBoxAdapter(
-                        child: SizedBox(height: 24),
-                      ),
-                    ],
-                  ),
-                ),
-          bottomNavigationBar: BottomNavigation(
-            currentIndex: 0,
-            categorizedProducts: categorizedProducts,
+          IconButton(
+            icon: Icon(Icons.mail,
+                color: Theme.of(context).colorScheme.onSurface),
+            onPressed: () {
+              Navigator.pushNamed(context, '/invitations');
+            },
           ),
-          floatingActionButton: FloatingActionButton(
+          IconButton(
+            icon: Icon(Icons.account_circle,
+                color: Theme.of(context).colorScheme.onSurface),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ChatbotPage()),
+                MaterialPageRoute(builder: (context) => UserAccountPage()),
               );
             },
-            backgroundColor: AppTheme.primaryColor,
-            child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        ),
-      ],
+        ],
+        centerTitle: true,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: () async {
+                await loadProducts();
+                await _getCurrentLocation();
+              },
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLocationBar(),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: SearchBarButton(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SearchPage()),
+                              );
+                            },
+                            hintText: 'Ürün, marka veya kategori ara',
+                          ),
+                        ),
+                        _buildWelcomeBanner(context),
+                      ],
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildFeaturedCategories(context),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildCheapestProducts(),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildPersonalizedRecommendations(),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildRecentlyViewed(),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: 24),
+                  ),
+                ],
+              ),
+            ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 0,
+        categorizedProducts: categorizedProducts,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ChatbotPage()),
+          );
+        },
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -570,7 +576,7 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Teslimat Adresi',
+                          'Konumum',
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -721,8 +727,8 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).primaryColor,
-            Theme.of(context).primaryColor.withOpacity(0.8),
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -730,7 +736,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -851,62 +857,53 @@ class _HomePageState extends State<HomePage> {
           final category = categories[index];
           return Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: FeatureIntroduction.wrapWithShowcase(
-              key: index == 0 ? FeatureIntroduction.discountsKey :
-                   index == 1 ? FeatureIntroduction.cartKey :
-                   FeatureIntroduction.favoritesKey,
-              title: category['name'] as String,
-              description: index == 0 ? 'İndirimli ürünleri buradan görebilirsiniz.' :
-                         index == 1 ? 'Alışveriş sepetinizi buradan yönetebilirsiniz.' :
-                         'Favori ürünlerinizi buradan görebilirsiniz.',
-              child: GestureDetector(
-                onTap: category['onTap'] as VoidCallback,
-                child: Container(
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: category['color'] as Color,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+            child: GestureDetector(
+              onTap: category['onTap'] as VoidCallback,
+              child: Container(
+                width: 120,
+                decoration: BoxDecoration(
+                  color: category['color'] as Color,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          category['icon'] as IconData,
-                          color: category['iconColor'] as Color,
-                          size: 28,
-                        ),
+                      child: Icon(
+                        category['icon'] as IconData,
+                        color: category['iconColor'] as Color,
+                        size: 28,
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        category['name'] as String,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      category['name'] as String,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),

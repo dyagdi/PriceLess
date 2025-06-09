@@ -71,8 +71,8 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).primaryColor.withOpacity(0.2),
-              Colors.white,
+              Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              Theme.of(context).colorScheme.background,
             ],
           ),
         ),
@@ -101,7 +101,10 @@ class _SplashScreenState extends State<SplashScreen>
                             "En uygun fiyatlı ürünleri keşfedin",
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey[700],
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.7),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -110,7 +113,10 @@ class _SplashScreenState extends State<SplashScreen>
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onBackground
+                                  .withOpacity(0.6),
                             ),
                           ),
                         ],

@@ -4,6 +4,8 @@ import 'package:frontend/services/product_service.dart';
 import 'package:frontend/screens/category_detail_page.dart';
 import 'package:frontend/widgets/bottom_navigation.dart';
 import 'package:frontend/constants/colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/screens/home_page.dart';
 
 class CategoryPage extends StatefulWidget {
   final Map<String, List<dynamic>> categorizedProducts;
@@ -55,47 +57,59 @@ class _CategoryPageState extends State<CategoryPage> {
     final Map<String, Map<String, dynamic>> categoryData = {
       'Meyve ve Sebze': {
         'image': 'images/meyve_sebze.jpeg',
-        'color': AppColors.mainGreenDark,
+        'color': Theme.of(context).colorScheme.primary,
         'icon': Icons.eco,
       },
       'İçecekler': {
         'image': 'images/default.jpg',
-        'color': Colors.purple[700]!,
+        'color': Theme.of(context).colorScheme.secondary,
         'icon': Icons.local_drink,
       },
       'Et, Tavuk ve Balık': {
         'image': 'images/et_tavuk_balik.jpeg',
-        'color': Colors.red[700]!,
+        'color': Theme.of(context).colorScheme.error,
         'icon': Icons.restaurant_menu,
       },
       'Temel Gıda': {
         'image': 'images/default.jpg',
-        'color': Colors.amber[800]!,
+        'color': Theme.of(context).colorScheme.secondaryContainer,
         'icon': Icons.grain,
       },
       'Dondurulmuş Gıda': {
         'image': 'images/default.jpg',
-        'color': Colors.blue[700]!,
+        'color': Theme.of(context).colorScheme.secondary,
         'icon': Icons.ac_unit,
       },
       // Fallback for any category that might not be normalized
       'Uncategorized': {
         'image': 'images/default.jpg',
-        'color': Colors.grey[700]!,
+        'color': Theme.of(context).colorScheme.outline,
         'icon': Icons.category,
       },
     };
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Kategoriler",
-          style: TextStyle(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
         ),
-        backgroundColor: Colors.white,
+        title: Text(
+          'Kategoriler',
+          style: GoogleFonts.poppins(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        automaticallyImplyLeading: true,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -179,9 +193,11 @@ class _CategoryPageState extends State<CategoryPage> {
                               Expanded(
                                 child: Text(
                                   category,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),

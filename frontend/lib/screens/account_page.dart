@@ -10,9 +10,10 @@ class UserAccountPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Hesabım'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text('Hesabım',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         automaticallyImplyLeading: true,
       ),
@@ -26,10 +27,6 @@ class UserAccountPage extends StatelessWidget {
             _buildAccountSettingsSection(context),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: -1,
-        categorizedProducts: const {},
       ),
     );
   }

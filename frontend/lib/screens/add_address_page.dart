@@ -16,15 +16,13 @@ class AddAddressPage extends StatefulWidget {
 
 class _AddAddressPageState extends State<AddAddressPage> {
   final _formKey = GlobalKey<FormState>();
-  
- 
+
   final _countryController = TextEditingController(text: 'Türkiye');
   final _addressTitleController = TextEditingController();
   final _addressDetailsController = TextEditingController();
   final _postalCodeController = TextEditingController();
   final _mahalleController = TextEditingController();
 
- 
   Map<String, List<String>> _citiesAndStates = {};
   String? _selectedCity;
   String? _selectedState;
@@ -32,7 +30,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
 
   String _fixTurkishChars(String? text) {
     if (text == null) return '';
-    
+
     final Map<String, String> turkishChars = {
       'Ä±': 'ı',
       'Ä°': 'İ',
@@ -67,15 +65,19 @@ class _AddAddressPageState extends State<AddAddressPage> {
       if (widget.existingAddress != null) {
         setState(() {
           _addressId = widget.existingAddress!['id'];
-          _addressTitleController.text = _fixTurkishChars(widget.existingAddress!['address_title'] ?? '');
-          _addressDetailsController.text = _fixTurkishChars(widget.existingAddress!['address_details'] ?? '');
-          _postalCodeController.text = widget.existingAddress!['postal_code'] ?? '';
-          _mahalleController.text = _fixTurkishChars(widget.existingAddress!['mahalle'] ?? '');
-          
-          
+          _addressTitleController.text =
+              _fixTurkishChars(widget.existingAddress!['address_title'] ?? '');
+          _addressDetailsController.text = _fixTurkishChars(
+              widget.existingAddress!['address_details'] ?? '');
+          _postalCodeController.text =
+              widget.existingAddress!['postal_code'] ?? '';
+          _mahalleController.text =
+              _fixTurkishChars(widget.existingAddress!['mahalle'] ?? '');
+
           final city = _fixTurkishChars(widget.existingAddress!['city'] ?? '');
-          final state = _fixTurkishChars(widget.existingAddress!['state'] ?? '');
-          
+          final state =
+              _fixTurkishChars(widget.existingAddress!['state'] ?? '');
+
           if (_citiesAndStates.containsKey(city)) {
             _selectedCity = city;
             if (_citiesAndStates[city]!.contains(state)) {
@@ -89,13 +91,13 @@ class _AddAddressPageState extends State<AddAddressPage> {
 
   Future<void> _loadCitiesAndStates() async {
     try {
-      final String jsonString = await rootBundle.loadString('assets/cities_states.json');
+      final String jsonString =
+          await rootBundle.loadString('assets/cities_states.json');
       final Map<String, dynamic> data = json.decode(jsonString);
-      
+
       setState(() {
-        _citiesAndStates = Map<String, List<String>>.from(
-          data.map((key, value) => MapEntry(key, (value as List).cast<String>()))
-        );
+        _citiesAndStates = Map<String, List<String>>.from(data.map(
+            (key, value) => MapEntry(key, (value as List).cast<String>())));
       });
     } catch (e) {
       print('Error loading cities and states: $e');
@@ -112,7 +114,8 @@ class _AddAddressPageState extends State<AddAddressPage> {
         return;
       }
 
-      final url = Uri.parse('${baseUrl}addresses/${_addressId != null ? "$_addressId/" : ""}');
+      final url = Uri.parse(
+          '${baseUrl}addresses/${_addressId != null ? "$_addressId/" : ""}');
       final method = _addressId != null ? http.put : http.post;
 
       final requestData = {
@@ -125,7 +128,7 @@ class _AddAddressPageState extends State<AddAddressPage> {
         'mahalle': _mahalleController.text,
       };
 
-      print('Sending address data: $requestData'); 
+      print('Sending address data: $requestData');
 
       final response = await method(
         url,
@@ -136,21 +139,25 @@ class _AddAddressPageState extends State<AddAddressPage> {
         body: jsonEncode(requestData),
       );
 
-      print('Response status: ${response.statusCode}'); 
-      print('Response body: ${response.body}'); 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_addressId != null ? "Adres başarıyla güncellendi" : "Adres başarıyla kaydedildi")),
+          SnackBar(
+              content: Text(_addressId != null
+                  ? "Adres başarıyla güncellendi"
+                  : "Adres başarıyla kaydedildi")),
         );
         Navigator.pop(context);
       } else {
         throw Exception('Failed to save address: ${response.body}');
       }
     } catch (e) {
-      print('Error saving address: $e'); 
+      print('Error saving address: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Adres kaydedilirken hata oluştu: ${e.toString()}")),
+        SnackBar(
+            content: Text("Adres kaydedilirken hata oluştu: ${e.toString()}")),
       );
     }
   }
@@ -218,9 +225,15 @@ class _AddAddressPageState extends State<AddAddressPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.existingAddress != null ? 'Adresi Düzenle' : 'Yeni Adres Ekle'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text(
+            widget.existingAddress != null
+                ? 'Adresi Düzenle'
+                : 'Yeni Adres Ekle',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -245,19 +258,21 @@ class _AddAddressPageState extends State<AddAddressPage> {
                     border: OutlineInputBorder(),
                   ),
                   items: _citiesAndStates.keys
-                    .map((String city) => DropdownMenuItem<String>(
-                          value: city,
-                          child: Text(_fixTurkishChars(city)),
-                        ))
-                    .toList()
-                    ..sort((a, b) => a.child.toString().compareTo(b.child.toString())),
+                      .map((String city) => DropdownMenuItem<String>(
+                            value: city,
+                            child: Text(_fixTurkishChars(city)),
+                          ))
+                      .toList()
+                    ..sort((a, b) =>
+                        a.child.toString().compareTo(b.child.toString())),
                   onChanged: (String? newValue) {
                     setState(() {
                       _selectedCity = newValue;
                       _selectedState = null;
                     });
                   },
-                  validator: (value) => value == null ? 'Lütfen il seçin' : null,
+                  validator: (value) =>
+                      value == null ? 'Lütfen il seçin' : null,
                 ),
                 SizedBox(height: 16),
                 _buildStateDropdown(),
@@ -316,7 +331,9 @@ class _AddAddressPageState extends State<AddAddressPage> {
                           backgroundColor: Colors.black,
                           padding: EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: Text(widget.existingAddress != null ? 'Adresi Güncelle' : 'Adresi Kaydet'),
+                        child: Text(widget.existingAddress != null
+                            ? 'Adresi Güncelle'
+                            : 'Adresi Kaydet'),
                       ),
                     ),
                     if (widget.existingAddress != null) ...[

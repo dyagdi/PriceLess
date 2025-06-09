@@ -12,6 +12,8 @@ import 'package:frontend/constants/constants_url.dart' as url_constants;
 import 'package:frontend/theme/app_theme.dart';
 import 'walking.dart';
 import 'package:frontend/screens/market_comparison_page.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/screens/home_page.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -30,7 +32,7 @@ class _CartPageState extends State<CartPage> {
 
   void _showNameCartDialog() {
     final TextEditingController nameController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -77,12 +79,14 @@ class _CartPageState extends State<CartPage> {
                           final token = await AuthService.getToken();
                           if (token == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Lütfen önce giriş yapın")),
+                              const SnackBar(
+                                  content: Text("Lütfen önce giriş yapın")),
                             );
                             return;
                           }
 
-                          final url = Uri.parse('${url_constants.baseUrl}favorite-carts/');
+                          final url = Uri.parse(
+                              '${url_constants.baseUrl}favorite-carts/');
                           final response = await http.post(
                             url,
                             headers: {
@@ -97,18 +101,24 @@ class _CartPageState extends State<CartPage> {
 
                           if (response.statusCode == 201) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Sepetiniz favorilere eklendi!")),
+                              const SnackBar(
+                                  content:
+                                      Text("Sepetiniz favorilere eklendi!")),
                             );
                           } else {
                             print('Error response: ${response.body}');
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Sepet favorilere eklenirken bir hata oluştu")),
+                              const SnackBar(
+                                  content: Text(
+                                      "Sepet favorilere eklenirken bir hata oluştu")),
                             );
                           }
                         } catch (e) {
                           print('Error saving cart to favorites: $e');
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Bir hata oluştu, lütfen tekrar deneyin")),
+                            const SnackBar(
+                                content: Text(
+                                    "Bir hata oluştu, lütfen tekrar deneyin")),
                           );
                         }
                       },
@@ -128,12 +138,15 @@ class _CartPageState extends State<CartPage> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () async {
-                    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                    final cartProvider =
+                        Provider.of<CartProvider>(context, listen: false);
                     final cartItems = cartProvider.cartItems;
 
                     if (cartItems.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Sepetiniz boş, favorilere eklenemez!")),
+                        const SnackBar(
+                            content:
+                                Text("Sepetiniz boş, favorilere eklenemez!")),
                       );
                       Navigator.of(context).pop();
                       return;
@@ -152,13 +165,15 @@ class _CartPageState extends State<CartPage> {
                       final token = await AuthService.getToken();
                       if (token == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Lütfen önce giriş yapın")),
+                          const SnackBar(
+                              content: Text("Lütfen önce giriş yapın")),
                         );
                         Navigator.of(context).pop();
                         return;
                       }
 
-                      final url = Uri.parse('${url_constants.baseUrl}favorite-carts/');
+                      final url =
+                          Uri.parse('${url_constants.baseUrl}favorite-carts/');
                       final response = await http.post(
                         url,
                         headers: {
@@ -167,34 +182,39 @@ class _CartPageState extends State<CartPage> {
                         },
                         body: jsonEncode({
                           'products': products,
-                          'name': nameController.text.trim().isEmpty 
-                              ? 'Favori Sepetim' 
+                          'name': nameController.text.trim().isEmpty
+                              ? 'Favori Sepetim'
                               : nameController.text.trim(),
                         }),
                       );
 
                       if (response.statusCode == 201) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Sepetiniz favorilere eklendi!")),
+                          const SnackBar(
+                              content: Text("Sepetiniz favorilere eklendi!")),
                         );
                         Navigator.of(context).pop();
                       } else {
                         print('Error response: ${response.body}');
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Sepet favorilere eklenirken bir hata oluştu")),
+                          const SnackBar(
+                              content: Text(
+                                  "Sepet favorilere eklenirken bir hata oluştu")),
                         );
                         Navigator.of(context).pop();
                       }
                     } catch (e) {
                       print('Error saving cart to favorites: $e');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Bir hata oluştu, lütfen tekrar deneyin")),
+                        const SnackBar(
+                            content:
+                                Text("Bir hata oluştu, lütfen tekrar deneyin")),
                       );
                       Navigator.of(context).pop();
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: Theme.of(context).cardColor,
                     minimumSize: const Size(double.infinity, 45),
                   ),
                   child: const Text('Kaydet'),
@@ -211,28 +231,39 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Sepetim",
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
+        ),
+        title: Text(
+          'Sepetim',
+          style: GoogleFonts.poppins(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           IconButton(
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.directions_walk,
-                color: Colors.green,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
             ),
@@ -245,9 +276,9 @@ class _CartPageState extends State<CartPage> {
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.favorite_border,
-                color: Colors.red,
+                color: Theme.of(context).colorScheme.error,
                 size: 20,
               ),
             ),
@@ -269,7 +300,8 @@ class _CartPageState extends State<CartPage> {
                   Icon(
                     Icons.shopping_cart_outlined,
                     size: 80,
-                    color: Colors.grey[400],
+                    color:
+                        Theme.of(context).colorScheme.outline.withOpacity(0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -282,7 +314,7 @@ class _CartPageState extends State<CartPage> {
                   Text(
                     "Alışverişe başlamak için ürün ekleyin",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.outline,
                         ),
                   ),
                 ],
@@ -301,7 +333,7 @@ class _CartPageState extends State<CartPage> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(AppTheme.radiusL),
                         boxShadow: [
                           BoxShadow(
@@ -327,11 +359,17 @@ class _CartPageState extends State<CartPage> {
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
-                                    color: Colors.grey[200],
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline
+                                        .withOpacity(0.1),
                                     child: Center(
                                       child: Icon(
                                         Icons.image_not_supported_outlined,
-                                        color: Colors.grey[400],
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline
+                                            .withOpacity(0.4),
                                         size: 32,
                                       ),
                                     ),
@@ -377,7 +415,10 @@ class _CartPageState extends State<CartPage> {
                                     children: [
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.grey[100],
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .outline
+                                              .withOpacity(0.1),
                                           borderRadius: BorderRadius.circular(
                                               AppTheme.radiusM),
                                         ),
@@ -416,8 +457,10 @@ class _CartPageState extends State<CartPage> {
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.delete_outline,
-                                            color: Colors.red),
+                                        icon: Icon(Icons.delete_outline,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .error),
                                         onPressed: () {
                                           cartProvider.removeItem(item);
                                         },
@@ -438,7 +481,7 @@ class _CartPageState extends State<CartPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),

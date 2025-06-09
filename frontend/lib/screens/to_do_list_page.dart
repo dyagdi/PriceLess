@@ -3,8 +3,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/constants/constants_url.dart';
+import 'package:frontend/constants/colors.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend/widgets/bottom_navigation.dart';
+import 'package:frontend/screens/home_page.dart';
+import 'package:frontend/widgets/elegant_toast.dart';
 
 class ToDoListPage extends StatefulWidget {
   const ToDoListPage({super.key});
@@ -21,6 +25,8 @@ class _ToDoListPageState extends State<ToDoListPage>
   final TextEditingController _newListController = TextEditingController();
   int? _selectedListId;
   List<Map<String, dynamic>> _shoppingLists = [];
+  Map<String, dynamic>? _selectedListDetails;
+  String? _currentUserUsername;
 
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
@@ -30,6 +36,7 @@ class _ToDoListPageState extends State<ToDoListPage>
   void initState() {
     super.initState();
     _fetchShoppingLists();
+    _getCurrentUser();
 
     _animationController = AnimationController(
       vsync: this,
@@ -77,6 +84,7 @@ class _ToDoListPageState extends State<ToDoListPage>
         if (_shoppingLists.isNotEmpty && _selectedListId == null) {
           _selectedListId = _shoppingLists[0]['id'];
           _fetchItems();
+          _fetchListDetails(_selectedListId!);
         }
       });
     }
@@ -269,6 +277,99 @@ class _ToDoListPageState extends State<ToDoListPage>
     }
   }
 
+  Future<void> _deleteList(int listId) async {
+    String? token = await _getAuthToken();
+    if (token == null) return;
+
+    try {
+      final response = await http.delete(
+        Uri.parse('${baseUrl}shopping-lists/$listId/delete/'),
+        headers: {'Authorization': 'Token $token'},
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 204) {
+        ElegantToast.showSuccess(context, "Liste başarıyla silindi!");
+        
+        // Reset selected list if it was the deleted one
+        if (_selectedListId == listId) {
+          setState(() {
+            _selectedListId = null;
+            _toDoItems.clear();
+          });
+        }
+        
+        // Refresh the lists
+        _fetchShoppingLists();
+      } else if (response.statusCode == 404) {
+        // Parse error message from response if available
+        try {
+          final errorData = json.decode(response.body);
+          final errorMessage = errorData['error'] ?? 'Liste bulunamadı veya yetkiniz yok';
+          ElegantToast.showError(context, errorMessage);
+        } catch (e) {
+          ElegantToast.showError(context, "Bu listeyi silme yetkiniz yok. Sadece liste sahibi listeyi silebilir.");
+        }
+      } else {
+        // Handle other error status codes
+        try {
+          final errorData = json.decode(response.body);
+          final errorMessage = errorData['error'] ?? 'Liste silinirken hata oluştu';
+          ElegantToast.showError(context, errorMessage);
+        } catch (e) {
+          ElegantToast.showError(context, "Liste silinirken hata oluştu (${response.statusCode})");
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ElegantToast.showError(context, "Bağlantı hatası: $e");
+    }
+  }
+
+  void _showDeleteListConfirmation(int listId, String listName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Liste Sil",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          "'$listName' listesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve listedeki tüm öğeler de silinecektir.",
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "İptal",
+              style: GoogleFonts.poppins(),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteList(listId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(
+              "Sil",
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showCreateListDialog() {
     showDialog(
       context: context,
@@ -346,22 +447,83 @@ class _ToDoListPageState extends State<ToDoListPage>
     }
   }
 
+  Future<void> _fetchListDetails(int listId) async {
+    String? token = await _getAuthToken();
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('${baseUrl}shopping-lists/$listId/'),
+        headers: {'Authorization': 'Token $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final listData = json.decode(response.body);
+        setState(() {
+          _selectedListDetails = listData;
+        });
+      }
+    } catch (e) {
+      print("Error fetching list details: $e");
+    }
+  }
+
+  Future<void> _getCurrentUser() async {
+    String? token = await _getAuthToken();
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse('${baseUrl}user-info/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
+        setState(() {
+          _currentUserUsername = userData['username'] ?? userData['email'];
+        });
+      }
+    } catch (e) {
+      print("Error getting current user: $e");
+    }
+  }
+
+  bool _isCurrentUserOwner() {
+    if (_selectedListDetails == null || _currentUserUsername == null) return false;
+    return _selectedListDetails!['owner'] == _currentUserUsername;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+              (route) => false,
+            );
+          },
+        ),
         title: Text(
           "Alışveriş Listeleri",
           style: GoogleFonts.poppins(
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
         actions: [
           IconButton(
             icon: Container(
@@ -406,7 +568,7 @@ class _ToDoListPageState extends State<ToDoListPage>
                 Container(
                   margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppTheme.radiusL),
                     boxShadow: [
                       BoxShadow(
@@ -447,48 +609,34 @@ class _ToDoListPageState extends State<ToDoListPage>
                       ),
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                        ),
-                        child: DropdownButton<int>(
-                          value: _selectedListId,
-                          isExpanded: true,
-                          hint: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              "Liste seçin",
-                              style: GoogleFonts.poppins(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                          items: _shoppingLists.map((list) {
-                            return DropdownMenuItem<int>(
-                              value: list['id'],
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Text(
-                                  list['name'],
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                  ),
+                        child: Column(
+                          children: [
+                            // Selected list display
+                            if (_selectedListId != null) ...[
+                              _buildSelectedListCard(),
+                              const SizedBox(height: 12),
+                            ],
+                            // Other lists
+                            if (_shoppingLists.length > 1) ...[
+                              Text(
+                                "Diğer Listeler",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[600],
                                 ),
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (int? newValue) {
-                            setState(() {
-                              _selectedListId = newValue;
-                              _fetchItems();
-                            });
-                          },
-                          underline: const SizedBox(),
+                              const SizedBox(height: 8),
+                              ..._shoppingLists.where((list) => list['id'] != _selectedListId).map((list) => 
+                                _buildListCard(list, false)
+                              ).toList(),
+                            ],
+                            if (_shoppingLists.isEmpty) ...[
+                              _buildEmptyListState(),
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -497,7 +645,7 @@ class _ToDoListPageState extends State<ToDoListPage>
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppTheme.radiusL),
                     boxShadow: [
                       BoxShadow(
@@ -550,7 +698,7 @@ class _ToDoListPageState extends State<ToDoListPage>
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppTheme.radiusL),
                     boxShadow: [
                       BoxShadow(
@@ -593,6 +741,10 @@ class _ToDoListPageState extends State<ToDoListPage>
             ),
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 2,
+        categorizedProducts: const {},
       ),
     );
   }
@@ -669,7 +821,7 @@ class _ToDoListPageState extends State<ToDoListPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(color: Colors.grey[200]!),
       ),
@@ -699,7 +851,7 @@ class _ToDoListPageState extends State<ToDoListPage>
           ),
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
+          icon: Icon(Icons.delete_outline, color: Colors.red.shade700),
           onPressed: () => _deleteItem(index),
         ),
       ),
@@ -792,6 +944,273 @@ class _ToDoListPageState extends State<ToDoListPage>
               "Davet Et",
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedListCard() {
+    final selectedList = _shoppingLists.firstWhere(
+      (list) => list['id'] == _selectedListId,
+      orElse: () => {'name': 'Unknown', 'id': _selectedListId},
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.mainGreen, AppColors.mainGreen.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.mainGreen.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.playlist_add_check,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          selectedList['name'],
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (_isCurrentUserOwner()) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "Sahip",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Aktif Liste • ${_toDoItems.length} öğe",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_isCurrentUserOwner()) ...[
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red.shade700,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    _showDeleteListConfirmation(_selectedListId!, selectedList['name']);
+                  },
+                  tooltip: "Listeyi Sil",
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListCard(Map<String, dynamic> list, bool isSelected) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedListId = list['id'];
+              _selectedListDetails = null;
+            });
+            _fetchItems();
+            _fetchListDetails(list['id']);
+          },
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              border: Border.all(
+                color: isSelected ? AppColors.mainGreen : Colors.grey[200]!,
+                width: isSelected ? 2 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.list_alt,
+                    color: Colors.grey[600],
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        list['name'],
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Listeye geç",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.grey[400],
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyListState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(
+          color: Colors.grey[200]!,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Icon(
+              Icons.playlist_add,
+              size: 40,
+              color: Colors.grey[400],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Henüz liste yok",
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "İlk alışveriş listenizi oluşturmak için\n'Yeni Liste' butonuna tıklayın",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey[600],
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _showCreateListDialog,
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(
+              "İlk Listenizi Oluşturun",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.mainGreen,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusM),
               ),
             ),
           ),
