@@ -40,7 +40,7 @@ class _WalkingPageState extends State<WalkingPage> {
     });
 
     try {
-      // Get user's location
+    
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high
       );
@@ -49,13 +49,13 @@ class _WalkingPageState extends State<WalkingPage> {
         _userLongitude = position.longitude;
       });
 
-      // Get market comparisons
+  
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final comparisons = await MarketComparisonService.compareProducts(
         cartProvider.cartItems
       );
 
-      // Get nearby markets with prices
+   
       final response = await http.get(
         Uri.parse('${baseUrl}nearby-markets/?latitude=$_userLatitude&longitude=$_userLongitude&radius=6500')
       );
@@ -81,12 +81,12 @@ class _WalkingPageState extends State<WalkingPage> {
   }
 
   double _calculateMarketScore(Map<String, dynamic> market) {
-    // Find matching market in nearby markets
+    
     final marketName = market['marketName'].toLowerCase();
     final nearbyMarket = _nearbyMarkets.firstWhere(
       (m) {
         final name = m['name'].toLowerCase();
-        // Check for various market name variations
+       
         return name.contains(marketName) || 
                marketName.contains(name) ||
                (marketName == 'mopas' && name.contains('mopaş')) ||
@@ -104,25 +104,21 @@ class _WalkingPageState extends State<WalkingPage> {
 
     final distance = nearbyMarket['distance'] as double;
     final price = market['totalPrice'] as double;
-    final hasPriceData = market['totalPrice'] != null;  // Use price data from market comparison instead
+    final hasPriceData = market['totalPrice'] != null; 
 
-    // Normalize values
-    final maxDistance = 5.0; // Maximum distance we consider
+    final maxDistance = 5.0; 
     final maxPrice = _marketComparisons.isNotEmpty 
-        ? _marketComparisons[0]['totalPrice'] * 1.5 // Use 1.5x the cheapest price as max
+        ? _marketComparisons[0]['totalPrice'] * 1.5 
         : 1000.0;
 
     final normalizedDistance = distance / maxDistance;
     final normalizedPrice = price / maxPrice;
 
-    // Calculate weights based on user preference
-    final distanceWeight = 1.0 - (_currentValue / 4.0); // 0 to 1
-    final priceWeight = _currentValue / 4.0; // 0 to 1
+    final distanceWeight = 1.0 - (_currentValue / 4.0); 
+    final priceWeight = _currentValue / 4.0; 
 
-    // Calculate score (lower is better)
     double score = (normalizedDistance * distanceWeight) + (normalizedPrice * priceWeight);
     
-    // Penalize markets without price data
     if (!hasPriceData) {
       score *= 1.5;
     }
@@ -276,7 +272,7 @@ class _WalkingPageState extends State<WalkingPage> {
                           final distance = nearbyMarket['distance'] as double;
                           final price = market['totalPrice'] as double;
                           final isComplete = market['isComplete'] as bool;
-                          final hasPriceData = market['totalPrice'] != null;  // Use price data from market comparison
+                          final hasPriceData = market['totalPrice'] != null;  
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),

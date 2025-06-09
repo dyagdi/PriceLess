@@ -245,22 +245,17 @@ def cheapest_products(request):
         except Exception as e:
             print(f"Error querying CarrefourProduct: {e}")
         
-        # Results to return
         cheapest_products = []
         
-        # For each market, sort products by price and take the 4 cheapest
         for market, products in market_products.items():
-            # Skip markets with no products
             if not products:
                 continue
                 
-            # Sort by price
             products.sort(key=lambda x: x["price"])
             
-            # Take the 4 cheapest products from this market
             cheapest_in_market = products[:4] if len(products) > 4 else products
             
-            # Add to results
+         
             cheapest_products.extend(cheapest_in_market)
         
         return JsonResponse(cheapest_products, safe=False)
@@ -268,13 +263,11 @@ def cheapest_products(request):
         import traceback
         print(f"Error in cheapest_products: {e}")
         print(traceback.format_exc())
-        # Return an empty list instead of an error to prevent the frontend from breaking
         return JsonResponse([], safe=False)
 
 def cheapest_products_per_category(request):
     """Her marketten en ucuz 4 ürünü döner."""
     try:
-        # Products organized by market
         market_products = {
             "Mopas": [],
             "Migros": [],
@@ -283,13 +276,10 @@ def cheapest_products_per_category(request):
             "Carrefour": []
         }
         
-        # Try to get products from each model, but continue if one fails
         try:
             for product in MopasProduct.objects.all():
                 try:
-                    # Only include products with valid price
                     if product.price is not None:
-                        # Convert price to float explicitly
                         price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Mopas"].append({
                             "name": product.name,
@@ -306,9 +296,7 @@ def cheapest_products_per_category(request):
         try:
             for product in MigrosProduct.objects.all():
                 try:
-                    # Only include products with valid price
                     if product.price is not None:
-                        # Convert price to float explicitly
                         price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Migros"].append({
                             "name": product.name,
@@ -325,9 +313,7 @@ def cheapest_products_per_category(request):
         try:
             for product in SokmarketProduct.objects.all():
                 try:
-                    # Only include products with valid price
                     if product.price is not None:
-                        # Convert price to float explicitly
                         price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Şok Market"].append({
                             "name": product.name,
@@ -344,9 +330,7 @@ def cheapest_products_per_category(request):
         try:
             for product in MarketpaketiProduct.objects.all():
                 try:
-                    # Only include products with valid price
                     if product.price is not None:
-                        # Convert price to float explicitly
                         price = float(product.price) if isinstance(product.price, str) else product.price
                         market_products["Market Paketi"].append({
                             "name": product.name,
@@ -363,7 +347,6 @@ def cheapest_products_per_category(request):
         try:
             for product in CarrefourProduct.objects.all():
                 try:
-                    # Only include products with valid price
                     if product.price is not None:
                         market_products["Carrefour"].append({
                             "name": product.name,
@@ -377,22 +360,16 @@ def cheapest_products_per_category(request):
         except Exception as e:
             print(f"Error querying CarrefourProduct: {e}")
         
-        # Final results to return - exactly 4 cheapest products from each market
         results = []
         
-        # For each market, sort by price and take the 4 cheapest
         for market, products in market_products.items():
-            # Skip markets with no products
             if not products:
                 continue
                 
-            # Sort by price
             products.sort(key=lambda x: x["price"])
             
-            # Take exactly 4 cheapest products (or all if less than 4)
             cheapest_in_market = products[:4] if len(products) > 4 else products
             
-            # Add to results
             results.extend(cheapest_in_market)
         
         return JsonResponse(results, safe=False)
@@ -400,7 +377,6 @@ def cheapest_products_per_category(request):
         import traceback
         print(f"Error in cheapest_products_per_category: {e}")
         print(traceback.format_exc())
-        # Return an empty list instead of an error to prevent the frontend from breaking
         return JsonResponse([], safe=False)    
     
 def search_products(request):
@@ -408,11 +384,8 @@ def search_products(request):
     query = request.GET.get('q', '')
     
     if query:
-        # Initialize empty list for results
         results = []
         
-        # Search in each market table using simple name__icontains filter
-        # avoiding any search_vector functionality
         for table_name, model, market_name in [
             ('mopas_products', MopasProduct, "mopas"),
             ('migros_products', MigrosProduct, "migros"),
@@ -421,7 +394,6 @@ def search_products(request):
             ('carrefour_products', CarrefourProduct, "carrefour")
         ]:
             try:
-                # Use basic filtering with name__icontains
                 matching_products = model.objects.filter(name__icontains=query)
                 
                 for product in matching_products:
@@ -536,7 +508,6 @@ class MarketsListAPIView(APIView):
                 "Carrefour": []
             }
             
-            # Get products from each market
             mopas_products = MopasProduct.objects.all()
             for product in mopas_products:
                 markets_data["Mopas"].append({
@@ -588,7 +559,7 @@ class MarketsListAPIView(APIView):
                     "products": market_products,
                 }
                 for market, market_products in markets_data.items()
-                if market_products  # Only include markets with products
+                if market_products 
             ]
 
             return JsonResponse(response_data, safe=False)
@@ -604,7 +575,6 @@ class DiscountedProductsAPIView(APIView):
     """İndirimde olan ürünleri dönen bir API"""
     def get(self, request):
         try:
-            # Define normalized category names (reusing from cheapest_products_by_categories)
             normalized_categories = {
                 "fruits_vegetables": "Meyve ve Sebze",  # All fruit & vegetable variations
                 "beverages": "İçecekler",  # All beverage variations
@@ -1375,18 +1345,14 @@ class ForgotPasswordView(APIView):
                     json_dumps_params={'ensure_ascii': False}
                 )
             
-            # Generate a random token
             reset_token = secrets.token_urlsafe(32)
-            # Set token expiry to 1 hour from now
             token_expiry = timezone.now() + datetime.timedelta(hours=1)
             
-            # Store the reset token and expiry in user's session
             request.session[f'reset_token_{user.id}'] = {
                 'token': reset_token,
                 'expiry': token_expiry.isoformat()
             }
             
-            # Send reset email
             reset_link = f"http://localhost:3000/reset-password?token={reset_token}&email={email}"
             email_body = f"""
             Merhaba,
@@ -1404,12 +1370,10 @@ class ForgotPasswordView(APIView):
             """
             
             try:
-                # ⚡ Create an SSL context that does NOT verify certificates
                 ssl_context = ssl._create_unverified_context()
                 
-                # ⚡ Create email connection using the "unverified" context
                 connection = get_connection(
-                    use_tls=True,  # or use_ssl=True if your SMTP server expects SSL directly
+                    use_tls=True, 
                     ssl_context=ssl_context,
                 )
                 
@@ -1622,7 +1586,6 @@ def add_member_to_list(request, list_id):
         )
         
         try:
-            # Try to use Channels if available
             channel_layer = get_channel_layer()
             if channel_layer is not None:
                 async_to_sync(channel_layer.group_send)(
@@ -1640,7 +1603,6 @@ def add_member_to_list(request, list_id):
                     }
                 )
         except Exception as e:
-            # Log the error but don't fail the request
             logger.error(f"Error sending notification: {str(e)}")
         
         return Response({'message': 'İstek başarıyla gönderildi'}, status=status.HTTP_200_OK)
@@ -1683,7 +1645,6 @@ def respond_to_invitation(request):
                     }
                 )
         except Exception as e:
-            # Log the error but don't fail the request
             logger.error(f"Error sending notification: {str(e)}")
         
         return Response({'message': message}, status=status.HTTP_200_OK)
@@ -1707,12 +1668,11 @@ class NearbyMarketsWithPricesAPIView(APIView):
     """API endpoint for retrieving nearby markets with their price data"""
     def get(self, request):
         try:
-            # Get query parameters
+           
             latitude = float(request.query_params.get('latitude', 0))
             longitude = float(request.query_params.get('longitude', 0))
-            radius = int(request.query_params.get('radius', 6500))  # Default 6.5km
+            radius = int(request.query_params.get('radius', 6500)) 
 
-            # Get all products from each market to calculate total prices
             market_products = {
                 "mopas": MopasProduct.objects.all(),
                 "migros": MigrosProduct.objects.all(),
@@ -1721,13 +1681,11 @@ class NearbyMarketsWithPricesAPIView(APIView):
                 "carrefour": CarrefourProduct.objects.all()
             }
 
-            # Calculate total prices for each market
             market_prices = {}
             for market_name, products in market_products.items():
                 total_price = sum(product.price for product in products if product.price is not None)
                 market_prices[market_name] = total_price
 
-            # Fetch nearby markets using Overpass API
             overpass_query = f"""
             [out:json];
             (
@@ -1752,7 +1710,6 @@ class NearbyMarketsWithPricesAPIView(APIView):
                 data = response.json()
                 elements = data.get("elements", [])
                 
-                # Process and combine market data
                 markets = []
                 for element in elements:
                     market_name = (
@@ -1763,19 +1720,16 @@ class NearbyMarketsWithPricesAPIView(APIView):
                         "Unnamed Market"
                     )
                     
-                    # Calculate distance using geodesic
                     user_location = (latitude, longitude)
                     market_location = (element["lat"], element["lon"])
                     distance = geodesic(user_location, market_location).kilometers
                     
-                    # Find matching market in our database
                     market_key = None
                     for key in market_prices.keys():
                         if key.lower() in market_name.lower():
                             market_key = key
                             break
                     
-                    # Ensure all values are non-null
                     market_data = {
                         "name": market_name,
                         "latitude": float(element["lat"]),
@@ -1783,14 +1737,13 @@ class NearbyMarketsWithPricesAPIView(APIView):
                         "distance": float(distance),
                         "total_price": float(market_prices.get(market_key, 0)) if market_key else 0.0,
                         "has_price_data": bool(market_key is not None),
-                        "is_open": True,  # Default to True since we don't have this data
-                        "rating": 0.0,    # Default rating
+                        "is_open": True,  
+                        "rating": 0.0,   
                         "address": element.get("tags", {}).get("addr:full", "") or element.get("tags", {}).get("address", "") or ""
                     }
                     
                     markets.append(market_data)
                 
-                # Sort by distance
                 markets.sort(key=lambda x: x["distance"])
                 
                 return Response(markets, status=200)

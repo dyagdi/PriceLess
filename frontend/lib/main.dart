@@ -32,6 +32,7 @@ import 'package:frontend/screens/splash_screen.dart';
 import 'package:frontend/screens/markets_page.dart';
 import 'package:frontend/screens/invitations_page.dart';
 import 'package:frontend/providers/price_history_provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 
 void main() {
   runApp(
@@ -42,7 +43,12 @@ void main() {
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => PriceHistoryProvider()),
       ],
-      child: const MyApp(),
+      child: ShowCaseWidget(
+        onFinish: () {
+          print('Showcase finished');
+        },
+        builder: (context) => const MyApp(),
+      ),
     ),
   );
 }
@@ -55,6 +61,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'PriceLess',
       theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: true,
       home: const SplashScreen(), // Use SplashScreen as the initial screen
       routes: {
         '/home': (context) => HomePage(), // Define the HomePage route

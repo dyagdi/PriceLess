@@ -1,6 +1,5 @@
 from django.db import models
-# Commenting out SearchVectorField as we're not using it temporarily
-# from django.contrib.postgres.search import SearchVectorField
+
 from django.contrib.auth.models import User
 
 
@@ -17,8 +16,7 @@ class Product(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    # Make search_vector truly optional
-    # search_vector = SearchVectorField(null=True, blank=True)
+
 
     def __str__(self):
         return self.name
@@ -28,8 +26,8 @@ class Product(models.Model):
 
 class FavoriteCart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    id = models.AutoField(primary_key=True)  # Django automatically assigns an ID, so no need for shopping_cart_id separately.
-    name = models.CharField(max_length=255, null=True, blank=True)  # Optional name field
+    id = models.AutoField(primary_key=True) 
+    name = models.CharField(max_length=255, null=True, blank=True) 
 
     class Meta:
         db_table = 'favorite_carts'
@@ -61,8 +59,7 @@ class MopasProduct(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    # Make search_vector truly optional
-    # search_vector = SearchVectorField(null=True, blank=True)
+
 
     class Meta:
         db_table = 'mopas_3_products'
@@ -80,8 +77,7 @@ class MigrosProduct(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    # Make search_vector truly optional
-    # search_vector = SearchVectorField(null=True, blank=True)
+   
 
     class Meta:
         db_table = 'migros_3_products'
@@ -99,8 +95,7 @@ class SokmarketProduct(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    # Make search_vector truly optional
-    # search_vector = SearchVectorField(null=True, blank=True)
+    
 
     class Meta:
         db_table = 'sokmarket_3_products'
@@ -118,8 +113,7 @@ class MarketpaketiProduct(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    # Make search_vector truly optional
-    # search_vector = SearchVectorField(null=True, blank=True)
+ 
 
     class Meta:
         db_table = 'marketpaketi_3_products'
@@ -137,8 +131,7 @@ class CarrefourProduct(models.Model):
     image_url = models.TextField()
     date = models.TextField()
     market_name = models.TextField()
-    # Make search_vector truly optional
-    # search_vector = SearchVectorField(null=True, blank=True)
+ 
 
     class Meta:
         db_table = 'carrefour_3_products'

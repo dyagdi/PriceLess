@@ -82,7 +82,7 @@ class ProductCard extends StatelessWidget {
             Stack(
               children: [
                 Hero(
-                  tag: 'product_image_$name',
+                  tag: 'product_image_$id',
                   child: ClipRRect(
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(AppTheme.radiusL),

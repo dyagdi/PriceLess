@@ -36,14 +36,14 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
       final response = await http.get(
         Uri.parse('${baseUrl}favorite-carts/'),
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
           "Authorization": "Token $token",
         },
       );
 
       if (response.statusCode == 200) {
         print("Response body: ${response.body}");
-        final decodedData = jsonDecode(response.body);
+        final decodedData = jsonDecode(utf8.decode(response.bodyBytes));
         setState(() {
           favoriteCarts = decodedData;
           isLoading = false;
@@ -75,7 +75,7 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
       final response = await http.delete(
         Uri.parse('${baseUrl}favorite-carts/$cartId/'),
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
           "Authorization": "Token $token",
         },
       );
@@ -172,6 +172,10 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                   itemBuilder: (context, index) {
                     final cart = favoriteCarts[index];
                     final products = cart['products'] ?? [];
+                    final cartName = cart['name']?.toString().isEmpty ?? true 
+                        ? 'Favori Sepetim ${index + 1}' 
+                        : cart['name'];
+                    
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
@@ -189,9 +193,7 @@ class _FavoriteCartsPageState extends State<FavoriteCartsPage> {
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         title: Text(
-                          cart['name']?.toString().isEmpty ?? true 
-                              ? 'Favori Sepetim ${index + 1}' 
-                              : cart['name'],
+                          cartName,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

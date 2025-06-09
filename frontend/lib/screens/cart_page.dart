@@ -57,7 +57,6 @@ class _CartPageState extends State<CartPage> {
                       icon: const Icon(Icons.close),
                       onPressed: () async {
                         Navigator.of(context).pop();
-                        // Save cart with default name when X is clicked
                         final cartProvider = Provider.of<CartProvider>(context, listen: false);
                         final cartItems = cartProvider.cartItems;
 
@@ -314,7 +313,7 @@ class _CartPageState extends State<CartPage> {
                       ),
                       child: Row(
                         children: [
-                          // Product Image
+                          
                           ClipRRect(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(AppTheme.radiusL),
@@ -341,7 +340,7 @@ class _CartPageState extends State<CartPage> {
                               ),
                             ),
                           ),
-                          // Product Details
+                         
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.all(12),
@@ -371,7 +370,7 @@ class _CartPageState extends State<CartPage> {
                                         ),
                                   ),
                                   const SizedBox(height: 8),
-                                  // Quantity Controls
+                                 
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -435,7 +434,7 @@ class _CartPageState extends State<CartPage> {
                   },
                 ),
               ),
-              // Bottom Summary
+         
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(

@@ -29,6 +29,13 @@ import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/screens/nearby_markets_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/screens/chatbot_page.dart';
+import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/constants/constants_url.dart';
+import 'package:frontend/screens/add_address_page.dart';
+import 'package:frontend/utils/snackbar_helper.dart';
+import 'package:frontend/utils/feature_introduction.dart';
+import 'package:showcaseview/showcaseview.dart';
+import 'package:frontend/widgets/chat_tooltip.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -46,32 +53,14 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _nearbyMarkets = [];
   double _userLatitude = 0.0;
   double _userLongitude = 0.0;
-
-  final List<SavedAddress> savedAddresses = [
-    SavedAddress(
-      id: '1',
-      name: 'Ev',
-      address: 'Ümit Mh., Meksika Cd., Çankaya',
-      isDefault: true,
-    ),
-    SavedAddress(
-      id: '2',
-      name: 'İş',
-      address: 'Kızılay Mh., Atatürk Blv., Çankaya',
-    ),
-    SavedAddress(
-      id: '3',
-      name: 'Okul',
-      address: 'ODTÜ, Üniversiteler Mh., Çankaya',
-    ),
-  ];
+  List<SavedAddress> savedAddresses = [];
 
   @override
   void initState() {
     super.initState();
-    selectedAddressId = savedAddresses.firstWhere((addr) => addr.isDefault).id;
-    _cheapestProducts = fetchCheapestProductsPerCategory();
     _getCurrentLocation();
+    _loadSavedAddresses();
+    _cheapestProducts = fetchCheapestProductsPerCategory();
     loadProducts();
   }
 
@@ -127,14 +116,14 @@ class _HomePageState extends State<HomePage> {
 
         setState(() {
           _nearbyMarkets = elements.map<Map<String, dynamic>>((element) {
-            // Calculate distance from current location
+           
             double distance = Geolocator.distanceBetween(
                   latitude,
                   longitude,
                   element["lat"],
                   element["lon"],
                 ) /
-                1000; // Convert to kilometers
+                1000; 
 
             return {
               "name": element["tags"]?["name"] ??
@@ -148,7 +137,6 @@ class _HomePageState extends State<HomePage> {
             };
           }).toList();
 
-          // Sort markets by distance
           _nearbyMarkets.sort((a, b) =>
               (a["distance"] as double).compareTo(b["distance"] as double));
         });
@@ -162,9 +150,9 @@ class _HomePageState extends State<HomePage> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Lütfen konum servisini açın.")),
-        );
+        setState(() {
+          currentAddress = "Konum servisi kapalı";
+        });
         return;
       }
 
@@ -172,18 +160,11 @@ class _HomePageState extends State<HomePage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Konum izni reddedildi.")),
-          );
+          setState(() {
+            currentAddress = "Konum izni reddedildi";
+          });
           return;
         }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Konum izni kalıcı olarak reddedildi.")),
-        );
-        return;
       }
 
       Position position = await Geolocator.getCurrentPosition(
@@ -203,13 +184,44 @@ class _HomePageState extends State<HomePage> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         setState(() {
-          currentAddress =
-              "${place.subLocality}, ${place.thoroughfare}, ${place.locality}";
+          currentAddress = "${place.street}, ${place.subLocality}, ${place.locality}";
         });
       }
       await fetchNearbyMarkets(position.latitude, position.longitude);
     } catch (e) {
       print('Error getting location: $e');
+      setState(() {
+        currentAddress = "Konum alınamadı";
+      });
+    }
+  }
+
+  Future<void> _getCoordinatesFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address, localeIdentifier: "tr_TR");
+      if (locations.isNotEmpty) {
+        setState(() {
+          _userLatitude = locations[0].latitude;
+          _userLongitude = locations[0].longitude;
+        });
+        await fetchNearbyMarkets(_userLatitude, _userLongitude);
+      }
+    } catch (e) {
+      print('Error getting coordinates: $e');
+    }
+  }
+
+  Future<void> _updateLocationAndMarkets() async {
+    if (selectedAddressId != null) {
+      final selectedAddress = savedAddresses.firstWhere(
+        (address) => address.id == selectedAddressId,
+        orElse: () => SavedAddress(id: '', name: '', address: '', isDefault: false),
+      );
+      if (selectedAddress.address.isNotEmpty) {
+        await _getCoordinatesFromAddress(selectedAddress.address);
+      }
+    } else {
+      await _getCurrentLocation();
     }
   }
 
@@ -263,7 +275,12 @@ class _HomePageState extends State<HomePage> {
                   IconButton(
                     icon: const Icon(Icons.add),
                     onPressed: () {
-                      // Add new address functionality
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddAddressPage()),
+                      ).then((_) {
+                        _loadSavedAddresses();
+                      });
                     },
                   ),
                 ],
@@ -272,7 +289,7 @@ class _HomePageState extends State<HomePage> {
               ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height *
-                      0.4, // Limit to 40% of screen height
+                      0.4, 
                 ),
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -328,17 +345,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _handleSearch(String query) {
-    // Implement your search logic here
     print('Searching for: $query');
-    // You could navigate to a search results page
-    // or filter the current products
+  
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SearchPage()),
     );
   }
 
-  // Helper function to truncate long product names
   String _truncateName(String name) {
     if (name.length > 18) {
       return name.substring(0, 18) + "...";
@@ -346,185 +360,355 @@ class _HomePageState extends State<HomePage> {
     return name;
   }
 
+  Future<void> _loadSavedAddresses() async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) return;
+
+      final response = await http.get(
+        Uri.parse('${baseUrl}addresses/'),
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Authorization": "Token $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          savedAddresses = data.map((item) => SavedAddress(
+            id: item['id'].toString(),
+            name: _fixTurkishChars(item['address_title']),
+            address: '${_fixTurkishChars(item['mahalle'])}, ${_fixTurkishChars(item['state'])}, ${_fixTurkishChars(item['city'])}',
+            isDefault: false,
+          )).toList();
+        });
+      }
+    } catch (e) {
+      print('Error loading addresses: $e');
+    }
+  }
+
+  String _fixTurkishChars(String? text) {
+    if (text == null) return '';
+    
+    final Map<String, String> turkishChars = {
+      'Ä±': 'ı',
+      'Ä°': 'İ',
+      'Ã¶': 'ö',
+      'Ã–': 'Ö',
+      'Ã¼': 'ü',
+      'Ãœ': 'Ü',
+      'ÅŸ': 'ş',
+      'Å': 'Ş',
+      'Ä': 'ğ',
+      'Ä': 'Ğ',
+      'Ã§': 'ç',
+      'Ã‡': 'Ç',
+      'â€™': "'",
+      'â€"': "–",
+      'â€"': "-",
+      'â€œ': '"',
+      'â€': '"',
+      'Ã': 'Ç',
+      'Ã§': 'ç',
+      'Ã‡': 'Ç',
+    };
+
+    String fixedText = text;
+    turkishChars.forEach((key, value) {
+      fixedText = fixedText.replaceAll(key, value);
+    });
+    return fixedText;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.shopping_basket_rounded,
-              color: Theme.of(context).primaryColor,
-              size: 24,
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.shopping_basket_rounded,
+                  color: Theme.of(context).primaryColor,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "PriceLess",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Text(
-              "PriceLess",
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.help_outline, color: Colors.black),
+                onPressed: () {
+                  FeatureIntroduction.startShowcase(context);
+                },
               ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.black),
-            onPressed: () {
-              Navigator.pushNamed(context, '/test-websocket');
-            },
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.black),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/test-websocket');
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.mail, color: Colors.black),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/invitations');
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_circle, color: Colors.black),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserAccountPage()),
+                  );
+                },
+              ),
+            ],
+            centerTitle: true,
           ),
-          IconButton(
-            icon: const Icon(Icons.mail, color: Colors.black),
-            onPressed: () {
-              Navigator.pushNamed(context, '/invitations');
-            },
+          body: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    await loadProducts();
+                    await _getCurrentLocation();
+                  },
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLocationBar(),
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: SearchBarButton(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => SearchPage()),
+                                  );
+                                },
+                                hintText: 'Ürün, marka veya kategori ara',
+                              ),
+                            ),
+                            _buildWelcomeBanner(context),
+                          ],
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _buildFeaturedCategories(context),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _buildCheapestProducts(),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _buildPersonalizedRecommendations(),
+                      ),
+                      SliverToBoxAdapter(
+                        child: _buildRecentlyViewed(),
+                      ),
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: 24),
+                      ),
+                    ],
+                  ),
+                ),
+          bottomNavigationBar: BottomNavigation(
+            currentIndex: 0,
+            categorizedProducts: categorizedProducts,
           ),
-          IconButton(
-            icon: const Icon(Icons.account_circle, color: Colors.black),
+          floatingActionButton: FloatingActionButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => UserAccountPage()),
+                MaterialPageRoute(builder: (context) => ChatbotPage()),
               );
             },
+            backgroundColor: AppTheme.primaryColor,
+            child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
           ),
-        ],
-        centerTitle: true,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () async {
-                await loadProducts();
-                await _getCurrentLocation();
-              },
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLocationBar(),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: SearchBarButton(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => SearchPage()),
-                              );
-                            },
-                            hintText: 'Ürün, marka veya kategori ara',
-                          ),
-                        ),
-                        _buildWelcomeBanner(context),
-                      ],
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: _buildFeaturedCategories(context),
-                  ),
-                  SliverToBoxAdapter(
-                    child: _buildCheapestProducts(),
-                  ),
-                  SliverToBoxAdapter(
-                    child: _buildPersonalizedRecommendations(),
-                  ),
-                  SliverToBoxAdapter(
-                    child: _buildRecentlyViewed(),
-                  ),
-                  // Add some bottom padding
-                  SliverToBoxAdapter(
-                    child: SizedBox(height: 24),
-                  ),
-                ],
-              ),
-            ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: 0,
-        categorizedProducts: categorizedProducts,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ChatbotPage()),
-          );
-        },
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        ),
+      ],
     );
   }
 
   Widget _buildLocationBar() {
-    return GestureDetector(
-      onTap: _showAddressSelector,
-      child: Container(
-        margin: const EdgeInsets.all(16.0),
-        padding: const EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                shape: BoxShape.circle,
+    return FeatureIntroduction.wrapWithShowcase(
+      key: FeatureIntroduction.locationKey,
+      title: 'Konum Seçimi',
+      description: 'Buradan teslimat adresinizi seçebilir veya mevcut konumunuzu kullanabilirsiniz.',
+      child: GestureDetector(
+        onTap: () async {
+          await _loadSavedAddresses();
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => StatefulBuilder(
+              builder: (context, setBottomSheetState) => Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Teslimat Adresi',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => AddAddressPage()),
+                            ).then((_) {
+                              _loadSavedAddresses();
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: savedAddresses.isEmpty ? 1 : savedAddresses.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return ListTile(
+                              leading: const Icon(Icons.my_location),
+                              title: const Text('Mevcut Konum'),
+                              subtitle: Text(currentAddress),
+                              trailing: selectedAddressId == null
+                                  ? Icon(Icons.check, color: Theme.of(context).primaryColor)
+                                  : null,
+                              onTap: () async {
+                                setState(() {
+                                  selectedAddressId = null;
+                                });
+                                await _getCurrentLocation();
+                                Navigator.pop(context);
+                              },
+                            );
+                          }
+
+                          if (savedAddresses.isEmpty) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text('Kayıtlı adres bulunmamaktadır'),
+                              ),
+                            );
+                          }
+
+                          final address = savedAddresses[index - 1];
+                          return ListTile(
+                            leading: Icon(
+                              address.isDefault ? Icons.home : Icons.location_on,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                            title: Text(address.name),
+                            subtitle: Text(address.address),
+                            trailing: selectedAddressId == address.id
+                                ? Icon(Icons.check, color: Theme.of(context).primaryColor)
+                                : null,
+                            onTap: () async {
+                              setState(() {
+                                selectedAddressId = address.id;
+                                currentAddress = address.address;
+                              });
+                              await _getCoordinatesFromAddress(address.address);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(
-                Icons.location_on,
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey.withOpacity(0.2),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.location_on,
+                  color: Theme.of(context).primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Teslimat Adresi',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      currentAddress,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down,
                 color: Theme.of(context).primaryColor,
-                size: 20,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Teslimat Adresi',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    currentAddress,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.keyboard_arrow_down,
-              color: Theme.of(context).primaryColor,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -533,7 +717,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildWelcomeBanner(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0),
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -554,50 +738,56 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             'Hoş Geldiniz!',
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'En uygun fiyatlı ürünleri keşfedin',
             style: GoogleFonts.poppins(
               color: Colors.white.withOpacity(0.9),
-              fontSize: 16,
+              fontSize: 14,
             ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NearbyMarketsPage(
-                    markets: _nearbyMarkets,
-                    userLatitude: _userLatitude,
-                    userLongitude: _userLongitude,
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 200,
+            child: ElevatedButton(
+              onPressed: () async {
+                await _updateLocationAndMarkets();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NearbyMarketsPage(
+                      markets: _nearbyMarkets,
+                      userLatitude: _userLatitude,
+                      userLongitude: _userLongitude,
+                    ),
                   ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Theme.of(context).primaryColor,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Theme.of(context).primaryColor,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
               ),
-            ),
-            child: Text(
-              'Yakınımdaki Marketleri Gör',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
+              child: Text(
+                'Yakınımdaki Marketleri Gör',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
@@ -661,53 +851,62 @@ class _HomePageState extends State<HomePage> {
           final category = categories[index];
           return Padding(
             padding: const EdgeInsets.only(right: 16),
-            child: GestureDetector(
-              onTap: category['onTap'] as VoidCallback,
-              child: Container(
-                width: 120,
-                decoration: BoxDecoration(
-                  color: category['color'] as Color,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+            child: FeatureIntroduction.wrapWithShowcase(
+              key: index == 0 ? FeatureIntroduction.discountsKey :
+                   index == 1 ? FeatureIntroduction.cartKey :
+                   FeatureIntroduction.favoritesKey,
+              title: category['name'] as String,
+              description: index == 0 ? 'İndirimli ürünleri buradan görebilirsiniz.' :
+                         index == 1 ? 'Alışveriş sepetinizi buradan yönetebilirsiniz.' :
+                         'Favori ürünlerinizi buradan görebilirsiniz.',
+              child: GestureDetector(
+                onTap: category['onTap'] as VoidCallback,
+                child: Container(
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: category['color'] as Color,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
-                      child: Icon(
-                        category['icon'] as IconData,
-                        color: category['iconColor'] as Color,
-                        size: 28,
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          category['icon'] as IconData,
+                          color: category['iconColor'] as Color,
+                          size: 28,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      category['name'] as String,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 12),
+                      Text(
+                        category['name'] as String,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -817,20 +1016,15 @@ class _HomePageState extends State<HomePage> {
 
     context.read<CartProvider>().addItem(cartItem);
 
-    // Use a truncated name for the snackbar message if it's too long
     final displayName = _truncateName(product.name ?? '');
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$displayName sepete eklendi!'),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'Geri Al',
-          onPressed: () {
-            context.read<CartProvider>().removeItem(cartItem);
-          },
-        ),
-      ),
+    SnackbarHelper.showShortSnackBar(
+      context,
+      '$displayName sepete eklendi!',
+      actionLabel: 'Geri Al',
+      onActionPressed: () {
+        context.read<CartProvider>().removeItem(cartItem);
+      },
     );
   }
 
