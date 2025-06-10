@@ -26,7 +26,7 @@ from geopy.distance import geodesic
 from urllib.parse import quote
 
 from .models import (
-    FavoriteCart, Product, A101Product, MopasProduct, MigrosProduct,
+    FavoriteCart, FavoriteCartProduct, Product, A101Product, MopasProduct, MigrosProduct,
     SokmarketProduct, MarketpaketiProduct, CarrefourProduct, UserAddress,
     UserPhoneNumber, ShoppingList, ShoppingListItem, Invitation
 )

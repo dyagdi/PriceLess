@@ -68,6 +68,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text(
           "Market Asistanı",
@@ -87,63 +88,65 @@ class _ChatbotPageState extends State<ChatbotPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Column(
-        children: [
-          // Chat messages area
-          Expanded(
-            child: _messages.isEmpty
-                ? _buildEmptyState(isDark)
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = _messages[index];
-                      final isUser = msg['sender'] == 'user';
-                      return ChatMessageWidget(
-                        message: msg['text'] ?? '',
-                        isUser: isUser,
-                      );
-                    },
-                  ),
-          ),
-
-          // Loading indicator
-          if (_loading)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.mainGreen),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Chat messages area
+            Expanded(
+              child: _messages.isEmpty
+                  ? _buildEmptyState(isDark)
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
+                        final isUser = msg['sender'] == 'user';
+                        return ChatMessageWidget(
+                          message: msg['text'] ?? '',
+                          isUser: isUser,
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Asistan yazıyor...',
-                    style: TextStyle(
-                      color: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.color
-                          ?.withOpacity(0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
             ),
 
-          // Input area
-          _buildInputArea(isDark),
-        ],
+            // Loading indicator
+            if (_loading)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(AppColors.mainGreen),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Asistan yazıyor...',
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.color
+                            ?.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Input area
+            _buildInputArea(isDark),
+          ],
+        ),
       ),
     );
   }
@@ -253,8 +256,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+          padding: const EdgeInsets.only(
+            bottom: 8,
             left: 16,
             right: 16,
             top: 12,
