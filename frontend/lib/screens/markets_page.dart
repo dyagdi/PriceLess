@@ -117,8 +117,10 @@ class MarketSection extends StatelessWidget {
     final Map<String, String> marketImages = {
       "Carrefour": "images/carrefour.png",
       "A101": "images/a101.png",
-      "Şok": "images/şok.png",
+      "Şok Market": "images/sok.png",
       "Migros": "images/migros.png",
+      "Mopas": "images/mopas.jpeg",
+      "Market Paketi": "images/market_paketi.png",
     };
 
     return Card(

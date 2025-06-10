@@ -55,6 +55,7 @@ class _HomePageState extends State<HomePage> {
   double _userLatitude = 0.0;
   double _userLongitude = 0.0;
   List<SavedAddress> savedAddresses = [];
+  int _pendingInvitationsCount = 0;
 
   @override
   void initState() {
@@ -63,6 +64,7 @@ class _HomePageState extends State<HomePage> {
     _loadSavedAddresses();
     _cheapestProducts = fetchCheapestProductsPerCategory();
     loadProducts();
+    _loadPendingInvitations();
   }
 
   @override
@@ -423,6 +425,30 @@ class _HomePageState extends State<HomePage> {
     return fixedText;
   }
 
+  Future<void> _loadPendingInvitations() async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) return;
+
+      final response = await http.get(
+        Uri.parse('${baseUrl}invitations/pending/'),
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Authorization": "Token $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        setState(() {
+          _pendingInvitationsCount = data['invitations'].length;
+        });
+      }
+    } catch (e) {
+      print('Error loading invitations: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -468,12 +494,41 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/test-websocket');
             },
           ),
-          IconButton(
-            icon: Icon(Icons.mail,
-                color: Theme.of(context).colorScheme.onSurface),
-            onPressed: () {
-              Navigator.pushNamed(context, '/invitations');
-            },
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(Icons.mail,
+                    color: Theme.of(context).colorScheme.onSurface),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/invitations');
+                },
+              ),
+              if (_pendingInvitationsCount > 0)
+                Positioned(
+                  right: 6,
+                  top: 6,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 14,
+                      minHeight: 14,
+                    ),
+                    child: Text(
+                      _pendingInvitationsCount > 99 ? '99+' : '$_pendingInvitationsCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
           IconButton(
             icon: Icon(Icons.account_circle,

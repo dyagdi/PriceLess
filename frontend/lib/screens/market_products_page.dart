@@ -353,7 +353,9 @@ class _MarketProductsPageState extends State<MarketProductsPage> {
     if (marketName.contains('bim')) return 'images/bim.png';
     if (marketName.contains('carrefour')) return 'images/carrefour.png';
     if (marketName.contains('migros')) return 'images/migros.png';
-    if (marketName.contains('şok')) return 'images/şok.png';
+    if (marketName.contains('şok market')) return 'images/sok.png';
+    if (marketName.contains('mopas')) return 'images/mopas.jpeg';
+    if (marketName.contains('market paketi')) return 'images/market_paketi.png';
     return 'images/default.png';
   }
 }

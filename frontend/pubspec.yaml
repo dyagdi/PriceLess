@@ -80,7 +80,9 @@ flutter:
     - images/bim.png
     - images/carrefour.png
     - images/migros.png
-    - images/şok.png
+    - images/sok.png
+    - images/mopas.jpeg
+    - images/market_paketi.png
     - images/default.png
     - images/twix_white.webp
     - images/snickers.webp
