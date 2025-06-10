@@ -26,14 +26,14 @@ from geopy.distance import geodesic
 from urllib.parse import quote
 
 from .models import (
-    FavoriteCart, Product, FavoriteCartProduct, MopasProduct, MigrosProduct,
+    FavoriteCart, Product, A101Product, MopasProduct, MigrosProduct,
     SokmarketProduct, MarketpaketiProduct, CarrefourProduct, UserAddress,
     UserPhoneNumber, ShoppingList, ShoppingListItem, Invitation
 )
 from .serializers import (
     UserSerializer, FavoriteCartSerializer, ProductSerializer,
     UserAddressSerializer, ShoppingListSerializer, ShoppingListItemSerializer,
-    MopasProductSerializer, MigrosProductSerializer, SokmarketProductSerializer,
+    MopasProductSerializer, MigrosProductSerializer, A101ProductSerializer,SokmarketProductSerializer,
     MarketpaketiProductSerializer, CarrefourProductSerializer
 )
 
@@ -122,6 +122,7 @@ class HomePageProductListAPIView(APIView):
             sokmarket_products = SokmarketProduct.objects.all()
             marketpaketi_products = MarketpaketiProduct.objects.all()
             carrefour_products = CarrefourProduct.objects.all()
+            a101_products = A101Product.objects.all()
             
             # Apply filters to each market's products
             if category:
@@ -130,7 +131,7 @@ class HomePageProductListAPIView(APIView):
                 sokmarket_products = sokmarket_products.filter(main_category__icontains=category)
                 marketpaketi_products = marketpaketi_products.filter(main_category__icontains=category)
                 carrefour_products = carrefour_products.filter(main_category__icontains=category)
-
+                a101_products = a101_products.filter(main_category__icontains=category)
             if in_stock is not None:
                 in_stock_value = in_stock.lower() == 'true'
                 mopas_products = mopas_products.filter(in_stock=in_stock_value)
@@ -138,7 +139,7 @@ class HomePageProductListAPIView(APIView):
                 sokmarket_products = sokmarket_products.filter(in_stock=in_stock_value)
                 marketpaketi_products = marketpaketi_products.filter(in_stock=in_stock_value)
                 carrefour_products = carrefour_products.filter(in_stock=in_stock_value)
-            
+                a101_products = a101_products.filter(in_stock=in_stock_value)
             # Combine products from different markets
             combined_data = []
             
@@ -147,7 +148,7 @@ class HomePageProductListAPIView(APIView):
             combined_data.extend(SokmarketProductSerializer(sokmarket_products, many=True).data)
             combined_data.extend(MarketpaketiProductSerializer(marketpaketi_products, many=True).data)
             combined_data.extend(CarrefourProductSerializer(carrefour_products, many=True).data)
-            
+            combined_data.extend(A101ProductSerializer(a101_products, many=True).data)
             return Response(combined_data, status=200)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
@@ -161,7 +162,8 @@ def cheapest_products(request):
             "Migros": [],
             "Şok Market": [],
             "Market Paketi": [],
-            "Carrefour": []
+            "Carrefour": [],
+            "A101": []
         }
         
         # Try to get products from each model, but continue if one fails
@@ -180,7 +182,20 @@ def cheapest_products(request):
                     print(f"Error processing MopasProduct: {e}")
         except Exception as e:
             print(f"Error querying MopasProduct: {e}")
-        
+        try:
+            for product in A101Product.objects.all():
+                try:
+                    if product.price is not None:
+                        market_products["A101"].append({
+                            "name": product.name,
+                            "price": product.price,
+                            "image": product.image_url,
+                            "market_name": "a101"  # Add market name
+                        })
+                except Exception as e:
+                    print(f"Error processing A101Product: {e}")
+        except Exception as e:
+            print(f"Error querying A101Product: {e}")
         try:
             for product in MigrosProduct.objects.all():
                 try:
@@ -273,9 +288,24 @@ def cheapest_products_per_category(request):
             "Migros": [],
             "Şok Market": [],
             "Market Paketi": [],
-            "Carrefour": []
+            "Carrefour": [],
+            "A101": []
         }
-        
+        try:
+            for product in A101Product.objects.all():
+                try:
+                    if product.price is not None:
+                        market_products["A101"].append({
+                            "name": product.name,
+                            "price": product.price,
+                            "image": product.image_url,
+                            "category": product.main_category,
+                            "market_name": "a101"
+                        })
+                except Exception as e:
+                    print(f"Error processing A101Product: {e}")
+        except Exception as e:  
+            print(f"Error querying A101Product: {e}")
         try:
             for product in MopasProduct.objects.all():
                 try:
@@ -387,11 +417,12 @@ def search_products(request):
         results = []
         
         for table_name, model, market_name in [
-            ('mopas_products', MopasProduct, "mopas"),
-            ('migros_products', MigrosProduct, "migros"),
-            ('sokmarket_products', SokmarketProduct, "sokmarket"),
-            ('marketpaketi_products', MarketpaketiProduct, "marketpaketi"),
-            ('carrefour_products', CarrefourProduct, "carrefour")
+            ('mopas_3_products', MopasProduct, "mopas"),
+            ('migros_3_products', MigrosProduct, "migros"),
+            ('sokmarket_3_products', SokmarketProduct, "sokmarket"),
+            ('marketpaketi_3_products', MarketpaketiProduct, "marketpaketi"),
+            ('carrefour_3_products', CarrefourProduct, "carrefour"),
+            ('a101_3_products', A101Product, "a101")
         ]:
             try:
                 matching_products = model.objects.filter(name__icontains=query)
@@ -505,7 +536,8 @@ class MarketsListAPIView(APIView):
                 "Migros": [],
                 "Şok Market": [],
                 "Market Paketi": [],
-                "Carrefour": []
+                "Carrefour": [],
+                "A101": []
             }
             
             mopas_products = MopasProduct.objects.all()
@@ -543,7 +575,14 @@ class MarketsListAPIView(APIView):
                     "image": product.image_url,
                     "category": product.main_category
                 })
-                
+
+            a101_products = A101Product.objects.all()
+            for product in a101_products:
+                markets_data["A101"].append({
+                    "name": product.name,
+                    "price": product.price,
+                    "image": product.image_url,
+                })
             carrefour_products = CarrefourProduct.objects.all()
             for product in carrefour_products:
                 markets_data["Carrefour"].append({
@@ -647,6 +686,13 @@ class DiscountedProductsAPIView(APIView):
                     "Et, Tavuk, Balık",
                     "Temel Gıda",
                     "Hazır Yemek&Donuk Ürünler"
+                ],
+                "A101": [
+                    
+                    "İçecek",
+                    "Et, Balık, Tavuk",
+                    "Temel Gıda",
+                    "Dondurulmuş Ürünler"
                 ]
             }
             
@@ -663,7 +709,8 @@ class DiscountedProductsAPIView(APIView):
                 "Migros": (MigrosProduct, MigrosProductSerializer),
                 "Şok Market": (SokmarketProduct, SokmarketProductSerializer),
                 "Market Paketi": (MarketpaketiProduct, MarketpaketiProductSerializer),
-                "Carrefour": (CarrefourProduct, CarrefourProductSerializer)
+                "Carrefour": (CarrefourProduct, CarrefourProductSerializer),
+                "A101": (A101Product, A101ProductSerializer)
             }
             
             for market_name in markets:
@@ -757,6 +804,12 @@ def cheapest_products_by_categories(request):
             "Yemeklik Malzemeler": "basic_food",
             "Dondurulmuş Ürünler": "frozen_food",
             
+            # A101 categories
+            "Et, Balık, Tavuk": "meat_poultry_fish",
+            "Temel Gıda": "basic_food",
+            "Dondurulmuş Ürünler": "frozen_food",
+            "İçecek": "beverages",
+            
             # Mopas categories
             "Sebze & Meyve": "fruits_vegetables",
             "İçecekler": "beverages",
@@ -810,6 +863,12 @@ def cheapest_products_by_categories(request):
                 "Et, Tavuk, Balık",
                 "Temel Gıda",
                 "Hazır Yemek&Donuk Ürünler"
+            ],
+            "A101": [
+                "Et, Balık, Tavuk",
+                "Temel Gıda",
+                "Dondurulmuş Ürünler",
+                "İçecek"
             ]
         }
         
@@ -817,6 +876,27 @@ def cheapest_products_by_categories(request):
         results = []
         
         # Process each market separately
+        
+        # A101
+        try:
+            a101_categories = market_categories["A101"]
+            for category in a101_categories:
+                category_products = list(A101Product.objects.filter(main_category=category))    
+                if category_products:
+                    category_products.sort(key=lambda x: x.price if x.price is not None else float('inf'))
+                    cheapest_products = category_products[:4] if len(category_products) >= 4 else category_products
+                    normalized_category = normalized_categories[category_mapping[category]]
+                    for product in cheapest_products:
+                        results.append({
+                            "name": product.name,
+                            "price": product.price,
+                            "image": product.image_url,
+                            "category": normalized_category,
+                            "original_category": category,
+                            "market_name": "a101"
+                        })  
+        except Exception as e:
+            print(f"Error processing A101 categories: {e}")
         
         # Migros
         try:
@@ -982,6 +1062,21 @@ def discounted_products(request):
     try:
         # Get products from all market tables that have discounts
         discounted_products = []
+
+        # A101 products with discounts
+        a101_products = A101Product.objects.filter(high_price__gt=F('price')).exclude(high_price__isnull=True)
+        discounted_products.extend([{
+            'id': str(product.id),
+            'name': product.name,
+            'price': product.price,
+            'image_url': product.image_url,
+            'main_category': product.main_category,
+            'sub_category': product.sub_category,
+            'lowest_category': product.lowest_category,
+            'market_name': 'a101',
+            'high_price': product.high_price,
+            'product_link': product.product_link
+        } for product in a101_products])
 
         # Mopas products with discounts
         mopas_products = MopasProduct.objects.filter(high_price__gt=F('price')).exclude(high_price__isnull=True)

@@ -245,12 +245,13 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       primaryColor: primaryColor,
-      scaffoldBackgroundColor: Colors.black,
+      scaffoldBackgroundColor:
+          Color(0xFF343541), // ChatGPT-like grey background
       colorScheme: ColorScheme.dark(
         primary: primaryColor,
         secondary: accentColor,
-        surface: Color(0xFF222222),
-        background: Color(0xFF121212),
+        surface: Color(0xFF444654), // ChatGPT-like surface grey
+        background: Color(0xFF343541), // ChatGPT-like background grey
         error: errorColor,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
@@ -309,7 +310,7 @@ class AppTheme {
         ),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF222222),
+        backgroundColor: Color(0xFF444654), // Updated to match surface color
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: Colors.white),
@@ -369,7 +370,8 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Color(0xFF222222),
+        fillColor:
+            Color(0xFF40414f), // Slightly different grey for input fields
         contentPadding: const EdgeInsets.symmetric(
           horizontal: spacingM,
           vertical: spacingM,
@@ -393,7 +395,7 @@ class AppTheme {
         hintStyle: const TextStyle(color: Colors.white70),
       ),
       cardTheme: CardTheme(
-        color: Color(0xFF222222),
+        color: Color(0xFF444654), // Updated to match surface color
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusL),
@@ -412,7 +414,7 @@ class AppTheme {
         ),
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xFF222222),
+        backgroundColor: Color(0xFF444654), // Updated to match surface color
         contentTextStyle: TextStyle(color: Colors.white),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(

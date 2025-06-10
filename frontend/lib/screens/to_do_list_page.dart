@@ -9,6 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend/widgets/bottom_navigation.dart';
 import 'package:frontend/screens/home_page.dart';
 import 'package:frontend/widgets/elegant_toast.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend/providers/theme_provider.dart';
 
 class ToDoListPage extends StatefulWidget {
   const ToDoListPage({super.key});
@@ -291,7 +293,7 @@ class _ToDoListPageState extends State<ToDoListPage>
 
       if (response.statusCode == 204) {
         ElegantToast.showSuccess(context, "Liste başarıyla silindi!");
-        
+
         // Reset selected list if it was the deleted one
         if (_selectedListId == listId) {
           setState(() {
@@ -299,26 +301,30 @@ class _ToDoListPageState extends State<ToDoListPage>
             _toDoItems.clear();
           });
         }
-        
+
         // Refresh the lists
         _fetchShoppingLists();
       } else if (response.statusCode == 404) {
         // Parse error message from response if available
         try {
           final errorData = json.decode(response.body);
-          final errorMessage = errorData['error'] ?? 'Liste bulunamadı veya yetkiniz yok';
+          final errorMessage =
+              errorData['error'] ?? 'Liste bulunamadı veya yetkiniz yok';
           ElegantToast.showError(context, errorMessage);
         } catch (e) {
-          ElegantToast.showError(context, "Bu listeyi silme yetkiniz yok. Sadece liste sahibi listeyi silebilir.");
+          ElegantToast.showError(context,
+              "Bu listeyi silme yetkiniz yok. Sadece liste sahibi listeyi silebilir.");
         }
       } else {
         // Handle other error status codes
         try {
           final errorData = json.decode(response.body);
-          final errorMessage = errorData['error'] ?? 'Liste silinirken hata oluştu';
+          final errorMessage =
+              errorData['error'] ?? 'Liste silinirken hata oluştu';
           ElegantToast.showError(context, errorMessage);
         } catch (e) {
-          ElegantToast.showError(context, "Liste silinirken hata oluştu (${response.statusCode})");
+          ElegantToast.showError(
+              context, "Liste silinirken hata oluştu (${response.statusCode})");
         }
       }
     } catch (e) {
@@ -493,7 +499,8 @@ class _ToDoListPageState extends State<ToDoListPage>
   }
 
   bool _isCurrentUserOwner() {
-    if (_selectedListDetails == null || _currentUserUsername == null) return false;
+    if (_selectedListDetails == null || _currentUserUsername == null)
+      return false;
     return _selectedListDetails!['owner'] == _currentUserUsername;
   }
 
@@ -627,9 +634,11 @@ class _ToDoListPageState extends State<ToDoListPage>
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              ..._shoppingLists.where((list) => list['id'] != _selectedListId).map((list) => 
-                                _buildListCard(list, false)
-                              ).toList(),
+                              ..._shoppingLists
+                                  .where(
+                                      (list) => list['id'] != _selectedListId)
+                                  .map((list) => _buildListCard(list, false))
+                                  .toList(),
                             ],
                             if (_shoppingLists.isEmpty) ...[
                               _buildEmptyListState(),
@@ -838,7 +847,9 @@ class _ToDoListPageState extends State<ToDoListPage>
           item['name'],
           style: GoogleFonts.poppins(
             decoration: item['is_done'] ? TextDecoration.lineThrough : null,
-            color: item['is_done'] ? Colors.grey[600] : Theme.of(context).colorScheme.onSurface,
+            color: item['is_done']
+                ? Colors.grey[600]
+                : Theme.of(context).colorScheme.onSurface,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -1011,7 +1022,8 @@ class _ToDoListPageState extends State<ToDoListPage>
                       ),
                       if (_isCurrentUserOwner()) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
@@ -1053,7 +1065,8 @@ class _ToDoListPageState extends State<ToDoListPage>
                     size: 20,
                   ),
                   onPressed: () {
-                    _showDeleteListConfirmation(_selectedListId!, selectedList['name']);
+                    _showDeleteListConfirmation(
+                        _selectedListId!, selectedList['name']);
                   },
                   tooltip: "Listeyi Sil",
                 ),
@@ -1066,6 +1079,9 @@ class _ToDoListPageState extends State<ToDoListPage>
   }
 
   Widget _buildListCard(Map<String, dynamic> list, bool isSelected) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -1083,15 +1099,17 @@ class _ToDoListPageState extends State<ToDoListPage>
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(AppTheme.radiusM),
               border: Border.all(
-                color: isSelected ? AppColors.mainGreen : Colors.grey[200]!,
+                color: isSelected
+                    ? AppColors.mainGreen
+                    : Theme.of(context).dividerColor.withOpacity(0.3),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1102,12 +1120,14 @@ class _ToDoListPageState extends State<ToDoListPage>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: isDark
+                        ? Colors.grey[700]?.withOpacity(0.3)
+                        : Colors.grey[100],
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.list_alt,
-                    color: Colors.grey[600],
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                     size: 20,
                   ),
                 ),
@@ -1121,7 +1141,7 @@ class _ToDoListPageState extends State<ToDoListPage>
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1131,7 +1151,11 @@ class _ToDoListPageState extends State<ToDoListPage>
                         "Listeye geç",
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.color
+                              ?.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -1139,7 +1163,11 @@ class _ToDoListPageState extends State<ToDoListPage>
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.grey[400],
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.color
+                      ?.withOpacity(0.4),
                   size: 16,
                 ),
               ],
@@ -1151,13 +1179,18 @@ class _ToDoListPageState extends State<ToDoListPage>
   }
 
   Widget _buildEmptyListState() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: isDark
+            ? Theme.of(context).colorScheme.surface.withOpacity(0.5)
+            : Colors.grey[50],
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         border: Border.all(
-          color: Colors.grey[200]!,
+          color: Theme.of(context).dividerColor.withOpacity(0.3),
           style: BorderStyle.solid,
         ),
       ),
@@ -1166,13 +1199,15 @@ class _ToDoListPageState extends State<ToDoListPage>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: isDark
+                  ? Colors.grey[700]?.withOpacity(0.3)
+                  : Colors.grey[100],
               borderRadius: BorderRadius.circular(50),
             ),
             child: Icon(
               Icons.playlist_add,
               size: 40,
-              color: Colors.grey[400],
+              color: isDark ? Colors.grey[400] : Colors.grey[400],
             ),
           ),
           const SizedBox(height: 16),
@@ -1181,7 +1216,7 @@ class _ToDoListPageState extends State<ToDoListPage>
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+              color: Theme.of(context).textTheme.headlineSmall?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -1190,7 +1225,11 @@ class _ToDoListPageState extends State<ToDoListPage>
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.color
+                  ?.withOpacity(0.7),
               height: 1.4,
             ),
           ),

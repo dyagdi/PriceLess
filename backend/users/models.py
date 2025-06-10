@@ -81,6 +81,22 @@ class MigrosProduct(models.Model):
 
     class Meta:
         db_table = 'migros_3_products'
+class A101Product(models.Model):
+    main_category = models.TextField()
+    sub_category = models.TextField()
+    lowest_category = models.TextField()
+    name = models.TextField()
+    price = models.FloatField()
+    high_price = models.FloatField(null=True, blank=True)
+    in_stock = models.TextField()
+    product_link = models.TextField()
+    page_link = models.TextField()
+    image_url = models.TextField()
+    date = models.TextField()
+    market_name = models.TextField()
+    
+    class Meta:
+        db_table = 'a101_3_products'
 
 class SokmarketProduct(models.Model):
     main_category = models.TextField()

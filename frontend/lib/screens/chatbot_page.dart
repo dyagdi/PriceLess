@@ -3,6 +3,8 @@ import 'package:frontend/services/chatbot_service.dart';
 import 'package:frontend/widgets/chat_message_widget.dart';
 import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/constants/colors.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend/providers/theme_provider.dart';
 import 'dart:math';
 
 class ChatbotPage extends StatefulWidget {
@@ -21,7 +23,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
   void initState() {
     super.initState();
     // Generate a unique session ID for this chat
-    _sessionId = 'session-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(1000)}';
+    _sessionId =
+        'session-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(1000)}';
   }
 
   void _sendMessage() async {
@@ -42,7 +45,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
       _messages.add({"sender": "bot", "text": response});
       _loading = false;
     });
-    
+
     _scrollToBottom();
   }
 
@@ -60,8 +63,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           "Market Asistanı",
@@ -70,10 +76,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
             fontSize: 18,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         shadowColor: Colors.black.withOpacity(0.1),
         centerTitle: true,
+        iconTheme: Theme.of(context).appBarTheme.iconTheme,
+        titleTextStyle: Theme.of(context).appBarTheme.titleTextStyle,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, size: 20),
           onPressed: () => Navigator.of(context).pop(),
@@ -83,23 +91,24 @@ class _ChatbotPageState extends State<ChatbotPage> {
         children: [
           // Chat messages area
           Expanded(
-            child: _messages.isEmpty 
-              ? _buildEmptyState() 
-              : ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  itemCount: _messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = _messages[index];
-                    final isUser = msg['sender'] == 'user';
-                    return ChatMessageWidget(
-                      message: msg['text'] ?? '',
-                      isUser: isUser,
-                    );
-                  },
-                ),
+            child: _messages.isEmpty
+                ? _buildEmptyState(isDark)
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[index];
+                      final isUser = msg['sender'] == 'user';
+                      return ChatMessageWidget(
+                        message: msg['text'] ?? '',
+                        isUser: isUser,
+                      );
+                    },
+                  ),
           ),
-          
+
           // Loading indicator
           if (_loading)
             Container(
@@ -112,29 +121,34 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.mainGreen),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.mainGreen),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Asistan yazıyor...',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.color
+                          ?.withOpacity(0.7),
                       fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-          
+
           // Input area
-          _buildInputArea(),
+          _buildInputArea(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -158,7 +172,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.headlineMedium?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -167,64 +181,71 @@ class _ChatbotPageState extends State<ChatbotPage> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.textSecondary,
+              color: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.color
+                  ?.withOpacity(0.7),
               height: 1.4,
             ),
           ),
           const SizedBox(height: 24),
-          _buildSampleQuestions(),
+          _buildSampleQuestions(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildSampleQuestions() {
+  Widget _buildSampleQuestions(bool isDark) {
     final sampleQuestions = [
       'Elma fiyatları hakkında bilgi ver',
     ];
 
     return Column(
-      children: sampleQuestions.map((question) => 
-        Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            onTap: () {
-              _controller.text = question;
-              _sendMessage();
-            },
-            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
+      children: sampleQuestions
+          .map(
+            (question) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                onTap: () {
+                  _controller.text = question;
+                  _sendMessage();
+                },
                 borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                border: Border.all(
-                  color: AppColors.mainGreen.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                question,
-                style: TextStyle(
-                  color: AppColors.mainGreen,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    border: Border.all(
+                      color: AppColors.mainGreen.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    question,
+                    style: TextStyle(
+                      color: AppColors.mainGreen,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-      ).toList(),
+          )
+          .toList(),
     );
   }
 
-  Widget _buildInputArea() {
+  Widget _buildInputArea(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -243,10 +264,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.backgroundColor,
+                    color: Theme.of(context).inputDecorationTheme.fillColor,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Theme.of(context).dividerColor.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
@@ -254,17 +275,18 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     controller: _controller,
                     decoration: InputDecoration(
                       hintText: "Bir şeyler yazın...",
-                      hintStyle: TextStyle(
-                        color: AppTheme.textHint,
-                        fontSize: 15,
-                      ),
+                      hintStyle:
+                          Theme.of(context).inputDecorationTheme.hintStyle,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 12,
                       ),
                     ),
-                    style: const TextStyle(fontSize: 15),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
                     maxLines: null,
                     textCapitalization: TextCapitalization.sentences,
                     onSubmitted: (_) => _sendMessage(),

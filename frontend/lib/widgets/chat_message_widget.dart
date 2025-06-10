@@ -4,6 +4,7 @@ import 'package:frontend/theme/app_theme.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
+import 'package:frontend/providers/theme_provider.dart';
 import 'package:frontend/models/cart_model.dart';
 
 class ChatMessageWidget extends StatefulWidget {
@@ -38,6 +39,9 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   }
 
   Widget _buildUserMessage() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -50,7 +54,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -68,19 +72,28 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   }
 
   Widget _buildBotMessage(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(4),
           topRight: Radius.circular(20),
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
         border: Border.all(
-          color: Colors.grey.withOpacity(0.1),
+          color: Theme.of(context).dividerColor.withOpacity(0.1),
           width: 1,
         ),
       ),
@@ -98,17 +111,17 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   }
 
   bool _isProductMessage() {
-    return widget.message.contains('TL') || 
-           widget.message.contains('fiyat') || 
-           widget.message.contains('Ürüne git') ||
-           widget.message.contains('https://');
+    return widget.message.contains('TL') ||
+        widget.message.contains('fiyat') ||
+        widget.message.contains('Ürüne git') ||
+        widget.message.contains('https://');
   }
 
   Widget _buildPlainTextMessage(BuildContext context) {
     return Text(
       widget.message,
       style: TextStyle(
-        color: AppTheme.textPrimary,
+        color: Theme.of(context).textTheme.bodyLarge?.color,
         fontSize: 15,
         height: 1.4,
       ),
@@ -118,7 +131,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   Widget _buildStructuredProductMessage(BuildContext context) {
     // Parse products from the message
     final products = _parseProducts();
-    
+
     if (products.isEmpty) {
       return _buildPlainTextMessage(context);
     }
@@ -130,7 +143,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           Text(
             _getIntroText(),
             style: TextStyle(
-              color: AppTheme.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
               fontSize: 15,
               height: 1.4,
               fontWeight: FontWeight.w500,
@@ -138,42 +151,46 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           ),
           const SizedBox(height: 12),
         ],
-        ...products.map((product) => _buildProductCard(product, context)).toList(),
+        ...products
+            .map((product) => _buildProductCard(product, context))
+            .toList(),
       ],
     );
   }
 
   bool _hasIntroText() {
-    return widget.message.contains('fiyatlar') || 
-           widget.message.contains('şöyle:') ||
-           widget.message.contains('mevcut');
+    return widget.message.contains('fiyatlar') ||
+        widget.message.contains('şöyle:') ||
+        widget.message.contains('mevcut');
   }
 
   String _getIntroText() {
     final lines = widget.message.split('\n');
     final firstLine = lines.first.trim();
-    
+
     if (firstLine.contains('*') || firstLine.contains('TL')) {
       return 'Aradığınız ürünler:';
     }
-    
+
     return firstLine;
   }
 
   List<ProductInfo> _parseProducts() {
     final products = <ProductInfo>[];
     final lines = widget.message.split('\n');
-    
+
     for (final line in lines) {
       // Look for lines that start with * and contain ** around product names
-      if (line.trim().startsWith('*') && line.contains('**') && line.contains('TL')) {
+      if (line.trim().startsWith('*') &&
+          line.contains('**') &&
+          line.contains('TL')) {
         final product = _parseProductLine(line);
         if (product != null) {
           products.add(product);
         }
       }
     }
-    
+
     return products;
   }
 
@@ -182,18 +199,18 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
       // Handle the new format with product names in **
       final nameMatch = RegExp(r'\*\*(.*?)\*\*').firstMatch(line);
       if (nameMatch == null) return null;
-      
+
       String name = nameMatch.group(1)?.trim() ?? '';
-      
+
       // Find the price pattern (number + TL)
       final pricePattern = RegExp(r'(\d+[,.]?\d*)\s*TL');
       final priceMatch = pricePattern.firstMatch(line);
       if (priceMatch == null) return null;
-      
+
       final priceStr = priceMatch.group(1)!.replaceAll(',', '.');
       final price = double.tryParse(priceStr);
       if (price == null) return null;
-      
+
       // Extract URL if present
       String? url;
       if (line.contains('[Ürüne git]')) {
@@ -202,13 +219,14 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           url = urlMatch.group(1);
         }
       }
-      
+
       // Extract market name from format: **Product** - Market - Price TL
       String? marketName;
       String? imageUrl;
-      
+
       // Use regex to match the entire pattern and extract market name and image URL
-      final fullPattern = RegExp(r'\*\*(.*?)\*\*\s*-\s*(.*?)\s*-\s*(\d+[,.]?\d*)\s*TL\s*(?:\[image:(.*?)\])?');
+      final fullPattern = RegExp(
+          r'\*\*(.*?)\*\*\s*-\s*(.*?)\s*-\s*(\d+[,.]?\d*)\s*TL\s*(?:\[image:(.*?)\])?');
       final fullMatch = fullPattern.firstMatch(line);
       if (fullMatch != null && fullMatch.groupCount >= 2) {
         marketName = fullMatch.group(2)?.trim();
@@ -216,7 +234,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
           imageUrl = fullMatch.group(4)?.trim();
         }
       }
-      
+
       return ProductInfo(
         name: name,
         marketName: marketName,
@@ -233,16 +251,16 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
   void _showElegantNotification(BuildContext context, String productName) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
-    
+
     overlayEntry = OverlayEntry(
       builder: (context) => ElegantToast(
         message: '$productName sepete eklendi!',
         onDismiss: () => overlayEntry.remove(),
       ),
     );
-    
+
     overlay.insert(overlayEntry);
-    
+
     // Auto dismiss after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (overlayEntry.mounted) {
@@ -253,19 +271,21 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
 
   Widget _buildProductCard(ProductInfo product, BuildContext context) {
     final isAdded = _addedToCart[product.name] ?? false;
-    
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.withOpacity(0.2),
+          color: Theme.of(context).dividerColor.withOpacity(0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -282,7 +302,8 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                     // Try the newer API first (works on simulator)
                     final uri = Uri.parse(product.url!);
                     if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
                     } else {
                       // Fallback to older API (works on real devices)
                       if (await canLaunch(product.url!)) {
@@ -290,7 +311,8 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                       } else {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Bu bağlantı açılamadı')),
+                            const SnackBar(
+                                content: Text('Bu bağlantı açılamadı')),
                           );
                         }
                       }
@@ -330,7 +352,7 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                         Text(
                           product.name,
                           style: TextStyle(
-                            color: AppTheme.textPrimary,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -343,7 +365,11 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                             Text(
                               product.marketName ?? '',
                               style: TextStyle(
-                                color: AppTheme.textSecondary,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color
+                                    ?.withOpacity(0.7),
                                 fontSize: 12,
                               ),
                             ),
@@ -373,36 +399,40 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     child: ElevatedButton.icon(
-                      onPressed: isAdded ? null : () async {
-                        final cartItem = CartItem(
-                          name: product.name,
-                          price: product.price,
-                          image: product.imageUrl ?? '',
-                        );
-                        
-                        cartProvider.addItem(cartItem);
-                        
-                        // Update button state
-                        setState(() {
-                          _addedToCart[product.name] = true;
-                        });
-                        
-                        // Show elegant notification
-                        _showElegantNotification(context, product.name);
-                        
-                        // Reset button state after 3 seconds
-                        Future.delayed(const Duration(seconds: 3), () {
-                          if (mounted) {
-                            setState(() {
-                              _addedToCart[product.name] = false;
-                            });
-                          }
-                        });
-                      },
+                      onPressed: isAdded
+                          ? null
+                          : () async {
+                              final cartItem = CartItem(
+                                name: product.name,
+                                price: product.price,
+                                image: product.imageUrl ?? '',
+                              );
+
+                              cartProvider.addItem(cartItem);
+
+                              // Update button state
+                              setState(() {
+                                _addedToCart[product.name] = true;
+                              });
+
+                              // Show elegant notification
+                              _showElegantNotification(context, product.name);
+
+                              // Reset button state after 3 seconds
+                              Future.delayed(const Duration(seconds: 3), () {
+                                if (mounted) {
+                                  setState(() {
+                                    _addedToCart[product.name] = false;
+                                  });
+                                }
+                              });
+                            },
                       icon: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         child: Icon(
-                          isAdded ? Icons.check_circle : Icons.add_shopping_cart,
+                          isAdded
+                              ? Icons.check_circle
+                              : Icons.add_shopping_cart,
                           size: 16,
                           key: ValueKey(isAdded),
                         ),
@@ -415,9 +445,11 @@ class _ChatMessageWidgetState extends State<ChatMessageWidget> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isAdded ? Colors.green : AppColors.mainGreen,
+                        backgroundColor:
+                            isAdded ? Colors.green : AppColors.mainGreen,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -462,7 +494,7 @@ class _ElegantToastState extends State<ElegantToast>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _slideAnimation = Tween<double>(
       begin: -100,
       end: 0,
@@ -470,7 +502,7 @@ class _ElegantToastState extends State<ElegantToast>
       parent: _controller,
       curve: Curves.elasticOut,
     ));
-    
+
     _opacityAnimation = Tween<double>(
       begin: 0,
       end: 1,
@@ -478,9 +510,9 @@ class _ElegantToastState extends State<ElegantToast>
       parent: _controller,
       curve: Curves.easeOut,
     ));
-    
+
     _controller.forward();
-    
+
     // Auto dismiss animation
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
@@ -511,7 +543,8 @@ class _ElegantToastState extends State<ElegantToast>
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
                     color: AppColors.mainGreen,
                     borderRadius: BorderRadius.circular(12),
@@ -587,4 +620,4 @@ class ProductInfo {
     this.url,
     this.imageUrl,
   });
-} 
+}

@@ -59,7 +59,8 @@ class _CartPageState extends State<CartPage> {
                       icon: const Icon(Icons.close),
                       onPressed: () async {
                         Navigator.of(context).pop();
-                        final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                        final cartProvider =
+                            Provider.of<CartProvider>(context, listen: false);
                         final cartItems = cartProvider.cartItems;
 
                         if (cartItems.isEmpty) {
@@ -214,10 +215,20 @@ class _CartPageState extends State<CartPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).cardColor,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     minimumSize: const Size(double.infinity, 45),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                    ),
                   ),
-                  child: const Text('Kaydet'),
+                  child: Text(
+                    'Kaydet',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -345,7 +356,6 @@ class _CartPageState extends State<CartPage> {
                       ),
                       child: Row(
                         children: [
-                          
                           ClipRRect(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(AppTheme.radiusL),
@@ -378,7 +388,6 @@ class _CartPageState extends State<CartPage> {
                               ),
                             ),
                           ),
-                         
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.all(12),
@@ -408,7 +417,6 @@ class _CartPageState extends State<CartPage> {
                                         ),
                                   ),
                                   const SizedBox(height: 8),
-                                 
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
@@ -477,7 +485,6 @@ class _CartPageState extends State<CartPage> {
                   },
                 ),
               ),
-         
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(

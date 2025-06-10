@@ -40,7 +40,6 @@ class _WalkingPageState extends State<WalkingPage> {
     });
 
     try {
-    
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       setState(() {
@@ -48,15 +47,12 @@ class _WalkingPageState extends State<WalkingPage> {
         _userLongitude = position.longitude;
       });
 
-  
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final comparisons =
           await MarketComparisonService.compareProducts(cartProvider.cartItems);
 
-   
-      final response = await http.get(
-        Uri.parse('${baseUrl}nearby-markets/?latitude=$_userLatitude&longitude=$_userLongitude&radius=6500')
-      );
+      final response = await http.get(Uri.parse(
+          '${baseUrl}nearby-markets/?latitude=$_userLatitude&longitude=$_userLongitude&radius=6500'));
 
       if (response.statusCode == 200) {
         final List<dynamic> marketsData = json.decode(response.body);
@@ -79,44 +75,39 @@ class _WalkingPageState extends State<WalkingPage> {
   }
 
   double _calculateMarketScore(Map<String, dynamic> market) {
-    
     final marketName = market['marketName'].toLowerCase();
-    final nearbyMarket = _nearbyMarkets.firstWhere(
-      (m) {
-        final name = m['name'].toLowerCase();
-       
-        return name.contains(marketName) || 
-               marketName.contains(name) ||
-               (marketName == 'mopas' && name.contains('mopaş')) ||
-               (marketName == 'migros' && name.contains('migros')) ||
-               (marketName == 'sokmarket' && name.contains('şok')) ||
-               (marketName == 'marketpaketi' && name.contains('market paketi')) ||
-               (marketName == 'carrefour' && name.contains('carrefour'));
-      },
-      orElse: () => {
-        'distance': 5.0,
-        'total_price': null,
-        'has_price_data': false
-      }
-    );
+    final nearbyMarket = _nearbyMarkets.firstWhere((m) {
+      final name = m['name'].toLowerCase();
+
+      return name.contains(marketName) ||
+          marketName.contains(name) ||
+          (marketName == 'mopas' && name.contains('mopaş')) ||
+          (marketName == 'migros' && name.contains('migros')) ||
+          (marketName == 'sokmarket' && name.contains('şok')) ||
+          (marketName == 'marketpaketi' && name.contains('market paketi')) ||
+          (marketName == 'carrefour' && name.contains('carrefour'));
+    },
+        orElse: () =>
+            {'distance': 5.0, 'total_price': null, 'has_price_data': false});
 
     final distance = nearbyMarket['distance'] as double;
     final price = market['totalPrice'] as double;
-    final hasPriceData = market['totalPrice'] != null; 
+    final hasPriceData = market['totalPrice'] != null;
 
-    final maxDistance = 5.0; 
-    final maxPrice = _marketComparisons.isNotEmpty 
-        ? _marketComparisons[0]['totalPrice'] * 1.5 
+    final maxDistance = 5.0;
+    final maxPrice = _marketComparisons.isNotEmpty
+        ? _marketComparisons[0]['totalPrice'] * 1.5
         : 1000.0;
 
     final normalizedDistance = distance / maxDistance;
     final normalizedPrice = price / maxPrice;
 
-    final distanceWeight = 1.0 - (_currentValue / 4.0); 
-    final priceWeight = _currentValue / 4.0; 
+    final distanceWeight = 1.0 - (_currentValue / 4.0);
+    final priceWeight = _currentValue / 4.0;
 
-    double score = (normalizedDistance * distanceWeight) + (normalizedPrice * priceWeight);
-    
+    double score =
+        (normalizedDistance * distanceWeight) + (normalizedPrice * priceWeight);
+
     if (!hasPriceData) {
       score *= 1.5;
     }
@@ -288,7 +279,7 @@ class _WalkingPageState extends State<WalkingPage> {
                           final distance = nearbyMarket['distance'] as double;
                           final price = market['totalPrice'] as double;
                           final isComplete = market['isComplete'] as bool;
-                          final hasPriceData = market['totalPrice'] != null;  
+                          final hasPriceData = market['totalPrice'] != null;
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
