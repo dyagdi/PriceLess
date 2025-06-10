@@ -191,7 +191,7 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(AppTheme.radiusL),
                             boxShadow: [
                               BoxShadow(
@@ -208,6 +208,7 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             subtitle: Column(
@@ -218,7 +219,7 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                                   address['address_details'] ?? '',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
-                                    color: Colors.grey[600],
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -226,13 +227,13 @@ class _AddressManagementPageState extends State<AddressManagementPage> {
                                   '${address['mahalle']}, ${address['state']}, ${address['city']}',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
-                                    color: Colors.grey[600],
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                   ),
                                 ),
                               ],
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
+                              icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
                               onPressed: () => _deleteAddress(address['id']),
                             ),
                           ),

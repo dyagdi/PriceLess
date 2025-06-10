@@ -838,7 +838,7 @@ class _ToDoListPageState extends State<ToDoListPage>
           item['name'],
           style: GoogleFonts.poppins(
             decoration: item['is_done'] ? TextDecoration.lineThrough : null,
-            color: item['is_done'] ? Colors.grey[600] : Colors.black,
+            color: item['is_done'] ? Colors.grey[600] : Theme.of(context).colorScheme.onSurface,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
